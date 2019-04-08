@@ -29,6 +29,13 @@ def get_data():
 				},
 				{
 					"type": "doctype",
+					"name": "Sales Invoice",
+					"description": _("Invoices for Costumers."),
+					"onboard": 1,
+					"dependencies": ["Item", "Customer"],
+				},
+				{
+					"type": "doctype",
 					"name": "Sales Partner",
 					"description": _("Manage Sales Partners."),
 					"dependencies": ["Item"],
@@ -46,14 +53,14 @@ def get_data():
 					"type": "report",
 					"is_query_report": True,
 					"name": "Territory Target Variance (Item Group-Wise)",
-					"route": "query-report/Territory Target Variance Item Group-Wise",
+					"route": "#query-report/Territory Target Variance Item Group-Wise",
 					"doctype": "Territory",
 				},
 				{
 					"type": "report",
 					"is_query_report": True,
 					"name": "Sales Person Target Variance (Item Group-Wise)",
-					"route": "query-report/Sales Person Target Variance Item Group-Wise",
+					"route": "#query-report/Sales Person Target Variance Item Group-Wise",
 					"doctype": "Sales Person",
 					"dependencies": ["Sales Person"],
 				},
@@ -72,7 +79,7 @@ def get_data():
 					"type": "doctype",
 					"name": "Item Price",
 					"description": _("Multiple Item prices."),
-					"route": "Report/Item Price",
+					"route": "#Report/Item Price",
 					"dependencies": ["Item", "Price List"],
 					"onboard": 1,
 				},
@@ -112,14 +119,14 @@ def get_data():
 			]
 		},
 		{
-			"label": _("Setup"),
+			"label": _("Settings"),
 			"icon": "fa fa-cog",
 			"items": [
 				{
 					"type": "doctype",
 					"name": "Selling Settings",
 					"description": _("Default settings for selling transactions."),
-					"onboard": 1,
+					"settings": 1,
 				},
 				{
 					"type": "doctype",
@@ -298,7 +305,7 @@ def get_data():
 				{
 					"type": "help",
 					"label": _("Sales Order to Payment"),
-					"youtube_id": "7AMq4lqkN4A"
+					"youtube_id": "1eP90MWoDQM"
 				},
 				{
 					"type": "help",
