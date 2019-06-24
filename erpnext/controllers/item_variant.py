@@ -124,16 +124,8 @@ def find_variant(template, args, variant_item_code=None):
 
 	conditions = " or ".join(conditions)
 
-	# use approximate match and shortlist possible variant matches
-	# it is approximate because we are matching using OR condition
-	# and it need not be exact match at this stage
-	# this uses a simpler query instead of using multiple exists conditions
-	possible_variants = frappe.db.sql_list("""select name from `tabItem` item
-		where variant_of=%s and exists (
-			select name from `tabItem Variant Attribute` iv_attribute
-				where iv_attribute.parent=item.name
-				and ({conditions}) and parent != %s
-		)""".format(conditions=conditions), (template, cstr(variant_item_code)))
+	from erpnext.portal.product_configurator.utils import get_item_codes_by_attributes
+	possible_variants = [i for i in get_item_codes_by_attributes(args, template) if i != variant_item_code]
 
 	for variant in possible_variants:
 		variant = frappe.get_doc("Item", variant)
@@ -287,14 +279,14 @@ def copy_attributes_to_variant(item, variant):
 					variant.set(field.fieldname, item.get(field.fieldname))
 
 	variant.variant_of = item.name
-	if 'description' in allow_fields:
-		variant.has_variants = 0
+
+	if 'description' not in allow_fields:
 		if not variant.description:
 			variant.description = ""
 
 		if item.variant_based_on=='Item Attribute':
 			if variant.attributes:
-				attributes_description = ""
+				attributes_description = item.description + " "
 				for d in variant.attributes:
 					attributes_description += "<div>" + d.attribute + ": " + cstr(d.attribute_value) + "</div>"
 
@@ -317,7 +309,7 @@ def make_variant_item_code(template_item_code, template_item_name, variant):
 			}, as_dict=True)
 
 		if not item_attribute:
-			return
+			continue
 			# frappe.throw(_('Invalid attribute {0} {1}').format(frappe.bold(attr.attribute),
 			# 	frappe.bold(attr.attribute_value)), title=_('Invalid Attribute'),
 			# 	exc=InvalidItemAttributeValueError)

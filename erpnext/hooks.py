@@ -10,10 +10,10 @@ app_color = "#e74c3c"
 app_email = "info@erpnext.com"
 app_license = "GNU General Public License (v3)"
 source_link = "https://github.com/frappe/erpnext"
+app_logo_url = '/assets/erpnext/images/erp-icon.svg'
+
 
 develop_version = '12.x.x-develop'
-
-error_report_email = "support@erpnext.com"
 
 app_include_js = "assets/js/erpnext.min.js"
 app_include_css = "assets/css/erpnext.css"
@@ -23,7 +23,8 @@ web_include_css = "assets/css/erpnext-web.css"
 doctype_js = {
 	"Communication": "public/js/communication.js",
 	"Event": "public/js/event.js",
-	"Website Theme": "public/js/website_theme.js"
+	"Website Theme": "public/js/website_theme.js",
+	"Newsletter": "public/js/newsletter.js"
 }
 
 welcome_email = "erpnext.setup.utils.welcome_email"
@@ -48,7 +49,7 @@ on_logout = "erpnext.shopping_cart.utils.clear_cart_count"
 treeviews = ['Account', 'Cost Center', 'Warehouse', 'Item Group', 'Customer Group', 'Sales Person', 'Territory', 'Assessment Group']
 
 # website
-update_website_context = "erpnext.shopping_cart.utils.update_website_context"
+update_website_context = ["erpnext.shopping_cart.utils.update_website_context", "erpnext.education.doctype.education_settings.education_settings.update_website_context"]
 my_account_context = "erpnext.shopping_cart.utils.update_my_account_context"
 
 email_append_to = ["Job Applicant", "Lead", "Opportunity", "Issue"]
@@ -240,7 +241,8 @@ scheduler_events = {
 		"erpnext.erpnext_integrations.doctype.amazon_mws_settings.amazon_mws_settings.schedule_get_order_details",
 		"erpnext.accounts.doctype.gl_entry.gl_entry.rename_gle_sle_docs",
 		"erpnext.projects.doctype.project.project.hourly_reminder",
-		"erpnext.projects.doctype.project.project.collect_project_status"
+		"erpnext.projects.doctype.project.project.collect_project_status",
+		"erpnext.hr.doctype.shift_type.shift_type.process_auto_attendance_for_all_shifts"
 	],
 	"daily": [
 		"erpnext.stock.reorder_item.reorder_item",
@@ -267,7 +269,7 @@ scheduler_events = {
 	"daily_long": [
 		"erpnext.manufacturing.doctype.bom_update_tool.bom_update_tool.update_latest_price_in_all_boms"
 	],
-	"monthly": [
+	"monthly_long": [
 		"erpnext.accounts.deferred_revenue.convert_deferred_revenue_to_income",
 		"erpnext.accounts.deferred_revenue.convert_deferred_expense_to_expense",
 		"erpnext.hr.utils.allocate_earned_leaves"

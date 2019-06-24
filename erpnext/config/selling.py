@@ -10,7 +10,7 @@ def get_data():
 				{
 					"type": "doctype",
 					"name": "Customer",
-					"description": _("Customer database."),
+					"description": _("Customer Database."),
 					"onboard": 1,
 				},
 				{
@@ -31,6 +31,13 @@ def get_data():
 					"type": "doctype",
 					"name": "Sales Invoice",
 					"description": _("Invoices for Costumers."),
+					"onboard": 1,
+					"dependencies": ["Item", "Customer"],
+				},
+				{
+					"type": "doctype",
+					"name": "Blanket Order",
+					"description": _("Blanket Orders from Costumers."),
 					"onboard": 1,
 					"dependencies": ["Item", "Customer"],
 				},
@@ -103,6 +110,11 @@ def get_data():
 					"name": "Product Bundle",
 					"description": _("Bundle items at time of sale."),
 					"dependencies": ["Item"],
+				},
+				{
+					"type": "doctype",
+					"name": "Promotional Scheme",
+					"description": _("Rules for applying different promotional schemes.")
 				},
 				{
 					"type": "doctype",
@@ -292,6 +304,12 @@ def get_data():
 					"name": "Customers Without Any Sales Transactions",
 					"doctype": "Customer"
 				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Sales Partners Commission",
+					"doctype": "Customer"
+				}
 			]
 		},
 		{
