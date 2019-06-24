@@ -720,6 +720,7 @@ def get_children(doctype, parent, company, is_root=False):
 	parent_fieldname = 'parent_' + doctype.lower().replace(' ', '_')
 	fields = [
 		'name as value',
+		'account_number',
 		'is_group as expandable'
 	]
 	filters = [['docstatus', '<', 2]]

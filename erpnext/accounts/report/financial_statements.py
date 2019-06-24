@@ -336,7 +336,16 @@ def sort_accounts(accounts, is_root=False, key="name"):
 				return cmp(a[key], b[key])
 		return 1
 
-	accounts.sort(key = functools.cmp_to_key(compare_accounts))
+	def sort_account_number(a):
+  		return a['account_number']
+
+	accounts_settings = frappe.get_doc('Accounts Settings', 'Accounts Settings')
+	# Sort by account_number only, if configured in Account Settings:
+	if accounts_settings.sort_coa_by_account_num == 1:
+		accounts.sort(key=sort_account_number)
+	else:
+		# https://docs.python.org/3/library/functools.html#functools.cmp_to_key
+		accounts.sort(key = functools.cmp_to_key(compare_accounts))
 
 def set_gl_entries_by_account(
 		company, from_date, to_date, root_lft, root_rgt, filters, gl_entries_by_account, ignore_closing_entries=False):
