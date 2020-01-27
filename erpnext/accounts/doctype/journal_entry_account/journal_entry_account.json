@@ -40,7 +40,7 @@
  "fields": [
   {
    "bold": 1,
-   "columns": 3,
+   "columns": 2,
    "fieldname": "account",
    "fieldtype": "Link",
    "in_global_search": 1,
@@ -92,12 +92,13 @@
   {
    "fieldname": "party_type",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Party Type",
    "options": "DocType",
    "search_index": 1
   },
   {
-   "columns": 3,
+   "columns": 2,
    "fieldname": "party",
    "fieldtype": "Dynamic Link",
    "in_list_view": 1,
@@ -270,7 +271,7 @@
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2019-09-12 12:16:17.588399",
+ "modified": "2020-01-13 12:41:33.968025",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Journal Entry Account",

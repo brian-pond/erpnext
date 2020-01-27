@@ -6,6 +6,7 @@ frappe.ui.form.on("Work Order", {
 		frm.custom_make_buttons = {
 			'Stock Entry': 'Start',
 			'Pick List': 'Create Pick List',
+			'Job Card': 'Create Job Card',
 		};
 
 		// Set query for warehouses
@@ -91,6 +92,16 @@ frappe.ui.form.on("Work Order", {
 			};
 		});
 
+		frm.set_query("operation", "required_items", function() {
+			return {
+				query: "erpnext.manufacturing.doctype.work_order.work_order.get_bom_operations",
+				filters: {
+					'parent': frm.doc.bom_no,
+					'parenttype': 'BOM'
+				}
+			};
+		});
+
 		// formatter for work order operation
 		frm.set_indicator_formatter('operation',
 			function(doc) { return (frm.doc.qty==doc.completed_qty) ? "green" : "orange"; });
@@ -126,7 +137,7 @@ frappe.ui.form.on("Work Order", {
 
 		if (frm.doc.docstatus === 1
 			&& frm.doc.operations && frm.doc.operations.length
-			&& frm.doc.qty != frm.doc.material_transferred_for_manufacturing) {
+			&& frm.doc.qty != frm.doc.produced_qty) {
 
 			const not_completed = frm.doc.operations.filter(d => {
 				if(d.status != 'Completed') {
@@ -332,7 +343,7 @@ frappe.ui.form.on("Work Order", {
 	},
 
 	project: function(frm) {
-		if(!erpnext.in_production_item_onchange) {
+		if(!erpnext.in_production_item_onchange && !frm.doc.bom_no) {
 			frm.trigger("production_item");
 		}
 	},
@@ -385,6 +396,11 @@ frappe.ui.form.on("Work Order", {
 				}
 			});
 		}
+	},
+
+	additional_operating_cost: function(frm) {
+		erpnext.work_order.calculate_cost(frm.doc);
+		erpnext.work_order.calculate_total_cost(frm);
 	}
 });
 
@@ -524,8 +540,7 @@ erpnext.work_order = {
 	},
 
 	calculate_total_cost: function(frm) {
-		var variable_cost = frm.doc.actual_operating_cost ?
-			flt(frm.doc.actual_operating_cost) : flt(frm.doc.planned_operating_cost);
+		let variable_cost = flt(frm.doc.actual_operating_cost) || flt(frm.doc.planned_operating_cost);
 		frm.set_value("total_operating_cost", (flt(frm.doc.additional_operating_cost) + variable_cost));
 	},
 
@@ -545,11 +560,14 @@ erpnext.work_order = {
 
 	get_max_transferable_qty: (frm, purpose) => {
 		let max = 0;
-		if (frm.doc.skip_transfer) return max;
-		if (purpose === 'Manufacture') {
-			max = flt(frm.doc.material_transferred_for_manufacturing) - flt(frm.doc.produced_qty);
+		if (frm.doc.skip_transfer) {
+			max = flt(frm.doc.qty) - flt(frm.doc.produced_qty);
 		} else {
-			max = flt(frm.doc.qty) - flt(frm.doc.material_transferred_for_manufacturing);
+			if (purpose === 'Manufacture') {
+				max = flt(frm.doc.material_transferred_for_manufacturing) - flt(frm.doc.produced_qty);
+			} else {
+				max = flt(frm.doc.qty) - flt(frm.doc.material_transferred_for_manufacturing);
+			}
 		}
 		return flt(max, precision('qty'));
 	},
@@ -564,6 +582,8 @@ erpnext.work_order = {
 				description: __('Max: {0}', [max]),
 				default: max
 			}, data => {
+				max += (max * (frm.doc.__onload.overproduction_percentage || 0.0)) / 100;
+
 				if (data.qty > max) {
 					frappe.msgprint(__('Quantity must not be more than {0}', [max]));
 					reject();
