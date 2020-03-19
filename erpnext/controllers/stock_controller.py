@@ -34,7 +34,7 @@ class StockController(AccountsController):
 					gl_entries = self.get_gl_entries(warehouse_account)
 				make_gl_entries(gl_entries, from_repost=from_repost)
 
-			if repost_future_gle:
+			if (repost_future_gle or self.flags.repost_future_gle):
 				items, warehouses = self.get_items_and_warehouses()
 				update_gl_entries_after(self.posting_date, self.posting_time, warehouses, items,
 					warehouse_account, company=self.company)
@@ -235,6 +235,21 @@ class StockController(AccountsController):
 				frappe.throw(_("{0} {1}: Cost Center is mandatory for Item {2}").format(
 					_(self.doctype), self.name, item.get("item_code")))
 
+	def delete_auto_created_batches(self):
+		for d in self.items:
+			if not d.batch_no: continue
+
+			serial_nos = [sr.name for sr in frappe.get_all("Serial No", {'batch_no': d.batch_no})]
+			if serial_nos:
+				frappe.db.set_value("Serial No", { 'name': ['in', serial_nos] }, "batch_no", None)
+
+			d.batch_no = None
+			d.db_set("batch_no", None)
+
+		for data in frappe.get_all("Batch",
+			{'reference_name': self.name, 'reference_doctype': self.doctype}):
+			frappe.delete_doc("Batch", data.name)
+
 	def get_sl_entries(self, d, args):
 		sl_dict = frappe._dict({
 			"item_code": d.get("item_code", None),
@@ -409,7 +424,7 @@ def get_future_stock_vouchers(posting_date, posting_time, for_warehouses=None, f
 	for d in frappe.db.sql("""select distinct sle.voucher_type, sle.voucher_no
 		from `tabStock Ledger Entry` sle
 		where timestamp(sle.posting_date, sle.posting_time) >= timestamp(%s, %s) {condition}
-		order by timestamp(sle.posting_date, sle.posting_time) asc, creation asc""".format(condition=condition),
+		order by timestamp(sle.posting_date, sle.posting_time) asc, creation asc for update""".format(condition=condition),
 		tuple([posting_date, posting_time] + values), as_dict=True):
 			future_stock_vouchers.append([d.voucher_type, d.voucher_no])
 

@@ -412,6 +412,9 @@ class SalesInvoice(SellingController):
 
 		if pos:
 			self.allow_print_before_pay = pos.allow_print_before_pay
+			
+			if not for_validate:
+				self.tax_category = pos.get("tax_category")
 
 			if not for_validate and not self.customer:
 				self.customer = pos.customer
@@ -714,7 +717,7 @@ class SalesInvoice(SellingController):
 				update_outstanding_amt(self.debit_to, "Customer", self.customer,
 					self.doctype, self.return_against if cint(self.is_return) and self.return_against else self.name)
 
-			if repost_future_gle and cint(self.update_stock) \
+			if (repost_future_gle or self.flags.repost_future_gle) and cint(self.update_stock) \
 				and cint(auto_accounting_for_stock):
 					items, warehouses = self.get_items_and_warehouses()
 					update_gl_entries_after(self.posting_date, self.posting_time,
@@ -1208,48 +1211,39 @@ class SalesInvoice(SellingController):
 
 		self.set_missing_values(for_validate = True)
 
-	def get_discounting_status(self):
-		status = None
-		if self.is_discounted:
-			invoice_discounting_list = frappe.db.sql("""
-				select status
-				from `tabInvoice Discounting` id, `tabDiscounted Invoice` d
-				where
-					id.name = d.parent
-					and d.sales_invoice=%s
-					and id.docstatus=1
-					and status in ('Disbursed', 'Settled')
-			""", self.name)
-			for d in invoice_discounting_list:
-				status = d[0]
-				if status == "Disbursed":
-					break
-		return status
-
 	def set_status(self, update=False, status=None, update_modified=True):
 		if self.is_new():
 			if self.get('amended_from'):
 				self.status = 'Draft'
 			return
 
+		precision = self.precision("outstanding_amount")
+		outstanding_amount = flt(self.outstanding_amount, precision)
+		due_date = getdate(self.due_date)
+		nowdate = getdate()
+
+		discounting_status = None
+		if self.is_discounted:
+			discountng_status = get_discounting_status(self.name)
+
 		if not status:
 			if self.docstatus == 2:
 				status = "Cancelled"
 			elif self.docstatus == 1:
-				if flt(self.outstanding_amount) > 0 and getdate(self.due_date) < getdate(nowdate()) and self.is_discounted and self.get_discounting_status()=='Disbursed':
+				if outstanding_amount > 0 and due_date < nowdate and self.is_discounted and discountng_status=='Disbursed':
 					self.status = "Overdue and Discounted"
-				elif flt(self.outstanding_amount) > 0 and getdate(self.due_date) < getdate(nowdate()):
+				elif outstanding_amount > 0 and due_date < nowdate:
 					self.status = "Overdue"
-				elif flt(self.outstanding_amount) > 0 and getdate(self.due_date) >= getdate(nowdate()) and self.is_discounted and self.get_discounting_status()=='Disbursed':
+				elif outstanding_amount > 0 and due_date >= nowdate and self.is_discounted and discountng_status=='Disbursed':
 					self.status = "Unpaid and Discounted"
-				elif flt(self.outstanding_amount) > 0 and getdate(self.due_date) >= getdate(nowdate()):
+				elif outstanding_amount > 0 and due_date >= nowdate:
 					self.status = "Unpaid"
 				#Check if outstanding amount is 0 due to credit note issued against invoice
-				elif flt(self.outstanding_amount) <= 0 and self.is_return == 0 and frappe.db.get_value('Sales Invoice', {'is_return': 1, 'return_against': self.name, 'docstatus': 1}):
+				elif outstanding_amount <= 0 and self.is_return == 0 and frappe.db.get_value('Sales Invoice', {'is_return': 1, 'return_against': self.name, 'docstatus': 1}):
 					self.status = "Credit Note Issued"
 				elif self.is_return == 1:
 					self.status = "Return"
-				elif flt(self.outstanding_amount)<=0:
+				elif outstanding_amount<=0:
 					self.status = "Paid"
 				else:
 					self.status = "Submitted"
@@ -1258,6 +1252,26 @@ class SalesInvoice(SellingController):
 
 		if update:
 			self.db_set('status', self.status, update_modified = update_modified)
+
+def get_discounting_status(sales_invoice):
+	status = None
+
+	invoice_discounting_list = frappe.db.sql("""
+		select status
+		from `tabInvoice Discounting` id, `tabDiscounted Invoice` d
+		where
+			id.name = d.parent
+			and d.sales_invoice=%s
+			and id.docstatus=1
+			and status in ('Disbursed', 'Settled')
+	""", sales_invoice)
+
+	for d in invoice_discounting_list:
+		status = d[0]
+		if status == "Disbursed":
+			break
+
+	return status
 
 def validate_inter_company_party(doctype, party, company, inter_company_reference):
 	if not party:
@@ -1426,6 +1440,21 @@ def get_inter_company_details(doc, doctype):
 		"company": company
 	}
 
+def get_internal_party(parties, link_doctype, doc):
+	if len(parties) == 1:
+			party = parties[0].name
+	else:
+		# If more than one Internal Supplier/Customer, get supplier/customer on basis of address
+		if doc.get('company_address') or doc.get('shipping_address'):
+			party = frappe.db.get_value("Dynamic Link", {"parent": doc.get('company_address') or doc.get('shipping_address'),
+			"parenttype": "Address", "link_doctype": link_doctype}, "link_name")
+
+			if not party:
+				party = parties[0].name
+		else:
+			party = parties[0].name
+
+	return party
 
 def validate_inter_company_transaction(doc, doctype):
 
@@ -1513,6 +1542,9 @@ def get_loyalty_programs(customer):
 		return []
 	else:
 		return lp_details
+
+def on_doctype_update():
+	frappe.db.add_index("Sales Invoice", ["customer", "is_return", "return_against"])
 
 @frappe.whitelist()
 def create_invoice_discounting(source_name, target_doc=None):

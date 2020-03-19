@@ -368,7 +368,7 @@ class PurchaseInvoice(BuyingController):
 				update_outstanding_amt(self.credit_to, "Supplier", self.supplier,
 					self.doctype, self.return_against if cint(self.is_return) and self.return_against else self.name)
 
-			if repost_future_gle and cint(self.update_stock) and self.auto_accounting_for_stock:
+			if (repost_future_gle or self.flags.repost_future_gle) and cint(self.update_stock) and self.auto_accounting_for_stock:
 				from erpnext.controllers.stock_controller import update_gl_entries_after
 				items, warehouses = self.get_items_and_warehouses()
 				update_gl_entries_after(self.posting_date, self.posting_time,
@@ -866,6 +866,7 @@ class PurchaseInvoice(BuyingController):
 		# because updating ordered qty in bin depends upon updated ordered qty in PO
 		if self.update_stock == 1:
 			self.update_stock_ledger()
+			self.delete_auto_created_batches()
 
 		self.make_gl_entries_on_cancel()
 		self.update_project()
@@ -927,9 +928,10 @@ class PurchaseInvoice(BuyingController):
 	def on_recurring(self, reference_doc, auto_repeat_doc):
 		self.due_date = None
 
-	def block_invoice(self, hold_comment=None):
+	def block_invoice(self, hold_comment=None, release_date=None):
 		self.db_set('on_hold', 1)
 		self.db_set('hold_comment', cstr(hold_comment))
+		self.db_set('release_date', release_date)
 
 	def unblock_invoice(self):
 		self.db_set('on_hold', 0)
@@ -1013,12 +1015,15 @@ def unblock_invoice(name):
 
 
 @frappe.whitelist()
-def block_invoice(name, hold_comment):
+def block_invoice(name, release_date, hold_comment=None):
 	if frappe.db.exists('Purchase Invoice', name):
 		pi = frappe.get_doc('Purchase Invoice', name)
-		pi.block_invoice(hold_comment)
+		pi.block_invoice(hold_comment, release_date)
 
 @frappe.whitelist()
 def make_inter_company_sales_invoice(source_name, target_doc=None):
 	from erpnext.accounts.doctype.sales_invoice.sales_invoice import make_inter_company_transaction
 	return make_inter_company_transaction("Purchase Invoice", source_name, target_doc)
+
+def on_doctype_update():
+	frappe.db.add_index("Purchase Invoice", ["supplier", "is_return", "return_against"])
