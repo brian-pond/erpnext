@@ -192,13 +192,14 @@
   {
    "fieldname": "stock_uom",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Stock UOM",
    "oldfieldname": "stock_uom",
    "oldfieldtype": "Data",
    "options": "UOM",
-   "print_width": "70px",
+   "print_width": "40px",
    "read_only": 1,
-   "width": "70px"
+   "width": "40px"
   },
   {
    "fieldname": "col_break2",
@@ -758,7 +759,7 @@
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2019-12-11 18:06:26.238169",
+ "modified": "2020-05-21 12:27:49.237456",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order Item",
