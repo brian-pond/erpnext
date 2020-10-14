@@ -13,13 +13,15 @@ form_grid_templates = {
 
 class BankReconciliation(Document):
 	def get_payment_entries(self):
-		if not (self.bank_account and self.from_date and self.to_date):
-			msgprint(_("Bank Account, From Date and To Date are Mandatory"))
-			return
+		if not (self.from_date and self.to_date):
+			frappe.throw(_("From Date and To Date are Mandatory"))
+
+		if not self.account:
+			frappe.throw(_("Account is mandatory to get payment entries"))
 
 		condition = ""
 		if not self.include_reconciled_entries:
-			condition = " and (clearance_date is null or clearance_date='0000-00-00')"
+			condition = "and (clearance_date IS NULL or clearance_date='0000-00-00')"
 
 		journal_entries = frappe.db.sql("""
 			select
@@ -32,10 +34,13 @@ class BankReconciliation(Document):
 			where
 				t2.parent = t1.name and t2.account = %(account)s and t1.docstatus=1
 				and t1.posting_date >= %(from)s and t1.posting_date <= %(to)s
-				and ifnull(t1.is_opening, 'No') = 'No' %(condition)s
+				and ifnull(t1.is_opening, 'No') = 'No' {condition}
 			group by t2.account, t1.name
 			order by t1.posting_date ASC, t1.name DESC
-		""", {"condition":condition, "account": self.account, "from": self.from_date, "to": self.to_date}, as_dict=1)
+		""".format(condition=condition), {"account": self.account, "from": self.from_date, "to": self.to_date}, as_dict=1)
+
+		if self.bank_account:
+			condition += 'and bank_account = %(bank_account)s'
 
 		payment_entries = frappe.db.sql("""
 			select
@@ -49,18 +54,19 @@ class BankReconciliation(Document):
 			where
 				(paid_from=%(account)s or paid_to=%(account)s) and docstatus=1
 				and posting_date >= %(from)s and posting_date <= %(to)s
-				and bank_account = %(bank_account)s
+				{condition}
 			order by
 				posting_date ASC, name DESC
-		""", {"account": self.account, "from":self.from_date,
+		""".format(condition=condition), {"account": self.account, "from":self.from_date,
 				"to": self.to_date, "bank_account": self.bank_account}, as_dict=1)
 
-		pos_entries = []
+		
+		pos_sales_invoices, pos_purchase_invoices = [], []
 		if self.include_pos_transactions:
-			pos_entries = frappe.db.sql("""
+			pos_sales_invoices = frappe.db.sql("""
 				select
 					"Sales Invoice Payment" as payment_document, sip.name as payment_entry, sip.amount as debit,
-					si.posting_date, si.debit_to as against_account, sip.clearance_date,
+					si.posting_date, si.customer as against_account, sip.clearance_date,
 					account.account_currency, 0 as credit
 				from `tabSales Invoice Payment` sip, `tabSales Invoice` si, `tabAccount` account
 				where
@@ -70,7 +76,20 @@ class BankReconciliation(Document):
 					si.posting_date ASC, si.name DESC
 			""", {"account":self.account, "from":self.from_date, "to":self.to_date}, as_dict=1)
 
-		entries = sorted(list(payment_entries)+list(journal_entries+list(pos_entries)),
+			pos_purchase_invoices = frappe.db.sql("""
+				select
+					"Purchase Invoice" as payment_document, pi.name as payment_entry, pi.paid_amount as credit,
+					pi.posting_date, pi.supplier as against_account, pi.clearance_date,
+					account.account_currency, 0 as debit
+				from `tabPurchase Invoice` pi, `tabAccount` account
+				where
+					pi.cash_bank_account=%(account)s and pi.docstatus=1 and account.name = pi.cash_bank_account
+					and pi.posting_date >= %(from)s and pi.posting_date <= %(to)s
+				order by
+					pi.posting_date ASC, pi.name DESC
+			""", {"account": self.account, "from": self.from_date, "to": self.to_date}, as_dict=1)
+
+		entries = sorted(list(payment_entries) + list(journal_entries + list(pos_sales_invoices) + list(pos_purchase_invoices)),
 			key=lambda k: k['posting_date'] or getdate(nowdate()))
 
 		self.set('payment_entries', [])

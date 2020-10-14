@@ -26,7 +26,6 @@ class Quotation(SellingController):
 		super(Quotation, self).validate()
 		self.set_status()
 		self.update_opportunity()
-		self.validate_order_type()
 		self.validate_uom_is_integer("stock_uom", "qty")
 		self.validate_valid_till()
 		self.set_customer_name()
@@ -39,9 +38,6 @@ class Quotation(SellingController):
 
 	def has_sales_order(self):
 		return frappe.db.get_value("Sales Order Item", {"prevdoc_docname": self.name, "docstatus": 1})
-
-	def validate_order_type(self):
-		super(Quotation, self).validate_order_type()
 
 	def update_lead(self):
 		if self.quotation_to == "Lead" and self.party_name:
@@ -96,6 +92,8 @@ class Quotation(SellingController):
 		self.update_lead()
 
 	def on_cancel(self):
+		if self.lost_reasons:
+			self.lost_reasons = []
 		super(Quotation, self).on_cancel()
 
 		#update enquiry status
@@ -264,9 +262,17 @@ def _make_customer(source_name, ignore_permissions=False):
 						return customer
 					else:
 						raise
-				except frappe.MandatoryError:
+				except frappe.MandatoryError as e:
+					mandatory_fields = e.args[0].split(':')[1].split(',')
+					mandatory_fields = [customer.meta.get_label(field.strip()) for field in mandatory_fields]
+
 					frappe.local.message_log = []
-					frappe.throw(_("Please create Customer from Lead {0}").format(lead_name))
+					lead_link = frappe.utils.get_link_to_form("Lead", lead_name)
+					message = _("Could not auto create Customer due to the following missing mandatory field(s):") + "<br>"
+					message += "<br><ul><li>" + "</li><li>".join(mandatory_fields) + "</li></ul>"
+					message += _("Please create Customer from Lead {0}.").format(lead_link)
+
+					frappe.throw(message, title=_("Mandatory Missing"))
 			else:
 				return customer_name
 		else:
