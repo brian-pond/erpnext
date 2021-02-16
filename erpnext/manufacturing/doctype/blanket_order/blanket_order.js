@@ -1,12 +1,38 @@
 // Copyright (c) 2018, Frappe Technologies Pvt. Ltd. and contributors
 // For license information, please see license.txt
 
+// In development, Bundling is not necessary for changes to take effect.
+
 frappe.ui.form.on('Blanket Order', {
-	onload: function(frm) {
+	onload: function(frm, cdt, cdn) {
+		// Filter 'party_billing_address' based on either Customer or Supplier
+		frm.set_query("party_billing_address", get_address_query);
 		frm.trigger('set_tc_name_filter');
+		frm.trigger('blanket_order_type');
+
+		// var current_doc = locals[cdt][cdn];	
+		// console.log(current_doc.supplier)
+	},
+
+	supplier: (frm, cdt, cdn) => {
+		// When Supplier is edited, clear the address fields.
+		custom_clear_address(frm);
+	},
+
+	customer: (frm, cdt, cdn) => {
+		// When Customer is edited, clear the address fields.
+		custom_clear_address(frm);
+	},
+
+	party_billing_address: (frm, cdt, cdn) => {
+		// When address is updated, automatically change the value of "party_billing_address_display"
+		// Signature:  add_fetch(link_fieldname, source_fieldname, target_fieldname)
+		// This only works because of the Link relationship to Customer.
+	
 	},
 
 	setup: function(frm) {
+		// Used here to populate read-only fields Customer Name and Supplier Name
 		frm.add_fetch("customer", "customer_name", "customer_name");
 		frm.add_fetch("supplier", "supplier_name", "supplier_name");
 	},
@@ -73,7 +99,34 @@ frappe.ui.form.on('Blanket Order', {
 
 	blanket_order_type: function (frm) {
 		frm.trigger('set_tc_name_filter');
-	}
+	},
+
+	/* eslint-enable */
 });
 
 
+function get_address_query (doc) {
+	if (doc.supplier) {
+		// Blanket Purchase Order					
+		return {
+			query: 'frappe.contacts.doctype.address.address.address_query',
+			filters: { link_doctype: 'Supplier', link_name: doc.supplier }
+		};
+	}
+	if (doc.customer) {
+		// Blanket Sales Order
+		return {
+			query: 'frappe.contacts.doctype.address.address.address_query',
+			filters: { link_doctype: 'Customer', link_name: doc.customer }
+		};
+	}			
+}	
+
+
+function custom_clear_address (frm) {
+	if (frm.doc.party_billing_address){
+		frm.set_value("party_billing_address", "");
+		frm.set_value("party_billing_address_display", "");
+	}
+	frm.set_query("party_billing_address", get_address_query);
+}

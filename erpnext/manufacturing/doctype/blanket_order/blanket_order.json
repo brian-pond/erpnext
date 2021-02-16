@@ -12,6 +12,8 @@
   "supplier",
   "supplier_name",
   "column_break_8",
+  "party_billing_address",
+  "party_billing_address_display",
   "from_date",
   "to_date",
   "company",
@@ -20,7 +22,8 @@
   "amended_from",
   "terms_and_conditions_section",
   "tc_name",
-  "terms"
+  "terms",
+  "percent_complete"
  ],
  "fields": [
   {
@@ -57,6 +60,7 @@
    "depends_on": "eval:doc.blanket_order_type == \"Purchasing\"",
    "fieldname": "supplier",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Supplier",
    "options": "Supplier"
   },
@@ -75,14 +79,15 @@
   {
    "fieldname": "from_date",
    "fieldtype": "Date",
-   "label": "From Date",
-   "reqd": 1
+   "label": "From Date"
   },
   {
    "fieldname": "to_date",
    "fieldtype": "Date",
+   "hidden": 1,
    "label": "To Date",
-   "reqd": 1
+   "print_hide": 1,
+   "read_only": 1
   },
   {
    "fieldname": "company",
@@ -127,10 +132,30 @@
    "fieldname": "terms",
    "fieldtype": "Text Editor",
    "label": "Terms and Conditions Details"
+  },
+  {
+   "fieldname": "percent_complete",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Percent Complete"
+  },
+  {
+   "fieldname": "party_billing_address",
+   "fieldtype": "Link",
+   "label": "Select Party Address",
+   "options": "Address"
+  },
+  {
+   "fetch_if_empty": 1,
+   "fieldname": "party_billing_address_display",
+   "fieldtype": "Small Text",
+   "label": "Party Address",
+   "print_hide": 1,
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2019-11-18 19:37:37.151686",
+ "modified": "2021-02-16 13:17:37.749095",
  "modified_by": "Administrator",
  "module": "Manufacturing",
  "name": "Blanket Order",
