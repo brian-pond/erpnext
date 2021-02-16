@@ -15,6 +15,15 @@ def get_data():
 					"dependencies": ["Item"],
 					"description": _("Request for purchase."),
 				},
+				# Spectrum_Fruits_Begin
+				{
+					"type": "doctype",
+					"name": "Blanket Order",
+					"onboard": 1,
+					"dependencies": ["Item", "Supplier"],
+					"description": _("Blanket Orders for future Purchase Orders."),
+				},
+				# Spectrum_Fruits End
 				{
 					"type": "doctype",
 					"name": "Purchase Order",
