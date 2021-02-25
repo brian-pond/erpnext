@@ -177,6 +177,12 @@ def get_data():
 			"items": [
 				{
 					"type": "doctype",
+					"label": "Bank Cheques",
+					"name": "Cheque",
+					"description": _("Bank cheques")
+				},
+				{
+					"type": "doctype",
 					"label": _("Match Payments with Invoices"),
 					"name": "Payment Reconciliation",
 					"description": _("Match non-linked Invoices and Payments.")
