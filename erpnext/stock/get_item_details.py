@@ -1059,29 +1059,32 @@ def update_party_blanket_order(args, out):
 
 @frappe.whitelist()
 def get_blanket_order_details(args):
+	# Spectrum_Fruits: Refactored for easier reading.
 	if isinstance(args, string_types):
 		args = frappe._dict(json.loads(args))
+	if not args.item_code:
+		return None
 
 	blanket_order_details = None
 	condition = ''
-	if args.item_code:
-		if args.customer and args.doctype == "Sales Order":
-			condition = ' and bo.customer=%(customer)s'
-		elif args.supplier and args.doctype == "Purchase Order":
-			condition = ' and bo.supplier=%(supplier)s'
-		if args.blanket_order:
-			condition += ' and bo.name =%(blanket_order)s'
-		if args.transaction_date:
-			condition += ' and bo.to_date>=%(transaction_date)s'
 
-		blanket_order_details = frappe.db.sql('''
-				select boi.rate as blanket_order_rate, bo.name as blanket_order
-				from `tabBlanket Order` bo, `tabBlanket Order Item` boi
-				where bo.company=%(company)s and boi.item_code=%(item_code)s
-					and bo.docstatus=1 and bo.name = boi.parent {0}
-			'''.format(condition), args, as_dict=True)
+	if args.customer and args.doctype == "Sales Order":
+		condition = ' and bo.customer=%(customer)s'
+	elif args.supplier and args.doctype == "Purchase Order":
+		condition = ' and bo.supplier=%(supplier)s'
+	if args.blanket_order:
+		condition += ' and bo.name =%(blanket_order)s'
+	if args.transaction_date:
+		condition += ' and bo.to_date>=%(transaction_date)s'
 
-		blanket_order_details = blanket_order_details[0] if blanket_order_details else ''
+	blanket_order_details = frappe.db.sql('''
+			select boi.rate as blanket_order_rate, bo.name as blanket_order
+			from `tabBlanket Order` bo, `tabBlanket Order Item` boi
+			where bo.company=%(company)s and boi.item_code=%(item_code)s
+				and bo.docstatus=1 and bo.name = boi.parent {0}
+		'''.format(condition), args, as_dict=True)
+
+	blanket_order_details = blanket_order_details[0] if blanket_order_details else ''
 	return blanket_order_details
 
 def get_so_reservation_for_item(args):
