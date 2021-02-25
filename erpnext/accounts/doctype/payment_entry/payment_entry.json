@@ -12,16 +12,20 @@
   "column_break_5",
   "posting_date",
   "company",
-  "mode_of_payment",
   "party_section",
   "party_type",
   "party",
   "party_name",
   "column_break_11",
-  "bank_account",
   "party_bank_account",
   "contact_person",
   "contact_email",
+  "payment_section",
+  "mode_of_payment",
+  "bank_account",
+  "payment_method_col1",
+  "reference_no",
+  "reference_date",
   "payment_accounts_section",
   "party_balance",
   "paid_from",
@@ -53,9 +57,7 @@
   "deductions_or_loss_section",
   "deductions",
   "transaction_references",
-  "reference_no",
   "column_break_23",
-  "reference_date",
   "clearance_date",
   "accounting_dimensions_section",
   "project",
@@ -168,7 +170,8 @@
    "fieldname": "party_name",
    "fieldtype": "Data",
    "in_global_search": 1,
-   "label": "Party Name"
+   "label": "Party Name",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_11",
@@ -537,7 +540,7 @@
    "depends_on": "party",
    "fieldname": "bank_account",
    "fieldtype": "Link",
-   "label": "Company Bank Account",
+   "label": "Our Bank Account",
    "options": "Bank Account"
   },
   {
@@ -572,10 +575,19 @@
    "label": "Status",
    "options": "\nDraft\nSubmitted\nCancelled",
    "read_only": 1
+  },
+  {
+   "fieldname": "payment_section",
+   "fieldtype": "Section Break",
+   "label": "Payment Method"
+  },
+  {
+   "fieldname": "payment_method_col1",
+   "fieldtype": "Column Break"
   }
  ],
  "is_submittable": 1,
- "modified": "2019-11-06 12:59:43.151721",
+ "modified": "2021-02-17 15:22:12.892600",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Payment Entry",

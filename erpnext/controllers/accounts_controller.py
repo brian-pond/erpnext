@@ -1358,7 +1358,7 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 	parent.reload()
 	validate_workflow_conditions(parent)
 
-	parent.update_blanket_order()
+	parent.update_blanket_order_items()
 	parent.update_billing_percentage()
 	parent.set_status()
 

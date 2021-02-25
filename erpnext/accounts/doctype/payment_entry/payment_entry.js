@@ -155,6 +155,23 @@ frappe.ui.form.on('Payment Entry', {
 		frm.events.hide_unhide_fields(frm);
 		frm.events.set_dynamic_labels(frm);
 		frm.events.show_general_ledger(frm);
+
+		// Spectrum Fruits: Show a link to Checks
+		frappe.call({
+			doc: frm.doc,
+			method: 'has_cheques',
+			callback: function(r) {
+				if (r.message && r.message == true) {
+					// Doing this inside the callback (to avoid await outside it?)
+					frm.add_custom_button(__('View Cheques'), function() {
+						frappe.set_route('List', 'Cheque', {origin_record: frm.doc.name});
+					})
+				}
+			}
+		});
+		// EOM: Spectrum Fruits
+
+
 	},
 
 	validate_company: (frm) => {
@@ -565,21 +582,25 @@ frappe.ui.form.on('Payment Entry', {
 			frm.events.set_unallocated_amount(frm);
 	},
 
+	// SPECTRUM FRUITS: Making defaults reasonable for payments.
 	get_outstanding_invoice: function(frm) {
 		const today = frappe.datetime.get_today();
 		const fields = [
 			{fieldtype:"Section Break", label: __("Posting Date")},
 			{fieldtype:"Date", label: __("From Date"),
-				fieldname:"from_posting_date", default:frappe.datetime.add_days(today, -30)},
+				fieldname:"from_posting_date"},
 			{fieldtype:"Column Break"},
-			{fieldtype:"Date", label: __("To Date"), fieldname:"to_posting_date", default:today},
+			{fieldtype:"Date", label: __("To Date"), fieldname:"to_posting_date"},
 			{fieldtype:"Section Break", label: __("Due Date")},
-			{fieldtype:"Date", label: __("From Date"), fieldname:"from_due_date"},
+			{fieldtype:"Date", label: __("From Date"), 
+			    fieldname:"from_due_date",
+			    default:today },
 			{fieldtype:"Column Break"},
 			{fieldtype:"Date", label: __("To Date"), fieldname:"to_due_date"},
 			{fieldtype:"Section Break", label: __("Outstanding Amount")},
 			{fieldtype:"Float", label: __("Greater Than Amount"),
-				fieldname:"outstanding_amt_greater_than", default: 0},
+				fieldname:"outstanding_amt_greater_than",
+				default: 0},
 			{fieldtype:"Column Break"},
 			{fieldtype:"Float", label: __("Less Than Amount"), fieldname:"outstanding_amt_less_than"},
 			{fieldtype:"Section Break"},

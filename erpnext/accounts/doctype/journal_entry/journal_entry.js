@@ -49,6 +49,21 @@ frappe.ui.form.on("Journal Entry", {
 					frm.trigger("make_inter_company_journal_entry");
 				}, __('Make'));
 		}
+
+		// Spectrum Fruits: Show a link to Checks
+		frappe.call({
+			doc: frm.doc,
+			method: 'has_cheques',
+			callback: function(r) {
+				if (r.message && r.message == true) {
+					// Doing this inside the callback (to avoid await outside it?)
+					frm.add_custom_button(__('View Cheques'), function() {
+						frappe.set_route('List', 'Cheque', {origin_record: frm.doc.name});
+					})
+				}
+			}
+		});
+		// EOM: Spectrum Fruits
 	},
 
 	make_inter_company_journal_entry: function(frm) {

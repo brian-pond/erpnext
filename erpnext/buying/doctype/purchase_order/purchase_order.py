@@ -229,7 +229,7 @@ class PurchaseOrder(BuyingController):
 		frappe.get_doc('Authorization Control').validate_approving_authority(self.doctype,
 			self.company, self.base_grand_total)
 
-		self.update_blanket_order()
+		self.update_blanket_order_items()
 
 		update_linked_doc(self.doctype, self.name, self.inter_company_order_reference)
 
@@ -254,8 +254,8 @@ class PurchaseOrder(BuyingController):
 		# Must be called after updating ordered qty in Material Request
 		self.update_requested_qty()
 		self.update_ordered_qty()
-
-		self.update_blanket_order()
+		self.update_receiving_percentage()  # Spectrum Fruits: Should be set to zero for a cancelled PO.
+		self.update_blanket_order_items()
 
 		unlink_inter_company_doc(self.doctype, self.name, self.inter_company_order_reference)
 
@@ -344,7 +344,7 @@ def close_or_unclose_purchase_orders(names, status):
 			else:
 				if po.status == "Closed":
 					po.update_status("Draft")
-			po.update_blanket_order()
+			po.update_blanket_order_items()
 
 	frappe.local.message_log = []
 

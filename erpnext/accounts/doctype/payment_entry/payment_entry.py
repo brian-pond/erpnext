@@ -2,10 +2,18 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+# Standard Modules
 from __future__ import unicode_literals
-import frappe, erpnext, json
+import json
+
+# 3rd Party Modules
+from six import string_types, iteritems
+
+import frappe
 from frappe import _, scrub, ValidationError
-from frappe.utils import flt, comma_or, nowdate, getdate
+from frappe.utils import flt, comma_or, nowdate, getdate, money_in_words # SPECTRUM
+
+import erpnext
 from erpnext.accounts.utils import get_outstanding_invoices, get_account_currency, get_balance_on
 from erpnext.accounts.party import get_party_account
 from erpnext.accounts.doctype.journal_entry.journal_entry import get_default_bank_cash_account
@@ -16,7 +24,8 @@ from erpnext.accounts.doctype.bank_account.bank_account import get_party_bank_ac
 from erpnext.controllers.accounts_controller import AccountsController, get_supplier_block_status
 from erpnext.accounts.doctype.invoice_discounting.invoice_discounting import get_party_account_based_on_invoice_discounting
 
-from six import string_types, iteritems
+from sf.bank.doctype.cheque import cheque
+
 
 class InvalidPaymentEntry(ValidationError):
 	pass
@@ -73,6 +82,7 @@ class PaymentEntry(AccountsController):
 		self.update_advance_paid()
 		self.update_expense_claim()
 		self.update_payment_schedule()
+		self.insert_cheque()  # Spectrum Fruits
 		self.set_status()
 
 	def on_cancel(self):
@@ -85,6 +95,7 @@ class PaymentEntry(AccountsController):
 		self.update_payment_schedule(cancel=1)
 		self.set_payment_req_status()
 		self.set_status(update=True)
+		self.cancel_cheque()
 
 	def set_payment_req_status(self):
 		from erpnext.accounts.doctype.payment_request.payment_request import update_payment_req_status
@@ -624,6 +635,27 @@ class PaymentEntry(AccountsController):
 
 		self.append('deductions', row)
 		self.set_unallocated_amount()
+
+	# SPECTRUM_FRUITS
+	def has_cheques(self):
+		""" Returns a boolean True if Journal Entry has related Cheques. """
+		# Returns a Tuple
+		sql_results = frappe.db.sql(f"""SELECT count(`name`)
+			FROM `tabCheque`
+			WHERE origin_type = 'Payment Entry' AND origin_record = '{self.name}'
+			""")
+		if sql_results[0]:
+			if isinstance(sql_results[0][0],int) and sql_results[0][0] > 0:
+				return True
+		return False
+
+	def insert_cheque(self):
+		cheque.create_from_doc(self)
+
+	def cancel_cheque(self):
+		cheque.cancel_from_origin_doc(self)
+
+	# EOM Spectrum Fruits
 
 @frappe.whitelist()
 def get_outstanding_reference_documents(args):

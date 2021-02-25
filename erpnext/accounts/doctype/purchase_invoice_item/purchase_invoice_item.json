@@ -13,9 +13,6 @@
   "description",
   "item_group",
   "brand",
-  "image_section",
-  "image",
-  "image_view",
   "manufacture_details",
   "manufacturer",
   "column_break_13",
@@ -96,6 +93,9 @@
   "dimension_col_break",
   "cost_center",
   "section_break_82",
+  "image_section",
+  "image",
+  "image_view",
   "page_break"
  ],
  "fields": [
@@ -146,14 +146,14 @@
    "fieldname": "image",
    "fieldtype": "Attach",
    "hidden": 1,
-   "label": "Image"
+   "label": "Image",
+   "print_hide": 1
   },
   {
    "fieldname": "image_view",
    "fieldtype": "Image",
    "label": "Image View",
-   "options": "image",
-   "print_hide": 1
+   "options": "image"
   },
   {
    "fieldname": "quantity_and_rate",
@@ -167,11 +167,11 @@
   },
   {
    "bold": 1,
-   "columns": 2,
+   "columns": 1,
    "fieldname": "qty",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Accepted Qty",
+   "label": "Qty",
    "oldfieldname": "qty",
    "oldfieldtype": "Currency",
    "reqd": 1
@@ -258,7 +258,7 @@
   },
   {
    "bold": 1,
-   "columns": 3,
+   "columns": 2,
    "fieldname": "rate",
    "fieldtype": "Currency",
    "in_list_view": 1,
@@ -335,6 +335,7 @@
    "read_only": 1
   },
   {
+   "columns": 2,
    "fieldname": "net_amount",
    "fieldtype": "Currency",
    "label": "Net Amount",
@@ -743,6 +744,7 @@
   {
    "fieldname": "manufacturer",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Manufacturer",
    "options": "Manufacturer"
   },
@@ -753,6 +755,7 @@
   {
    "fieldname": "manufacturer_part_no",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Manufacturer Part Number"
   },
   {
@@ -778,7 +781,7 @@
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2020-06-30 16:48:01.398356",
+ "modified": "2021-01-29 13:26:50.331506",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Purchase Invoice Item",

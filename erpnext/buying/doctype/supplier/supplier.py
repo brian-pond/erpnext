@@ -51,8 +51,28 @@ class Supplier(TransactionBase):
 		validate_party_accounts(self)
 
 	def on_trash(self):
+		""" When deleting supplier, delete related Contacts and Addresses. """
 		delete_contact_and_address('Supplier', self.name)
 
 	def after_rename(self, olddn, newdn, merge=False):
 		if frappe.defaults.get_global_default('supp_master_name') == 'Supplier Name':
 			frappe.db.set(self, "supplier_name", newdn)
+
+	def get_remit_to_address(self):
+		""" Spectrum Fruits: Get a supplier's 'Remit To' address. """
+
+		# Using this function to find the appropriate address for new Cheques.
+		filters = [
+			["Dynamic Link", "link_doctype", "=", "Supplier"],
+			["Dynamic Link", "link_name", "=", self.name],
+			["Dynamic Link", "parenttype", "=", "Address"],
+			["Address", "address_type", "=", "Remit To"],
+		]
+
+		address_list = frappe.get_all("Address", filters=filters, fields=["name"])
+		if not address_list or len(address_list) == 0:
+			frappe.error(_(f"Unable to find default 'Remit To' address for Supplier {self.name}."))
+		if len(address_list) > 1:
+			frappe.error(_(f"Found multiple 'Remit To' address records for Supplier {self.name}."))
+		ret = frappe.get_doc("Address", address_list[0]['name'])
+		return ret

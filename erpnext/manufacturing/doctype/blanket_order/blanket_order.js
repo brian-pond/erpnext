@@ -10,6 +10,7 @@ frappe.ui.form.on('Blanket Order', {
 		frm.trigger('set_tc_name_filter');
 		frm.trigger('blanket_order_type');
 
+		render_grand_total(frm, cdt, cdn)
 		// var current_doc = locals[cdt][cdn];	
 		// console.log(current_doc.supplier)
 	},
@@ -129,4 +130,25 @@ function custom_clear_address (frm) {
 		frm.set_value("party_billing_address_display", "");
 	}
 	frm.set_query("party_billing_address", get_address_query);
+}
+
+
+function render_grand_total (frm) {
+
+	frm.doc.blanket_order.tmp_hello = "Hello";
+
+	/*
+	const parent = $('<div class="range-selector')
+
+
+	const  grand_total_field = frappe.ui.form.make_control({
+		df: {
+			label: 'Grand Total',
+			fieldname: 'blanket_grand_total',
+			fieldtype: 'Date'
+		},
+		parent: frm.field_html.wrapper,
+		render_input: true
+	})
+	*/
 }

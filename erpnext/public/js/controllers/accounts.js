@@ -17,8 +17,14 @@ frappe.ui.form.on(cur_frm.doctype, {
 	onload: function(frm) {
 		if(frm.get_field("taxes")) {
 			frm.set_query("account_head", "taxes", function(doc) {
+				// Spectrum Fruits:  Brian made the following changes to v12.
+				// Sales could be a Tax, Income (Delivery Fee to recipient), Expense (another tax?)
+				// Purchase could be a Tax, or an Expense (Handling Fee, 3rd Party Freight).  But not Income.
 				if(frm.cscript.tax_table == "Sales Taxes and Charges") {
-					var account_type = ["Tax", "Chargeable", "Expense Account"];
+					var account_type = ["Tax", "Chargeable", "Income Account", "Expense Account"];
+				}
+				else if(frm.cscript.tax_table == "Purchase Taxes and Charges") {
+					var account_type = ["Tax", "Chargeable", "Expense Account", "Cost of Goods Sold"];
 				} else {
 					var account_type = ["Tax", "Chargeable", "Income Account", "Expenses Included In Valuation"];
 				}

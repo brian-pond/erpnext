@@ -22,6 +22,10 @@
   "posting_time",
   "set_posting_time",
   "amended_from",
+  "bill_no",
+  "bill_date",
+  "grand_total",
+  "outstanding_amount",
   "accounting_dimensions_section",
   "cost_center",
   "dimension_col_break",
@@ -31,15 +35,12 @@
   "release_date",
   "cb_17",
   "hold_comment",
-  "supplier_invoice_details",
-  "bill_no",
-  "column_break_15",
-  "bill_date",
   "returns",
   "return_against",
   "section_addresses",
   "supplier_address",
   "address_display",
+  "contact_column_break_column",
   "contact_person",
   "contact_display",
   "contact_mobile",
@@ -106,12 +107,10 @@
   "base_rounded_total",
   "base_in_words",
   "column_break8",
-  "grand_total",
   "rounding_adjustment",
   "rounded_total",
   "in_words",
   "total_advance",
-  "outstanding_amount",
   "disable_rounded_total",
   "payments_section",
   "mode_of_payment",
@@ -198,6 +197,7 @@
    "fetch_from": "supplier.supplier_name",
    "fieldname": "supplier_name",
    "fieldtype": "Data",
+   "hidden": 1,
    "in_global_search": 1,
    "label": "Supplier Name",
    "oldfieldname": "supplier_name",
@@ -250,6 +250,7 @@
   {
    "fieldname": "company",
    "fieldtype": "Link",
+   "hidden": 1,
    "in_standard_filter": 1,
    "label": "Company",
    "options": "Company",
@@ -312,6 +313,7 @@
   },
   {
    "default": "0",
+   "depends_on": "eval:doc.on_hold==1 || doc.docstatus < 1",
    "fieldname": "on_hold",
    "fieldtype": "Check",
    "label": "Hold Invoice"
@@ -334,13 +336,6 @@
    "label": "Reason For Putting On Hold"
   },
   {
-   "collapsible": 1,
-   "collapsible_depends_on": "bill_no",
-   "fieldname": "supplier_invoice_details",
-   "fieldtype": "Section Break",
-   "label": "Supplier Invoice Details"
-  },
-  {
    "fieldname": "bill_no",
    "fieldtype": "Data",
    "label": "Supplier Invoice No",
@@ -349,10 +344,7 @@
    "print_hide": 1
   },
   {
-   "fieldname": "column_break_15",
-   "fieldtype": "Column Break"
-  },
-  {
+   "fetch_if_empty": 1,
    "fieldname": "bill_date",
    "fieldtype": "Date",
    "label": "Supplier Invoice Date",
@@ -530,6 +522,7 @@
   },
   {
    "default": "No",
+   "depends_on": "eval:doc.is_subcontracted=='Yes' || doc.docstatus < 1",
    "fieldname": "is_subcontracted",
    "fieldtype": "Select",
    "label": "Raw Materials Supplied",
@@ -905,6 +898,7 @@
   {
    "fieldname": "in_words",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "In Words",
    "oldfieldname": "in_words_import",
    "oldfieldtype": "Data",
@@ -1291,10 +1285,10 @@
    "fieldtype": "Column Break"
   },
   {
-    "fieldname": "project",
-    "fieldtype": "Link",
-    "label": "Project",
-    "options": "Project"
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project"
   },
   {
    "fieldname": "tax_withholding_category",
@@ -1303,12 +1297,16 @@
    "label": "Tax Withholding Category",
    "options": "Tax Withholding Category",
    "print_hide": 1
+  },
+  {
+   "fieldname": "contact_column_break_column",
+   "fieldtype": "Column Break"
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 204,
  "is_submittable": 1,
- "modified": "2020-09-21 12:22:09.164068",
+ "modified": "2021-01-29 12:05:59.048811",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Purchase Invoice",

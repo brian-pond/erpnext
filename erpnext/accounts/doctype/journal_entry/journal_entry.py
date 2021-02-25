@@ -40,8 +40,9 @@ class JournalEntry(AccountsController):
 		self.validate_empty_accounts_table()
 		self.set_account_and_party_balance()
 		self.validate_inter_company_accounts()
-		if not self.title:
-			self.title = self.get_title()
+		# SF: Do not change our Title Field
+		#if not self.title:
+		#	self.title = self.get_title()
 
 	def on_submit(self):
 		self.validate_cheque_info()
@@ -644,6 +645,20 @@ class JournalEntry(AccountsController):
 
 			d.account_balance = account_balance[d.account]
 			d.party_balance = party_balance[(d.party_type, d.party)]
+
+	# Spectrum Fruits
+	def has_cheques(self):
+		""" Returns a boolean True if Journal Entry has related Cheques. """
+		# Returns a Tuple
+		sql_results = frappe.db.sql(f"""SELECT count(`name`)
+			FROM `tabCheque`
+			WHERE origin_type = 'Journal Entry' AND origin_record = '{self.name}'
+			""")
+		if sql_results[0]:
+			if isinstance(sql_results[0][0],int) and sql_results[0][0] > 0:
+				return True
+		return False
+	# EOM Spectrum Fruits
 
 @frappe.whitelist()
 def get_default_bank_cash_account(company, account_type=None, mode_of_payment=None, account=None):

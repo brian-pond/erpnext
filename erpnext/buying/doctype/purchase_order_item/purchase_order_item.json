@@ -17,16 +17,18 @@
   "col_break1",
   "image",
   "image_view",
-  "manufacture_details",
-  "manufacturer",
-  "column_break_14",
-  "manufacturer_part_no",
   "quantity_and_rate",
+  "weight_qty",
   "qty",
-  "stock_uom",
+  "stock_qty",
   "col_break2",
+  "weight_uom",
   "uom",
-  "conversion_factor",
+  "stock_uom",
+  "conversion_factor",  
+  "item_weight_details",
+  "weight_per_unit",
+  "total_weight",
   "sec_break1",
   "price_list_rate",
   "discount_percentage",
@@ -51,11 +53,7 @@
   "base_net_rate",
   "base_net_amount",
   "billed_amt",
-  "item_weight_details",
-  "weight_per_unit",
-  "total_weight",
   "column_break_40",
-  "weight_uom",
   "warehouse_and_reference",
   "warehouse",
   "delivered_by_supplier",
@@ -67,14 +65,13 @@
   "supplier_quotation",
   "supplier_quotation_item",
   "col_break5",
-  "blanket_order",
+  "blanket_order_item",
   "blanket_order_rate",
   "item_group",
   "brand",
   "bom",
   "include_exploded_items",
   "section_break_56",
-  "stock_qty",
   "column_break_60",
   "received_qty",
   "returned_qty",
@@ -86,12 +83,16 @@
   "dimension_col_break",
   "section_break_72",
   "page_break",
-  "item_tax_rate"
- ],
+  "item_tax_rate",
+  "manufacture_details",
+  "manufacturer",
+  "column_break_14",
+  "manufacturer_part_no"
+],
  "fields": [
   {
    "bold": 1,
-   "columns": 3,
+   "columns": 2,
    "fieldname": "item_code",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -127,10 +128,8 @@
   {
    "allow_on_submit": 1,
    "bold": 1,
-   "columns": 2,
    "fieldname": "schedule_date",
    "fieldtype": "Date",
-   "in_list_view": 1,
    "label": "Reqd By Date",
    "oldfieldname": "schedule_date",
    "oldfieldtype": "Date",
@@ -152,8 +151,10 @@
    "label": "Description"
   },
   {
+   "columns": 2,
    "fieldname": "description",
    "fieldtype": "Text Editor",
+   "in_list_view": 1,
    "label": "Description",
    "oldfieldname": "description",
    "oldfieldtype": "Small Text",
@@ -214,8 +215,10 @@
    "print_hide": 1
   },
   {
+   "columns": 1,
    "fieldname": "uom",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "UOM",
    "oldfieldname": "uom",
    "oldfieldtype": "Link",
@@ -225,6 +228,7 @@
    "width": "100px"
   },
   {
+   "depends_on": "eval:doc.conversion_factor != 1",
    "fieldname": "conversion_factor",
    "fieldtype": "Float",
    "label": "UOM Conversion Factor",
@@ -388,7 +392,7 @@
    "read_only": 1
   },
   {
-   "collapsible": 1,
+   "collapsible": 0,
    "fieldname": "item_weight_details",
    "fieldtype": "Section Break",
    "label": "Item Weight Details"
@@ -425,7 +429,6 @@
   {
    "fieldname": "warehouse",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Warehouse",
    "oldfieldname": "warehouse",
    "oldfieldtype": "Link",
@@ -511,11 +514,13 @@
    "read_only": 1
   },
   {
-   "fieldname": "blanket_order",
+   "fieldname": "blanket_order_item",
    "fieldtype": "Link",
-   "label": "Blanket Order",
+   "hidden": 1,
+   "label": "Blanket Order Item",
    "no_copy": 1,
-   "options": "Blanket Order"
+   "options": "Blanket Order Item",
+   "read_only": 1
   },
   {
    "fieldname": "blanket_order_rate",
@@ -689,7 +694,8 @@
    "fieldname": "manufacturer",
    "fieldtype": "Link",
    "label": "Manufacturer",
-   "options": "Manufacturer"
+   "options": "Manufacturer",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_14",
@@ -698,7 +704,8 @@
   {
    "fieldname": "manufacturer_part_no",
    "fieldtype": "Data",
-   "label": "Manufacturer Part Number"
+   "label": "Manufacturer Part Number",
+   "read_only": 1
   },
   {
    "default": "0",
@@ -707,11 +714,21 @@
    "fieldtype": "Check",
    "label": "Is Fixed Asset",
    "read_only": 1
-  }
+  },
+  {
+	"fieldname": "weight_qty",
+	"fieldtype": "Float",
+	"label": "Qty as per Weight UOM",
+	"no_copy": 0,
+	"print_hide": 0,
+	"print_width": "100px",
+	"read_only": 0,
+	"width": "100px"
+   }
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2020-04-07 18:35:17.558928",
+ "modified": "2021-02-01 17:31:57.565099",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Purchase Order Item",
