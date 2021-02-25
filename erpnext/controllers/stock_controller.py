@@ -375,10 +375,13 @@ class StockController(AccountsController):
 				else:
 					frappe.msgprint(_("Create Quality Inspection for Item {0}").format(frappe.bold(d.item_code)))
 
-	def update_blanket_order(self):
-		blanket_orders = list(set([d.blanket_order for d in self.items if d.blanket_order]))
-		for blanket_order in blanket_orders:
-			frappe.get_doc("Blanket Order", blanket_order).update_ordered_qty()
+	# Spectrum_Fruits: Begin
+	def update_blanket_order_items(self):
+		# Order lines are related to a single Blanket Order Item.
+		blanket_line_names = list(set([d.blanket_order_item for d in self.items if d.blanket_order_item]))
+		for name in blanket_line_names:
+			frappe.get_doc("Blanket Order Item", name).update_ordered_qty()
+	# Spectrum_Fruits: End
 
 	def validate_customer_provided_item(self):
 		for d in self.get('items'):
