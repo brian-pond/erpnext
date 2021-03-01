@@ -1,10 +1,13 @@
+# Python package requirements ERPNext v13
+# Datahenge version.
+#
 braintree==3.57.1
-frappe
 gocardless-pro==1.11.0
 googlemaps==3.1.1
-pandas>=1.0.5
+pandas==1.0.5
 plaid-python==6.0.0
 pycountry==19.8.18
+pycryptodome==3.9.8
 PyGithub==1.44.1
 python-stdnum==1.12
 python-youtube==0.6.0
@@ -12,4 +15,17 @@ taxjar==1.9.0
 tweepy==3.8.0
 Unidecode==1.1.1
 WooCommerce==2.1.1
-pycryptodome==3.9.8
+
+# Notes
+# Braintree is a division of PayPal, specializing in mobile and web eCommerce.
+# GoCardless allows you to pull payments from customer's banks.
+#   * https://developer.gocardless.com/getting-started/api/introduction/
+# Pandas is for Python data tables.
+# Plaid is some kind of financial API (more research required)
+# pycountry has ISO country, subdivision, language, currency, and translations.
+# pycryptodome: Mostly pure-Python cryptography library
+# PyGithub is a Python wrapper for the GitHub API
+# python-stdnum validates all sorts of numbering conventions: Mac Address, Phone Number, IP, SSN, tons more.
+# TaxJar has an API for sales tax.  Seems like a modern Avalara
+# Tweepy: Library for Twitter API
+# WooCommerce: Built on Wordpress, alternative to Shopify.

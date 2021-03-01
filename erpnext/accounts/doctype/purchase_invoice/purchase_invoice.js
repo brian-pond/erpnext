@@ -144,6 +144,18 @@ erpnext.accounts.PurchaseInvoice = erpnext.buying.BuyingController.extend({
 					}
 				})
 			}, __("Get Items From"));
+
+			// Datahenge: Display a "Show Links" button on top of page.
+			this.frm.add_custom_button(__("Show Links"), function() {
+				// "me" previously defined as "this" for refresh()
+				if(!me.frm.linked_with) {
+					me.frm.linked_with = new frappe.ui.form.LinkedWith({
+						frm: me.frm
+					});
+				}
+				me.frm.linked_with.show();
+			});
+
 		}
 		this.frm.toggle_reqd("supplier_warehouse", this.frm.doc.is_subcontracted==="Yes");
 
@@ -550,3 +562,16 @@ frappe.ui.form.on("Purchase Invoice", {
 		frm.fields_dict.items.grid.toggle_reqd("item_code", frm.doc.update_stock? true: false);
 	}
 })
+
+
+// Datahenge: Display links on main page.
+let show_linked_with = function(caller) {
+	const me = caller;
+
+	if(!me.frm.linked_with) {
+		me.frm.linked_with = new frappe.ui.form.LinkedWith({
+			frm: me.frm
+		});
+	}
+	me.frm.linked_with.show();
+}
