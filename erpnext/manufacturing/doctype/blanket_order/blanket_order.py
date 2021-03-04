@@ -27,8 +27,8 @@ class BlanketOrder(Document):
 
 	def update_ordered_qty(self):
 		# SF_MOD_0001: Update each blanket order line individually.
-		for d in self.items:
-			d.update_ordered_qty()
+		for line in self.items:
+			line.update_ordered_qty()
 
 	def set_supplier_address(self):
 		address_dict = {

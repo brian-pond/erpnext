@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 
-# SF_MOD_0001 : Blanket Orders
+# SF_MOD_0001 : Blanket Order Items
 class BlanketOrderItem(Document):
 	def update_ordered_qty(self):
 		""" Update line 'ordered_qty' based on actual PO/SO value.
@@ -14,18 +14,18 @@ class BlanketOrderItem(Document):
 		"""
 		# Sum quantity per Blanket Order line name.
 		blanket_order_type = frappe.get_doc('Blanket Order', self.parent).blanket_order_type
-		ref_doctype = "Sales Order" if blanket_order_type == "Selling" else "Purchase Order"
-		item_ordered_qty = frappe.db.sql("""
-			SELECT SUM(trans_item.stock_qty) as qty
-			FROM `tab{0} Item` trans_item
+		if blanket_order_type == "Selling":
+			return
 
-			INNER JOIN `tab{0}` trans
-			ON trans.name = trans_item.parent
-			AND trans.docstatus=1
-			AND trans.status not in ('Closed', 'Stopped')
+		sql_query = """
+			SELECT IFNULL(SUM(purchase_line.qty),0) as qty
+			FROM `tabPurchase Order Item` AS purchase_line
+			WHERE purchase_line.blanket_order_item = '{0}'
+			AND purchase_line.docstatus = 1
+			
+		""".format(self.name)
 
-			WHERE trans_item.blanket_order_item = '{1}'
-		""".format(ref_doctype, self.name))
-
-		self.ordered_qty = item_ordered_qty[0][0]
-		self.save()
+		# AND purchase_line.status not in ('Closed', 'Stopped')
+		item_ordered_qty = frappe.db.sql(sql_query)
+		# Cannot use the ORM, because we're not allowed to update Cancelled documents.
+		frappe.db.set_value('Blanket Order Item', self.name, 'ordered_qty',  item_ordered_qty[0][0])

@@ -174,7 +174,7 @@ class SalesOrder(SellingController):
 		self.update_project()
 		self.update_prevdoc_status('submit')
 
-		self.update_blanket_order()
+		self.update_blanket_order_items()
 
 		update_linked_doc(self.doctype, self.name, self.inter_company_order_reference)
 		if self.coupon_code:
@@ -195,7 +195,7 @@ class SalesOrder(SellingController):
 
 		frappe.db.set(self, 'status', 'Cancelled')
 
-		self.update_blanket_order()
+		self.update_blanket_order_items()
 
 		unlink_inter_company_doc(self.doctype, self.name, self.inter_company_order_reference)
 		if self.coupon_code:
@@ -490,7 +490,7 @@ def close_or_unclose_sales_orders(names, status):
 			else:
 				if so.status == "Closed":
 					so.update_status('Draft')
-			so.update_blanket_order()
+			so.update_blanket_order_items()
 
 	frappe.local.message_log = []
 

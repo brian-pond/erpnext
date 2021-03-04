@@ -25,7 +25,7 @@
   "weight_uom",
   "uom",
   "stock_uom",
-  "conversion_factor",  
+  "conversion_factor",
   "item_weight_details",
   "weight_per_unit",
   "total_weight",
@@ -88,7 +88,7 @@
   "manufacturer",
   "column_break_14",
   "manufacturer_part_no"
-],
+ ],
  "fields": [
   {
    "bold": 1,
@@ -392,7 +392,6 @@
    "read_only": 1
   },
   {
-   "collapsible": 0,
    "fieldname": "item_weight_details",
    "fieldtype": "Section Break",
    "label": "Item Weight Details"
@@ -520,6 +519,7 @@
    "label": "Blanket Order Item",
    "no_copy": 1,
    "options": "Blanket Order Item",
+   "print_hide": 1,
    "read_only": 1
   },
   {
@@ -716,19 +716,16 @@
    "read_only": 1
   },
   {
-	"fieldname": "weight_qty",
-	"fieldtype": "Float",
-	"label": "Qty as per Weight UOM",
-	"no_copy": 0,
-	"print_hide": 0,
-	"print_width": "100px",
-	"read_only": 0,
-	"width": "100px"
-   }
+   "fieldname": "weight_qty",
+   "fieldtype": "Float",
+   "label": "Qty as per Weight UOM",
+   "print_width": "100px",
+   "width": "100px"
+  }
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2021-02-01 17:31:57.565099",
+ "modified": "2021-03-02 10:57:37.957246",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Purchase Order Item",

@@ -68,7 +68,7 @@
   "target_warehouse",
   "prevdoc_docname",
   "col_break4",
-  "blanket_order",
+  "blanket_order_item",
   "blanket_order_rate",
   "planning_section",
   "projected_qty",
@@ -211,7 +211,6 @@
    "fieldtype": "Link",
    "label": "UOM",
    "options": "UOM",
-   "print_hide": 0,
    "reqd": 1
   },
   {
@@ -578,13 +577,6 @@
    "report_hide": 1
   },
   {
-   "fieldname": "blanket_order",
-   "fieldtype": "Link",
-   "label": "Blanket Order",
-   "no_copy": 1,
-   "options": "Blanket Order"
-  },
-  {
    "fieldname": "blanket_order_rate",
    "fieldtype": "Currency",
    "label": "Blanket Order Rate",
@@ -756,11 +748,18 @@
    "fieldname": "additional_notes",
    "fieldtype": "Text",
    "label": "Additional Notes"
+  },
+  {
+   "fieldname": "blanket_order_item",
+   "fieldtype": "Link",
+   "label": "Blanket Order Item",
+   "no_copy": 1,
+   "options": "Blanket Order Item"
   }
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2020-10-01 10:20:30.000000",
+ "modified": "2020-11-16 18:32:51.315900",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order Item",
