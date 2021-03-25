@@ -651,7 +651,7 @@ class JournalEntry(AccountsController):
 		""" Returns a boolean True if Journal Entry has related Cheques. """
 		# Returns a Tuple
 		sql_results = frappe.db.sql(f"""SELECT count(`name`)
-			FROM `tabCheque`
+			FROM `tabBank Check`
 			WHERE origin_type = 'Journal Entry' AND origin_record = '{self.name}'
 			""")
 		if sql_results[0]:
