@@ -5,14 +5,16 @@
  "engine": "InnoDB",
  "field_order": [
   "item_code",
-  "item_name",
-  "column_break_3",
   "qty",
   "rate",
-  "ordered_qty",
+  "line_amount",
+  "warehouse",
+  "reqd_by_date",
+  "column_break_3",
+  "item_name",
+  "description",
   "section_break_7",
-  "terms_and_conditions",
-  "reqd_by_date"
+  "ordered_qty"
  ],
  "fields": [
   {
@@ -41,6 +43,7 @@
    "label": "Quantity"
   },
   {
+   "columns": 1,
    "fieldname": "rate",
    "fieldtype": "Currency",
    "in_list_view": 1,
@@ -49,6 +52,7 @@
   },
   {
    "allow_on_submit": 1,
+   "columns": 1,
    "fieldname": "ordered_qty",
    "fieldtype": "Float",
    "in_list_view": 1,
@@ -61,19 +65,34 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "terms_and_conditions",
-   "fieldtype": "Text",
-   "label": "Terms and Conditions"
-  },
-  {
+   "columns": 1,
    "fieldname": "reqd_by_date",
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "Reqd By Date"
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "columns": 2,
+   "fieldname": "line_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Line Amount",
+   "read_only": 1
   }
  ],
  "istable": 1,
- "modified": "2020-11-17 14:47:28.777788",
+ "modified": "2021-03-25 11:24:00.968715",
  "modified_by": "Administrator",
  "module": "Manufacturing",
  "name": "Blanket Order Item",

@@ -1,5 +1,4 @@
 {
- "actions": [],
  "allow_events_in_timeline": 1,
  "allow_import": 1,
  "allow_rename": 1,
@@ -15,6 +14,11 @@
   "supplier_name",
   "country",
   "default_bank_account",
+  "column_break_6",
+  "supplier_group",
+  "supplier_type",
+  "mode_of_payment",
+  "section_break_1",
   "tax_id",
   "tax_category",
   "tax_withholding_category",
@@ -23,8 +27,6 @@
   "represents_company",
   "image",
   "column_break0",
-  "supplier_group",
-  "supplier_type",
   "pan",
   "language",
   "allow_purchase_invoice_creation_without_purchase_order",
@@ -379,13 +381,28 @@
    "fieldname": "allow_purchase_invoice_creation_without_purchase_receipt",
    "fieldtype": "Check",
    "label": "Allow Purchase Invoice Creation Without Purchase Receipt"
+  },
+  {
+   "fieldname": "mode_of_payment",
+   "fieldtype": "Link",
+   "label": "Default Mode of Payment",
+   "options": "Mode of Payment"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_break_1",
+   "fieldtype": "Section Break",
+   "label": "Tax and Options"
+  },
+  {
+   "fieldname": "column_break_6",
+   "fieldtype": "Column Break"
   }
  ],
  "icon": "fa fa-user",
  "idx": 370,
  "image_field": "image",
- "links": [],
- "modified": "2020-06-17 23:28:30",
+ "modified": "2021-03-18 12:38:13.939663",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Supplier",

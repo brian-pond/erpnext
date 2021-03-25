@@ -24,7 +24,7 @@ from erpnext.accounts.doctype.bank_account.bank_account import get_party_bank_ac
 from erpnext.controllers.accounts_controller import AccountsController, get_supplier_block_status
 from erpnext.accounts.doctype.invoice_discounting.invoice_discounting import get_party_account_based_on_invoice_discounting
 
-from sf.bank.doctype.cheque import cheque
+from sf.bank.doctype.bank_check import bank_check
 
 
 class InvalidPaymentEntry(ValidationError):
@@ -228,6 +228,11 @@ class PaymentEntry(AccountsController):
 		for field in ("paid_amount", "received_amount", "source_exchange_rate", "target_exchange_rate"):
 			if not self.get(field):
 				frappe.throw(_("{0} is mandatory").format(self.meta.get_label(field)))
+		# Spectrum Fruits
+		mode_of_payment = frappe.get_doc('Mode of Payment', self.mode_of_payment)
+		if (mode_of_payment):
+			if (mode_of_payment.mandatory_remit_to) and (self.party_type == 'Supplier') and (self.remit_to_address is None):
+				frappe.throw(_("When payment mode is '{}', the Remit-To Address is mandatory.").format(self.mode_of_payment))
 
 	def validate_reference_documents(self):
 		if self.party_type == "Student":
@@ -638,10 +643,10 @@ class PaymentEntry(AccountsController):
 
 	# SPECTRUM_FRUITS
 	def has_cheques(self):
-		""" Returns a boolean True if Journal Entry has related Cheques. """
+		""" Returns a boolean True if Journal Entry has related Bank Checks. """
 		# Returns a Tuple
 		sql_results = frappe.db.sql(f"""SELECT count(`name`)
-			FROM `tabCheque`
+			FROM `tabBank Check`
 			WHERE origin_type = 'Payment Entry' AND origin_record = '{self.name}'
 			""")
 		if sql_results[0]:
@@ -650,10 +655,10 @@ class PaymentEntry(AccountsController):
 		return False
 
 	def insert_cheque(self):
-		cheque.create_from_doc(self)
+		bank_check.create_from_doc(caller_doc=self)
 
 	def cancel_cheque(self):
-		cheque.cancel_from_origin_doc(self)
+		bank_check.cancel_from_origin_doc(self)
 
 	# EOM Spectrum Fruits
 
@@ -855,6 +860,13 @@ def get_party_details(company, party_type, party, date, cost_center=None):
 	party_balance = get_balance_on(party_type=party_type, party=party, cost_center=cost_center)
 	if party_type in ["Customer", "Supplier"]:
 		bank_account = get_party_bank_account(party_type, party)
+	# Spectrum Fruits
+	mode_of_payment = None
+	remit_to_address = None
+	if party_type in ["Supplier"]:
+		supplier = frappe.get_doc("Supplier", party)
+		mode_of_payment = supplier.mode_of_payment
+		remit_to_address = supplier.get_remit_to_address(first_only=True)
 
 	return {
 		"party_account": party_account,
@@ -862,7 +874,9 @@ def get_party_details(company, party_type, party, date, cost_center=None):
 		"party_account_currency": account_currency,
 		"party_balance": party_balance,
 		"account_balance": account_balance,
-		"bank_account": bank_account
+		"bank_account": bank_account,
+		"mode_of_payment" : mode_of_payment,  # Spectrum Fruits
+		"remit_to_address": remit_to_address  # Spectrum Fruits
 	}
 
 
@@ -1207,3 +1221,9 @@ def make_payment_order(source_name, target_doc=None):
 	}, target_doc, set_missing_values)
 
 	return doclist
+
+@frappe.whitelist()
+def get_supplier_mode_of_payment(supplier_key):
+	# Spectrum Fruits
+	return frappe.db.get_value('Supplier',
+		supplier_key, 'mode_of_payment')

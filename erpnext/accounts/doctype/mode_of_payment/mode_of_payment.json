@@ -10,7 +10,9 @@
   "mode_of_payment",
   "enabled",
   "type",
-  "accounts"
+  "accounts",
+  "mandatory_remit_to",
+  "create_bank_check"
  ],
  "fields": [
   {
@@ -41,12 +43,27 @@
    "fieldname": "enabled",
    "fieldtype": "Check",
    "label": "Enabled"
+  },
+  {
+   "default": "0",
+   "description": "If marked, then a Remit-To Address is required to submit a Payment Entry.",
+   "fieldname": "mandatory_remit_to",
+   "fieldtype": "Check",
+   "label": "Mandatory Remit-To Address"
+  },
+  {
+   "default": "0",
+   "description": "If marked, when a Payment Entry is submitted, a new Bank Check document will automatically be generated.",
+   "fieldname": "create_bank_check",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Create Bank Check"
   }
  ],
  "icon": "fa fa-credit-card",
  "idx": 1,
- "modified": "2019-08-14 14:58:42.079115",
- "modified_by": "sammish.thundiyil@gmail.com",
+ "modified": "2021-03-17 21:28:05.451865",
+ "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Mode of Payment",
  "owner": "harshada@webnotestech.com",

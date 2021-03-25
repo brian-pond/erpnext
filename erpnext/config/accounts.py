@@ -177,9 +177,9 @@ def get_data():
 			"items": [
 				{
 					"type": "doctype",
-					"label": "Bank Cheques",
-					"name": "Cheque",
-					"description": _("Bank cheques")
+					"label": "Bank Checks",
+					"name": "Bank Check",
+					"description": _("Bank Checks")
 				},
 				{
 					"type": "doctype",

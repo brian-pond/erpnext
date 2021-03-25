@@ -50,15 +50,15 @@ frappe.ui.form.on("Journal Entry", {
 				}, __('Make'));
 		}
 
-		// Spectrum Fruits: Show a link to Checks
+		// Spectrum Fruits: Show a link to Bank Checks
 		frappe.call({
 			doc: frm.doc,
 			method: 'has_cheques',
 			callback: function(r) {
 				if (r.message && r.message == true) {
 					// Doing this inside the callback (to avoid await outside it?)
-					frm.add_custom_button(__('View Cheques'), function() {
-						frappe.set_route('List', 'Cheque', {origin_record: frm.doc.name});
+					frm.add_custom_button(__('View Bank Checks'), function() {
+						frappe.set_route('List', 'Bank Check', {origin_record: frm.doc.name});
 					})
 				}
 			}

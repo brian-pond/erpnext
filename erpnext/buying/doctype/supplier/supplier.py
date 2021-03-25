@@ -58,10 +58,10 @@ class Supplier(TransactionBase):
 		if frappe.defaults.get_global_default('supp_master_name') == 'Supplier Name':
 			frappe.db.set(self, "supplier_name", newdn)
 
-	def get_remit_to_address(self):
+	def get_remit_to_address(self, first_only=False):
 		""" Spectrum Fruits: Get a supplier's 'Remit To' address. """
 
-		# Using this function to find the appropriate address for new Cheques.
+		# Using this function to find the appropriate address for new Bank Checks.
 		filters = [
 			["Dynamic Link", "link_doctype", "=", "Supplier"],
 			["Dynamic Link", "link_name", "=", self.name],
@@ -72,7 +72,7 @@ class Supplier(TransactionBase):
 		address_list = frappe.get_all("Address", filters=filters, fields=["name"])
 		if not address_list or len(address_list) == 0:
 			frappe.error(_(f"Unable to find default 'Remit To' address for Supplier {self.name}."))
-		if len(address_list) > 1:
+		if (len(address_list) > 1) and not first_only:
 			frappe.error(_(f"Found multiple 'Remit To' address records for Supplier {self.name}."))
 		ret = frappe.get_doc("Address", address_list[0]['name'])
 		return ret
