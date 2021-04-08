@@ -379,6 +379,8 @@ class PurchaseInvoice(BuyingController):
 		if gl_entries:
 			update_outstanding = "No" if (cint(self.is_paid) or self.write_off_account) else "Yes"
 
+			# Note: This is not recursion.  The function below is from erpnext.accounts.general_ledger
+			# DEBUG frappe.throw(_(str(gl_entries)))
 			make_gl_entries(gl_entries,  cancel=(self.docstatus == 2),
 				update_outstanding=update_outstanding, merge_entries=False, from_repost=from_repost)
 

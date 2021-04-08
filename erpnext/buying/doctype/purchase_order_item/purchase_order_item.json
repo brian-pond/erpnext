@@ -28,6 +28,7 @@
   "conversion_factor",
   "item_weight_details",
   "weight_per_unit",
+  "column_break_100",
   "total_weight",
   "sec_break1",
   "price_list_rate",
@@ -182,7 +183,7 @@
   {
    "fieldname": "quantity_and_rate",
    "fieldtype": "Section Break",
-   "label": "Quantity and Rate"
+   "label": "Quantity"
   },
   {
    "bold": 1,
@@ -236,6 +237,7 @@
    "oldfieldtype": "Currency",
    "print_hide": 1,
    "print_width": "100px",
+   "read_only": 1,
    "reqd": 1,
    "width": "100px"
   },
@@ -418,7 +420,8 @@
    "fieldtype": "Link",
    "label": "Weight UOM",
    "options": "UOM",
-   "read_only": 1
+   "read_only": 1,
+   "reqd": 1
   },
   {
    "fieldname": "warehouse_and_reference",
@@ -721,11 +724,15 @@
    "label": "Qty as per Weight UOM",
    "print_width": "100px",
    "width": "100px"
+  },
+  {
+   "fieldname": "column_break_100",
+   "fieldtype": "Column Break"
   }
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2021-03-02 10:57:37.957246",
+ "modified": "2021-04-08 10:05:38.025683",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Purchase Order Item",

@@ -53,6 +53,14 @@ frappe.ui.form.on("Purchase Order Item", {
 			}
 		}
 	}
+
+	/* Spectrum Fruits
+
+	  * When 'weight_qty' is modified, the code that triggers updates is:
+	    erpnext/public/js/controllers/transactions/js.  Method is weight_qty() around line 1058
+	  * This change also triggers changes in Stock Quantity, Total Weight, etc.
+	*/
+
 });
 
 erpnext.buying.PurchaseOrderController = erpnext.buying.BuyingController.extend({

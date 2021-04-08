@@ -540,6 +540,7 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 							tax_category: me.frm.doc.tax_category,
 							item_tax_template: item.item_tax_template,
 							child_docname: item.name,
+							weight_qty: item.weight_qty || 1,
 						}
 					},
 
@@ -1011,6 +1012,16 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 				},
 				callback: function(r) {
 					if(!r.exc) {
+						// SF: Update 'weight_qty'
+						if(item.weight_uom) {
+							if (item.uom === item.weight_uom) {
+								item.weight_qty = item.qty;
+							}
+							else {
+								item.weight_qty = item.qty * item.weight_per_unit;
+							}
+						}
+						// SF
 						me.conversion_factor(me.frm.doc, cdt, cdn);
 					}
 				}
@@ -1048,11 +1059,42 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 
 	},
 
+	// Spectrum Fruits:  In For a Penny...
 	qty: function(doc, cdt, cdn) {
+		console.log("DEBUG: entered method 'qty'");
+
 		let item = frappe.get_doc(cdt, cdn);
+		// 1. Update 'weight_qty'
+		if (item.uom === item.weight_uom) {
+			item.weight_qty = item.qty;
+		}
+		else {
+			item.weight_qty = item.qty * item.weight_per_unit;
+		}
+
 		this.conversion_factor(doc, cdt, cdn, true);
 		this.apply_pricing_rule(item, true);
 	},
+
+	// Spectrum Fruits:  In For a Pound...
+	weight_qty: function(doc, cdt, cdn) {
+		console.log("DEBUG: entered method 'weight_qty'");
+		// When 'weight_qty' changes, update 'qty'.  Then trigger standard code from there forward.
+		let item = frappe.get_doc(cdt, cdn);
+		
+		// 1. Update qty
+		if (item.uom === item.weight_uom) {
+			item.qty = item.weight_qty;
+		}
+		else {
+			item.qty = item.weight_qty / item.weight_per_unit;
+		}
+		
+		// 2. Standard code, same as when 'qty' is changed.
+		this.conversion_factor(doc, cdt, cdn, true);
+		this.apply_pricing_rule(item, true);
+	},
+
 
 	service_stop_date: function(frm, cdt, cdn) {
 		var child = locals[cdt][cdn];
