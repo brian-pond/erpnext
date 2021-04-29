@@ -82,7 +82,7 @@ class PaymentEntry(AccountsController):
 		self.update_advance_paid()
 		self.update_expense_claim()
 		self.update_payment_schedule()
-		self.insert_cheque()  # Spectrum Fruits
+		self.insert_bank_cheque()  # Spectrum Fruits
 		self.set_status()
 
 	def on_cancel(self):
@@ -654,7 +654,7 @@ class PaymentEntry(AccountsController):
 				return True
 		return False
 
-	def insert_cheque(self):
+	def insert_bank_cheque(self):
 		bank_check.create_from_doc(caller_doc=self)
 
 	def cancel_cheque(self):
@@ -1086,12 +1086,26 @@ def get_payment_entry(dt, dn, party_amount=None, bank_account=None, bank_amount=
 			# if party account currency and bank currency is different then populate paid amount as well
 			paid_amount = received_amount * doc.conversion_rate
 
+	# Spectrum Fruits: Default Mode of Payment
+	default_mode_of_payment = doc.get("mode_of_payment")
+	if (not default_mode_of_payment) and (dt in ("Purchase Invoice", "Purchase Order")):
+		default_mode_of_payment = frappe.db.get_value("Supplier",
+		                                              {"name": doc.supplier}, "mode_of_payment")
+	# Spectrum Fruits: End
+
 	pe = frappe.new_doc("Payment Entry")
 	pe.payment_type = payment_type
 	pe.company = doc.company
 	pe.cost_center = doc.get("cost_center")
 	pe.posting_date = nowdate()
-	pe.mode_of_payment = doc.get("mode_of_payment")
+	# Spectrum Fruits: Begin
+	# 1. Mode of Payment
+	pe.mode_of_payment = default_mode_of_payment
+	# 2. Remit To Address
+	if dt in ("Purchase Invoice", "Purchase Order"):
+		supplier = frappe.get_doc("Supplier", doc.supplier)
+		pe.remit_to_address = supplier.get_remit_to_address().name
+	# Spectrum Fruits: End
 	pe.party_type = party_type
 	pe.party = doc.get(scrub(party_type))
 	pe.contact_person = doc.get("contact_person")

@@ -259,13 +259,17 @@ erpnext.accounts.PurchaseInvoice = erpnext.buying.BuyingController.extend({
 				party_type: "Supplier",
 				account: this.frm.doc.credit_to,
 				price_list: this.frm.doc.buying_price_list
-			}, function() {
+			}, function(r) {
 				me.apply_pricing_rule();
 				me.frm.doc.apply_tds = me.frm.supplier_tds ? 1 : 0;
 				me.frm.doc.tax_withholding_category = me.frm.supplier_tds;
 				me.frm.set_df_property("apply_tds", "read_only", me.frm.supplier_tds ? 0 : 1);
 				me.frm.set_df_property("tax_withholding_category", "hidden", me.frm.supplier_tds ? 0 : 1);
-			})
+				// Spectrum Fruits: After Supplier is updated, change the Title also.
+				me.frm.set_value("title", me.frm.doc.supplier_name);
+			});
+
+		
 	},
 
 	apply_tds: function(frm) {

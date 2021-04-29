@@ -1,5 +1,4 @@
 {
- "actions": [],
  "allow_import": 1,
  "allow_rename": 1,
  "creation": "2017-05-29 21:35:13.136357",
@@ -35,7 +34,8 @@
   "integration_id",
   "last_integration_date",
   "column_break_27",
-  "mask"
+  "mask",
+  "naming_series_for_check"
  ],
  "fields": [
   {
@@ -210,10 +210,14 @@
    "fieldtype": "Data",
    "label": "Mask",
    "read_only": 1
+  },
+  {
+   "fieldname": "naming_series_for_check",
+   "fieldtype": "Select",
+   "label": "Check Naming Series"
   }
  ],
- "links": [],
- "modified": "2020-01-29 20:42:26.458316",
+ "modified": "2021-04-18 13:17:20.327761",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Bank Account",
