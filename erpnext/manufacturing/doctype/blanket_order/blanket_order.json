@@ -34,6 +34,7 @@
    "reqd": 1
   },
   {
+   "default": "Purchasing",
    "fieldname": "blanket_order_type",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -155,7 +156,7 @@
   }
  ],
  "is_submittable": 1,
- "modified": "2021-02-16 13:17:37.749095",
+ "modified": "2021-05-10 12:57:28.716995",
  "modified_by": "Administrator",
  "module": "Manufacturing",
  "name": "Blanket Order",

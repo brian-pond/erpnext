@@ -428,14 +428,21 @@ frappe.ui.form.on('Payment Entry', {
 								frm.set_value(balance_field, r.message['account_balance']);
 
 								if(frm.doc.payment_type=="Receive" && currency_field=="paid_to_account_currency") {
+									// Spectrum Fruits Begin: Disabling Mandatory Reference Number and Date
+									/*
 									frm.toggle_reqd(["reference_no", "reference_date"],
 										(r.message['account_type'] == "Bank" ? 1 : 0));
+									*/
+									// Spectrum Fruits End
 									if(!frm.doc.received_amount && frm.doc.paid_amount)
 										frm.events.paid_amount(frm);
 								} else if(frm.doc.payment_type=="Pay" && currency_field=="paid_from_account_currency") {
+									// Spectrum Fruits Begin: Disabling Mandatory Reference Number and Date
+									/*
 									frm.toggle_reqd(["reference_no", "reference_date"],
 										(r.message['account_type'] == "Bank" ? 1 : 0));
-
+									*/
+									// Spectrum Fruits End
 									if(!frm.doc.paid_amount && frm.doc.received_amount)
 										frm.events.received_amount(frm);
 								}

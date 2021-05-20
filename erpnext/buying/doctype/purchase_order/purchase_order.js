@@ -384,6 +384,26 @@ erpnext.buying.PurchaseOrderController = erpnext.buying.BuyingController.extend(
 				})
 			}, __("Get items from"));
 
+		// Spectrum Fruits
+		this.frm.add_custom_button(__('Blanket Order'),
+		function() {
+			erpnext.utils.map_current_doc({
+				// method: "erpnext.buying.doctype.supplier_quotation.supplier_quotation.make_purchase_order",
+				 method: "erpnext.manufacturing.doctype.blanket_order.blanket_order.make_purchase_order",
+				source_doctype: "Blanket Order",
+				target: me.frm,
+				setters: {
+					company: me.frm.doc.company
+				},
+				get_query_filters: {
+					docstatus: 1,
+					status: ["!=", "Stopped"],
+				}
+			})
+		}, __("Get items from"));
+
+
+
 		this.frm.add_custom_button(__('Update rate as per last purchase'),
 			function() {
 				frappe.call({

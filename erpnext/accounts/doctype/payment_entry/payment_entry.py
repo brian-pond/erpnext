@@ -466,10 +466,11 @@ class PaymentEntry(AccountsController):
 		bank_account = self.paid_to if self.payment_type == "Receive" else self.paid_from
 		bank_account_type = frappe.db.get_value("Account", bank_account, "account_type")
 
-		if bank_account_type == "Bank":
-			if not self.reference_no or not self.reference_date:
-				frappe.throw(_("Reference No and Reference Date is mandatory for Bank transaction"))
-
+		# Spectrum Fruits: Disabling this mandatory requirement.
+		# if bank_account_type == "Bank":
+		#	if not self.reference_no or not self.reference_date:
+		#		frappe.throw(_("Reference No and Reference Date is mandatory for Bank transaction"))
+		# Spectrum Fruits End
 	def set_remarks(self):
 		if self.remarks: return
 
@@ -655,7 +656,9 @@ class PaymentEntry(AccountsController):
 		return False
 
 	def insert_bank_cheque(self):
-		bank_check.create_from_doc(caller_doc=self)
+		# Only creates Bank Check records if Mode of Payment = Check.
+		if self.mode_of_payment == 'Check':
+			bank_check.create_from_doc(caller_doc=self)
 
 	def cancel_cheque(self):
 		bank_check.cancel_from_origin_doc(self)
@@ -866,7 +869,7 @@ def get_party_details(company, party_type, party, date, cost_center=None):
 	if party_type in ["Supplier"]:
 		supplier = frappe.get_doc("Supplier", party)
 		mode_of_payment = supplier.mode_of_payment
-		remit_to_address = supplier.get_remit_to_address(first_only=True)
+		remit_to_address = supplier.get_remit_to_address(first_only=True, none_on_error=(mode_of_payment != 'Check'))
 
 	return {
 		"party_account": party_account,
@@ -1104,7 +1107,10 @@ def get_payment_entry(dt, dn, party_amount=None, bank_account=None, bank_amount=
 	# 2. Remit To Address
 	if dt in ("Purchase Invoice", "Purchase Order"):
 		supplier = frappe.get_doc("Supplier", doc.supplier)
-		pe.remit_to_address = supplier.get_remit_to_address().name
+		# Brian: Remit to Address is only mandatory when Payment Method = Check
+		remit_to_doc =  supplier.get_remit_to_address(none_on_error=(pe.mode_of_payment != 'Check'))
+		if remit_to_doc:
+			pe.remit_to_address = remit_to_doc.name
 	# Spectrum Fruits: End
 	pe.party_type = party_type
 	pe.party = doc.get(scrub(party_type))

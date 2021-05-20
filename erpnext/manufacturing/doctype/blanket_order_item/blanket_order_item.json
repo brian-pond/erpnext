@@ -5,13 +5,25 @@
  "engine": "InnoDB",
  "field_order": [
   "item_code",
+  "item_name",
+  "column_break_1",
+  "reqd_by_date",
+  "sb_quantity",
+  "weight_qty",
   "qty",
+  "column_break_2",
+  "uom_weight",
+  "uom_buying",
+  "conversion_factor",
+  "sb_weight_details",
+  "weight_per_unit",
+  "column_break_3",
+  "total_weight",
+  "section_break_2",
   "rate",
   "line_amount",
   "warehouse",
-  "reqd_by_date",
-  "column_break_3",
-  "item_name",
+  "column_break_4",
   "description",
   "section_break_7",
   "ordered_qty"
@@ -89,10 +101,68 @@
    "in_list_view": 1,
    "label": "Line Amount",
    "read_only": 1
+  },
+  {
+   "fieldname": "weight_qty",
+   "fieldtype": "Data",
+   "label": "Qty as per Weight UOM"
+  },
+  {
+   "fieldname": "sb_quantity",
+   "fieldtype": "Section Break",
+   "label": "Quantity"
+  },
+  {
+   "fieldname": "uom_weight",
+   "fieldtype": "Link",
+   "label": "Weight UOM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "uom_buying",
+   "fieldtype": "Link",
+   "label": "UOM",
+   "options": "UOM"
+  },
+  {
+   "fieldname": "conversion_factor",
+   "fieldtype": "Float",
+   "label": "UOM Conversion Factor"
+  },
+  {
+   "fieldname": "sb_weight_details",
+   "fieldtype": "Section Break",
+   "label": "Item Weight Details"
+  },
+  {
+   "fieldname": "weight_per_unit",
+   "fieldtype": "Float",
+   "label": "Weight Per Unit"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_weight",
+   "fieldtype": "Float",
+   "label": "Total Weight"
+  },
+  {
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
   }
  ],
  "istable": 1,
- "modified": "2021-03-25 11:24:00.968715",
+ "modified": "2021-05-10 13:13:37.132845",
  "modified_by": "Administrator",
  "module": "Manufacturing",
  "name": "Blanket Order Item",
