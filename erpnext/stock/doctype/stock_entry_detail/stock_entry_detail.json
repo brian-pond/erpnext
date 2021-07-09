@@ -296,7 +296,6 @@
    "fieldname": "batch_no",
    "fieldtype": "Link",
    "label": "Batch No",
-   "no_copy": 1,
    "oldfieldname": "batch_no",
    "oldfieldtype": "Link",
    "options": "Batch"
@@ -502,7 +501,7 @@
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2020-09-04 12:12:35.668198",
+ "modified": "2021-07-01 14:35:25.033332",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Stock Entry Detail",
