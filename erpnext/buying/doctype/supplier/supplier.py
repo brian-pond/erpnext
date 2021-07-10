@@ -51,7 +51,9 @@ class Supplier(TransactionBase):
 		validate_party_accounts(self)
 
 	def on_trash(self):
-		""" When deleting supplier, delete related Contacts and Addresses. """
+		"""
+		When deleting supplier, delete related Contacts and Addresses.
+		"""
 		delete_contact_and_address('Supplier', self.name)
 
 	def after_rename(self, olddn, newdn, merge=False):
@@ -59,7 +61,9 @@ class Supplier(TransactionBase):
 			frappe.db.set(self, "supplier_name", newdn)
 
 	def get_remit_to_address(self, first_only=False, none_on_error=True):
-		""" Spectrum Fruits: Get a supplier's 'Remit To' address. """
+		"""
+		Spectrum Fruits: Get a supplier's 'Remit To' address.
+		"""
 
 		# Using this function to find the appropriate address for new Bank Checks.
 		filters = [

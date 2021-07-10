@@ -394,6 +394,7 @@
    "read_only": 1
   },
   {
+   "collapsible": 0,
    "fieldname": "item_weight_details",
    "fieldtype": "Section Break",
    "label": "Item Weight Details"
@@ -431,6 +432,7 @@
   {
    "fieldname": "warehouse",
    "fieldtype": "Link",
+   "in_list_view": 0,
    "label": "Warehouse",
    "oldfieldname": "warehouse",
    "oldfieldtype": "Link",

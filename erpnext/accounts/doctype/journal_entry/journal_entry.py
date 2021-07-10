@@ -1066,4 +1066,4 @@ def make_reverse_journal_entry(source_name, target_doc=None):
 		},
 	}, target_doc)
 
-	return doclist 
+	return doclist

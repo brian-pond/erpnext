@@ -1,4 +1,5 @@
 {
+ "actions": [],
  "allow_import": 1,
  "allow_rename": 1,
  "creation": "2017-05-29 21:35:13.136357",
@@ -217,6 +218,7 @@
    "label": "Check Naming Series"
   }
  ],
+ "links": [],
  "modified": "2021-04-18 13:17:20.327761",
  "modified_by": "Administrator",
  "module": "Accounts",

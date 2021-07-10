@@ -13,6 +13,9 @@
   "description",
   "item_group",
   "brand",
+  "image_section",
+  "image",
+  "image_view",
   "manufacture_details",
   "manufacturer",
   "column_break_13",
@@ -93,9 +96,6 @@
   "dimension_col_break",
   "cost_center",
   "section_break_82",
-  "image_section",
-  "image",
-  "image_view",
   "page_break"
  ],
  "fields": [
@@ -153,7 +153,8 @@
    "fieldname": "image_view",
    "fieldtype": "Image",
    "label": "Image View",
-   "options": "image"
+   "options": "image",
+   "print_hide": 1
   },
   {
    "fieldname": "quantity_and_rate",
