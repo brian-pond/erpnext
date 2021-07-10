@@ -142,6 +142,11 @@ class PurchaseInvoice(BuyingController):
 			throw(_("Conversion rate cannot be 0 or 1"))
 
 	def validate_credit_to_acc(self):
+		if not self.credit_to:
+			self.credit_to = get_party_account("Supplier", self.supplier, self.company)
+			if not self.credit_to:
+				self.raise_missing_debit_credit_account_error("Supplier", self.supplier)
+
 		account = frappe.db.get_value("Account", self.credit_to,
 			["account_type", "report_type", "account_currency"], as_dict=True)
 
@@ -638,7 +643,8 @@ class PurchaseInvoice(BuyingController):
 									item.item_tax_amount / self.conversion_rate)
 						}, item=item))
 				else:
-					cwip_account = get_asset_account("capital_work_in_progress_account", company = self.company)
+					cwip_account = get_asset_account("capital_work_in_progress_account",
+						asset_category=item.asset_category,company=self.company)
 
 					cwip_account_currency = get_account_currency(cwip_account)
 					gl_entries.append(self.get_gl_dict({

@@ -68,7 +68,7 @@ class ProductionPlan(Document):
 			from `tabMaterial Request` mr, `tabMaterial Request Item` mr_item
 			where mr_item.parent = mr.name
 				and mr.material_request_type = "Manufacture"
-				and mr.docstatus = 1 and mr.company = %(company)s
+				and mr.docstatus = 1 and mr.status != "Stopped" and mr.company = %(company)s
 				and mr_item.qty > ifnull(mr_item.ordered_qty,0) {0} {1}
 				and (exists (select name from `tabBOM` bom where bom.item=mr_item.item_code
 					and bom.is_active = 1))
@@ -709,8 +709,12 @@ def get_items_for_material_requests(doc, ignore_existing_ordered_qty=None):
 					mr_items.append(items)
 
 	if not mr_items:
-		frappe.msgprint(_("""As raw materials projected quantity is more than required quantity, there is no need to create material request.
-			Still if you want to make material request, kindly enable <b>Ignore Existing Projected Quantity</b> checkbox"""))
+		to_enable = frappe.bold(_("Ignore Existing Projected Quantity"))
+		warehouse = frappe.bold(doc.get('for_warehouse'))
+		message = _("As there are sufficient raw materials, Material Request is not required for Warehouse {0}.").format(warehouse) + "<br><br>"
+		message += _(" If you still want to proceed, please enable {0}.").format(to_enable)
+
+		frappe.msgprint(message, title=_("Note"))
 
 	return mr_items
 

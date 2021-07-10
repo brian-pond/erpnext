@@ -537,7 +537,8 @@
    "fieldtype": "Data",
    "hidden": 1,
    "label": "Title",
-   "print_hide": 1
+   "print_hide": 1,
+   "read_only": 1
   },
   {
    "depends_on": "party",

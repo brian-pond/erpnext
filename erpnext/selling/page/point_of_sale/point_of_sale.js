@@ -155,7 +155,7 @@ erpnext.pos.PointOfSale = class PointOfSale {
 					var me = this;
 					if (this.frm.doc.customer) {
 						frappe.call({
-							method: "erpnext.accounts.doctype.loyalty_program.loyalty_program.get_loyalty_program_details",
+							method: "erpnext.accounts.doctype.loyalty_program.loyalty_program.get_loyalty_program_details_with_points",
 							args: {
 								"customer": me.frm.doc.customer,
 								"expiry_date": me.frm.doc.posting_date,
@@ -1515,6 +1515,9 @@ class POSItems {
 	}
 
 	get_items({start = 0, page_length = 40, search_value='', item_group=this.parent_item_group}={}) {
+		if (!this.frm.doc.pos_profile)
+			return;
+
 		const price_list = this.frm.doc.selling_price_list;
 		return new Promise(res => {
 			frappe.call({

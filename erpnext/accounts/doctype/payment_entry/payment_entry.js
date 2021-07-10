@@ -205,7 +205,7 @@ frappe.ui.form.on('Payment Entry', {
 
 		frm.toggle_display("base_received_amount", (
 			frm.doc.paid_to_account_currency != company_currency &&
-			frm.doc.paid_from_account_currency != frm.doc.paid_to_account_currency 
+			frm.doc.paid_from_account_currency != frm.doc.paid_to_account_currency
 			&& frm.doc.base_paid_amount != frm.doc.base_received_amount
 		));
 
@@ -412,6 +412,8 @@ frappe.ui.form.on('Payment Entry', {
 
 	set_account_currency_and_balance: function(frm, account, currency_field,
 			balance_field, callback_function) {
+
+		var company_currency = frappe.get_doc(":Company", frm.doc.company).default_currency;
 		if (frm.doc.posting_date && account) {
 			frappe.call({
 				method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_account_details",
@@ -445,6 +447,14 @@ frappe.ui.form.on('Payment Entry', {
 									// Spectrum Fruits End
 									if(!frm.doc.paid_amount && frm.doc.received_amount)
 										frm.events.received_amount(frm);
+
+									if (frm.doc.paid_from_account_currency == frm.doc.paid_to_account_currency
+										&& frm.doc.paid_amount != frm.doc.received_amount) {
+											if (company_currency != frm.doc.paid_from_account_currency &&
+												frm.doc.payment_type == "Pay") {
+													frm.doc.paid_amount = frm.doc.received_amount;
+												}
+										}
 								}
 							},
 							() => {

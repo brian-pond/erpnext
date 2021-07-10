@@ -20,6 +20,30 @@ class TestPurchaseReceipt(unittest.TestCase):
 		frappe.db.set_value("Buying Settings", None, "allow_multiple_items", 1)
 
 	def test_make_purchase_invoice(self):
+		if not frappe.db.exists('Payment Terms Template', '_Test Payment Terms Template For Purchase Invoice'):
+			frappe.get_doc({
+				'doctype': 'Payment Terms Template',
+				'template_name': '_Test Payment Terms Template For Purchase Invoice',
+				'allocate_payment_based_on_payment_terms': 1,
+				'terms': [
+					{
+						'doctype': 'Payment Terms Template Detail',
+						'invoice_portion': 50.00,
+						'credit_days_based_on': 'Day(s) after invoice date',
+						'credit_days': 00
+					},
+					{
+						'doctype': 'Payment Terms Template Detail',
+						'invoice_portion': 50.00,
+						'credit_days_based_on': 'Day(s) after invoice date',
+						'credit_days': 30
+					}]
+			}).insert()
+
+		template = frappe.db.get_value('Payment Terms Template', '_Test Payment Terms Template For Purchase Invoice')
+		old_template_in_supplier = frappe.db.get_value("Supplier", "_Test Supplier", "payment_terms")
+		frappe.db.set_value("Supplier", "_Test Supplier", "payment_terms", template)
+
 		pr = make_purchase_receipt(do_not_save=True)
 		self.assertRaises(frappe.ValidationError, make_purchase_invoice, pr.name)
 		pr.submit()
@@ -29,9 +53,22 @@ class TestPurchaseReceipt(unittest.TestCase):
 		self.assertEqual(pi.doctype, "Purchase Invoice")
 		self.assertEqual(len(pi.get("items")), len(pr.get("items")))
 
-		# modify rate
+		# test maintaining same rate throughout purchade cycle
 		pi.get("items")[0].rate = 200
 		self.assertRaises(frappe.ValidationError, frappe.get_doc(pi).submit)
+
+		# test if payment terms are fetched and set in PI
+		self.assertEqual(pi.payment_terms_template, template)
+		self.assertEqual(pi.payment_schedule[0].payment_amount, flt(pi.grand_total)/2)
+		self.assertEqual(pi.payment_schedule[0].invoice_portion, 50)
+		self.assertEqual(pi.payment_schedule[1].payment_amount, flt(pi.grand_total)/2)
+		self.assertEqual(pi.payment_schedule[1].invoice_portion, 50)
+
+		# teardown
+		pi.delete() # draft PI
+		pr.cancel()
+		frappe.db.set_value("Supplier", "_Test Supplier", "payment_terms", old_template_in_supplier)
+		frappe.get_doc('Payment Terms Template', '_Test Payment Terms Template For Purchase Invoice').delete()
 
 	def test_purchase_receipt_no_gl_entry(self):
 		company = frappe.db.get_value('Warehouse', '_Test Warehouse - _TC', 'company')
@@ -416,7 +453,7 @@ class TestPurchaseReceipt(unittest.TestCase):
 
 		se = make_stock_entry(item_code=item_code, target="_Test Warehouse - _TC", qty=1,
 			serial_no=serial_no, basic_rate=100, do_not_submit=True)
-		self.assertRaises(SerialNoDuplicateError, se.submit)
+		se.submit()
 
 	def test_auto_asset_creation(self):
 		asset_item = "Test Asset Item"
@@ -471,8 +508,7 @@ class TestPurchaseReceipt(unittest.TestCase):
 			"expected_value_after_useful_life": 10,
 			"depreciation_method": "Straight Line",
 			"total_number_of_depreciations": 3,
-			"frequency_of_depreciation": 1,
-			"depreciation_start_date": frappe.utils.nowdate()
+			"frequency_of_depreciation": 1
 		})
 		asset.submit()
 
@@ -614,9 +650,9 @@ class TestPurchaseReceipt(unittest.TestCase):
 
 		rm_items = [
 			{"item_code":item_code,"rm_item_code":"Sub Contracted Raw Material 3","item_name":"_Test Item",
-				"qty":300,"warehouse":"_Test Warehouse - _TC", "stock_uom":"Nos"},
+				"qty":300,"warehouse":"_Test Warehouse - _TC", "stock_uom":"Nos", "name": po.supplied_items[0].name},
 			{"item_code":item_code,"rm_item_code":"Sub Contracted Raw Material 3","item_name":"_Test Item",
-				"qty":200,"warehouse":"_Test Warehouse - _TC", "stock_uom":"Nos"}
+				"qty":200,"warehouse":"_Test Warehouse - _TC", "stock_uom":"Nos", "name": po.supplied_items[0].name}
 		]
 
 		rm_item_string = json.dumps(rm_items)
@@ -639,6 +675,56 @@ class TestPurchaseReceipt(unittest.TestCase):
 			self.assertEqual(transferred_batch.get(row.batch_no), row.consumed_qty)
 
 		update_backflush_based_on("BOM")
+
+	def test_po_to_pi_and_po_to_pr_worflow_full(self):
+		"""Test following behaviour:
+			- Create PO
+			- Create PI from PO and submit
+			- Create PR from PO and submit
+		"""
+		from erpnext.buying.doctype.purchase_order import test_purchase_order
+		from erpnext.buying.doctype.purchase_order import purchase_order
+
+		po = test_purchase_order.create_purchase_order()
+
+		pi = purchase_order.make_purchase_invoice(po.name)
+		pi.submit()
+
+		pr = purchase_order.make_purchase_receipt(po.name)
+		pr.submit()
+
+		pr.load_from_db()
+
+		self.assertEqual(pr.status, "Completed")
+		self.assertEqual(pr.per_billed, 100)
+
+	def test_po_to_pi_and_po_to_pr_worflow_partial(self):
+		"""Test following behaviour:
+			- Create PO
+			- Create partial PI from PO and submit
+			- Create PR from PO and submit
+		"""
+		from erpnext.buying.doctype.purchase_order import test_purchase_order
+		from erpnext.buying.doctype.purchase_order import purchase_order
+
+		po = test_purchase_order.create_purchase_order()
+
+		pi = purchase_order.make_purchase_invoice(po.name)
+		pi.items[0].qty /= 2   # roughly 50%, ^ this function only creates PI with 1 item.
+		pi.submit()
+
+		pr = purchase_order.make_purchase_receipt(po.name)
+		pr.save()
+		# per_billed is only updated after submission.
+		self.assertEqual(flt(pr.per_billed), 0)
+
+		pr.submit()
+
+		pi.load_from_db()
+		pr.load_from_db()
+
+		self.assertEqual(pr.status, "To Bill")
+		self.assertAlmostEqual(pr.per_billed, 50.0, places=2)
 
 def get_gl_entries(voucher_type, voucher_no):
 	return frappe.db.sql("""select account, debit, credit, cost_center

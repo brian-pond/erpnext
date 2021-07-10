@@ -240,10 +240,10 @@ def make_round_off_gle(gl_map, debit_credit_diff, precision):
 	for d in gl_map:
 		if d.account == round_off_account:
 			round_off_gle = d
-			if d.debit_in_account_currency:
-				debit_credit_diff -= flt(d.debit_in_account_currency)
+			if d.debit:
+				debit_credit_diff -= flt(d.debit)
 			else:
-				debit_credit_diff += flt(d.credit_in_account_currency)
+				debit_credit_diff += flt(d.credit)
 			round_off_account_exists = True
 
 	if round_off_account_exists and abs(debit_credit_diff) <= (1.0 / (10**precision)):
@@ -252,7 +252,7 @@ def make_round_off_gle(gl_map, debit_credit_diff, precision):
 
 	if not round_off_gle:
 		for k in ["voucher_type", "voucher_no", "company",
-			"posting_date", "remarks", "is_opening"]:
+			"posting_date", "remarks"]:
 				round_off_gle[k] = gl_map[0][k]
 
 	round_off_gle.update({
@@ -264,6 +264,7 @@ def make_round_off_gle(gl_map, debit_credit_diff, precision):
 		"cost_center": round_off_cost_center,
 		"party_type": None,
 		"party": None,
+		"is_opening": "No",
 		"against_voucher_type": None,
 		"against_voucher": None
 	})

@@ -635,7 +635,7 @@ execute:frappe.reload_doc('desk', 'doctype', 'dashboard_chart')
 execute:frappe.reload_doc('desk', 'doctype', 'dashboard_chart_field')
 erpnext.patches.v12_0.add_default_dashboards
 erpnext.patches.v12_0.remove_bank_remittance_custom_fields
-erpnext.patches.v12_0.generate_leave_ledger_entries
+erpnext.patches.v12_0.generate_leave_ledger_entries #04-11-2020
 erpnext.patches.v12_0.move_credit_limit_to_customer_credit_limit
 erpnext.patches.v12_0.add_variant_of_in_item_attribute_table
 erpnext.patches.v12_0.rename_bank_account_field_in_journal_entry_account
@@ -678,3 +678,11 @@ erpnext.patches.v12_0.update_state_code_for_daman_and_diu
 erpnext.patches.v12_0.rename_lost_reason_detail
 erpnext.patches.v12_0.update_leave_application_status
 erpnext.patches.v12_0.update_payment_entry_status
+erpnext.patches.v12_0.add_transporter_address_field #2020-10-27
+erpnext.patches.v12_0.setup_einvoice_fields #2020-12-02
+erpnext.patches.v12_0.add_state_code_for_ladakh
+erpnext.patches.v12_0.create_taxable_value_field
+erpnext.patches.v12_0.purchase_receipt_status
+erpnext.patches.v12_0.add_company_link_to_einvoice_settings
+erpnext.patches.v12_0.add_document_type_field_for_italy_einvoicing
+erpnext.patches.v12_0.create_taxable_value_field_in_purchase_invoice

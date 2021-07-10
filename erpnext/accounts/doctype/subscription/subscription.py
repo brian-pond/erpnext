@@ -263,13 +263,14 @@ class Subscription(Document):
 			invoice.set_taxes()
 
 		# Due date
-		invoice.append(
-			'payment_schedule',
-			{
-				'due_date': add_days(self.current_invoice_end, cint(self.days_until_due)),
-				'invoice_portion': 100
-			}
-		)
+		if self.days_until_due:
+			invoice.append(
+				'payment_schedule',
+				{
+					'due_date': add_days(self.current_invoice_end, cint(self.days_until_due)),
+					'invoice_portion': 100
+				}
+			)
 
 		# Discounts
 		if self.additional_discount_percentage:
@@ -297,7 +298,8 @@ class Subscription(Document):
 		Returns the `Item`s linked to `Subscription Plan`
 		"""
 		if prorate:
-			prorate_factor = get_prorata_factor(self.current_invoice_end, self.current_invoice_start)
+			prorate_factor = get_prorata_factor(self.current_invoice_end, self.current_invoice_start,
+				self.generate_invoice_at_period_start)
 
 		items = []
 		customer = self.customer
@@ -332,7 +334,7 @@ class Subscription(Document):
 		if not self.generate_invoice_at_period_start:
 			return False
 
-		if self.is_new_subscription():
+		if self.is_new_subscription() and getdate(nowdate()) >= getdate(self.current_invoice_start):
 			return True
 
 		# Check invoice dates and make sure it doesn't have outstanding invoices
@@ -407,6 +409,15 @@ class Subscription(Document):
 			else:
 				self.set_status_grace_period()
 
+			if getdate() > getdate(self.current_invoice_end):
+				self.update_subscription_period(add_days(self.current_invoice_end, 1))
+
+			# Generate invoices periodically even if current invoice are unpaid
+			if self.generate_new_invoices_past_due_date and not self.is_current_invoice_generated() and (self.is_postpaid_to_invoice()
+				or self.is_prepaid_to_invoice()):
+				prorate = frappe.db.get_single_value('Subscription Settings', 'prorate')
+				self.generate_invoice(prorate)
+
 	@staticmethod
 	def is_not_outstanding(invoice):
 		"""
@@ -458,11 +469,13 @@ class Subscription(Document):
 		if invoice:
 			return invoice.precision('grand_total')
 
-
-def get_prorata_factor(period_end, period_start):
-	diff = flt(date_diff(nowdate(), period_start) + 1)
-	plan_days = flt(date_diff(period_end, period_start) + 1)
-	prorate_factor = diff / plan_days
+def get_prorata_factor(period_end, period_start, is_prepaid):
+	if is_prepaid:
+		prorate_factor = 1
+	else:
+		diff = flt(date_diff(nowdate(), period_start) + 1)
+		plan_days = flt(date_diff(period_end, period_start) + 1)
+		prorate_factor = diff / plan_days
 
 	return prorate_factor
 

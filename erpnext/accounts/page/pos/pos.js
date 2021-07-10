@@ -81,7 +81,7 @@ erpnext.pos.PointOfSale = erpnext.taxes_and_totals.extend({
 					me.page.set_indicator(__("Online"), "green")
 				}
 			}
-		})
+		});
 	},
 
 	onload: function () {
@@ -278,6 +278,14 @@ erpnext.pos.PointOfSale = erpnext.taxes_and_totals.extend({
 		})
 	},
 
+	set_pos_profile_title(pos_profile) {
+		this.page.set_title_sub(
+			`<span class="indicator blue">
+				<a class="text-muted" href="#Form/POS Profile/${pos_profile}">${pos_profile}</a>
+			</span>`
+		);
+	},
+
 	get_data_from_server: function (callback) {
 		var me = this;
 		frappe.call({
@@ -286,6 +294,7 @@ erpnext.pos.PointOfSale = erpnext.taxes_and_totals.extend({
 			freeze_message: __("Master data syncing, it might take some time"),
 			callback: function (r) {
 				localStorage.setItem('doc', JSON.stringify(r.message.doc));
+				me.set_pos_profile_title(r.message.pos_profile.name);
 				me.init_master_data(r)
 				me.set_interval_for_si_sync();
 				me.check_internet_connection();
@@ -1064,7 +1073,7 @@ erpnext.pos.PointOfSale = erpnext.taxes_and_totals.extend({
 					$(frappe.render_template("pos_item", {
 						item_code: escape(obj.name),
 						item_price: item_price,
-						title: obj.name || obj.item_name,
+						title: obj.name === obj.item_name ? obj.name : obj.item_name,
 						item_name: obj.name === obj.item_name ? "" : obj.item_name,
 						item_image: obj.image,
 						item_stock: __('Stock Qty') + ": " + me.get_actual_qty(obj),
@@ -1546,7 +1555,7 @@ erpnext.pos.PointOfSale = erpnext.taxes_and_totals.extend({
 		$.each(this.frm.doc.items || [], function (i, d) {
 			$(frappe.render_template("pos_bill_item_new", {
 				item_code: escape(d.item_code),
-				title: d.item_code || d.item_name,
+				title: d.item_code === d.item_name ? d.item_code : d.item_name,
 				item_name: (d.item_name === d.item_code || !d.item_name) ? "" : ("<br>" + d.item_name),
 				qty: d.qty,
 				discount_percentage: d.discount_percentage || 0.0,
@@ -2009,34 +2018,57 @@ erpnext.pos.PointOfSale = erpnext.taxes_and_totals.extend({
 
 	apply_pricing_rule: function () {
 		var me = this;
+
+		var remove_item = false;
 		$.each(this.frm.doc["items"], function (n, item) {
 			var pricing_rule = me.get_pricing_rule(item)
 			me.validate_pricing_rule(pricing_rule)
 			if (pricing_rule.length) {
-				item.pricing_rule = pricing_rule[0].name;
-				item.margin_type = pricing_rule[0].margin_type;
-				item.price_list_rate = pricing_rule[0].price || item.price_list_rate;
-				item.margin_rate_or_amount = pricing_rule[0].margin_rate_or_amount;
-				item.discount_percentage = pricing_rule[0].discount_percentage || 0.0;
-				me.apply_pricing_rule_on_item(item)
+				if (pricing_rule[0].price_or_product_discount == "Price") {
+					item.pricing_rule = pricing_rule[0].name;
+					item.margin_type = pricing_rule[0].margin_type;
+					item.price_list_rate = pricing_rule[0].price || item.price_list_rate;
+					item.margin_rate_or_amount = pricing_rule[0].margin_rate_or_amount;
+					item.discount_percentage = pricing_rule[0].discount_percentage || 0.0;
+					me.apply_pricing_rule_on_item(item)
+				} else {
+					me.child = frappe.model.add_child(me.frm.doc, me.frm.doc.doctype + " Item", "items");
+					me.child.item_code = pricing_rule[0].same_item ? item.item_code : pricing_rule[0].free_item;
+					me.child.item_name = pricing_rule[0].same_item ? item.item_name : pricing_rule[0].free_item;
+					me.child.stock_uom = pricing_rule[0].same_item ? item.stock_uom : pricing_rule[0].free_item_uom;
+					me.child.uom = pricing_rule[0].same_item ? item.uom : pricing_rule[0].free_item_uom;
+					me.child.conversion_factor = 1;
+					me.child.qty = pricing_rule.qty || 1;
+					me.child.is_free_item = 1;
+					me.child.brand = pricing_rule[0].same_item ? item.brand : "";
+					me.child.description = pricing_rule[0].same_item ? item.description : pricing_rule[0].free_item;
+				}
 			} else if (item.pricing_rule) {
 				item.price_list_rate = me.price_list_data[item.item_code]
 				item.margin_rate_or_amount = 0.0;
 				item.discount_percentage = 0.0;
 				item.pricing_rule = null;
 				me.apply_pricing_rule_on_item(item)
+			} else if (item.is_free_item) {
+				remove_item = true;
+				item.qty = 0
 			}
 
 			if(item.discount_percentage > 0) {
 				me.apply_pricing_rule_on_item(item)
 			}
-		})
+		});
+
+		if (remove_item) {
+			this.remove_zero_qty_items_from_cart();
+		}
 	},
 
 	get_pricing_rule: function (item) {
 		var me = this;
 		return $.grep(this.pricing_rules, function (data) {
-			if (item.qty >= data.min_qty && (item.qty <= (data.max_qty ? data.max_qty : item.qty))) {
+			me.get_mixed_min_max_qty_and_amt(data, item);
+			if (data.mixed_qty >= data.min_qty && (data.mixed_qty <= (data.max_qty ? data.max_qty : data.mixed_qty))) {
 				if (me.validate_item_condition(data, item)) {
 					if (in_list(['Customer', 'Customer Group', 'Territory', 'Campaign'], data.applicable_for)) {
 						return me.validate_condition(data)
@@ -2048,11 +2080,26 @@ erpnext.pos.PointOfSale = erpnext.taxes_and_totals.extend({
 		})
 	},
 
+	get_mixed_min_max_qty_and_amt: function(data, item) {
+		var apply_on = frappe.model.scrub(data.apply_on);
+		data.mixed_qty = 0.0
+		if (data.mixed_conditions && in_list(data[apply_on], item[apply_on])) {
+			this.frm.doc.items.forEach(d => {
+				if (in_list(data[apply_on], d[apply_on])) {
+					data.mixed_qty += d.qty;
+					data.mixed_amt += d.amount;
+				}
+			});
+		} else {
+			data.mixed_qty = item.qty;
+			data.mixed_amt = item.amount;
+		}
+	},
+
 	validate_item_condition: function (data, item) {
 		var apply_on = frappe.model.scrub(data.apply_on);
 
-		return (data.apply_on == 'Item Group')
-			? this.validate_item_group(data.item_group, item.item_group) : (data[apply_on] == item[apply_on]);
+		return in_list(data[apply_on], item[apply_on]);
 	},
 
 	validate_item_group: function (pr_item_group, cart_item_group) {

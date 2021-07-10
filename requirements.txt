@@ -1,12 +1,13 @@
-# Brian's pip Requirements File for ERPNext v12
+# Spectrum Fruit's pip requirements for ERPNext v12
 braintree==3.57.1
-frappe>=12.2.0
+frappe
 gocardless-pro==1.11.0
 googlemaps==3.1.1
 pandas==1.0.1
-plaid-python==3.4.0
+plaid-python>=7.0.0
+pycryptodome==3.9.8
 PyGithub==1.44.1
 python-stdnum==1.12
 Unidecode==1.1.1
 WooCommerce==2.1.1
-
+pycryptodome==3.9.8

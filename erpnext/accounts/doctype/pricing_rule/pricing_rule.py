@@ -49,9 +49,10 @@ class PricingRule(Document):
 			if self.apply_on == apply_on and len(self.get(field) or []) < 1:
 				throw(_("{0} is not added in the table").format(apply_on), frappe.MandatoryError)
 
-		tocheck = frappe.scrub(self.get("applicable_for", ""))
-		if tocheck and not self.get(tocheck):
-			throw(_("{0} is required").format(self.meta.get_label(tocheck)), frappe.MandatoryError)
+		if self.get("applicable_for", "") is not None:
+			tocheck = frappe.scrub(self.get("applicable_for", ""))
+			if tocheck and not self.get(tocheck):
+				throw(_("{0} is required").format(self.meta.get_label(tocheck)), frappe.MandatoryError)
 
 		if self.apply_rule_on_other:
 			o_field = 'other_' + frappe.scrub(self.apply_rule_on_other)
@@ -130,7 +131,7 @@ class PricingRule(Document):
 			for d in self.items:
 				max_discount = frappe.get_cached_value("Item", d.item_code, "max_discount")
 				if max_discount and flt(self.discount_percentage) > flt(max_discount):
-					throw(_("Max discount allowed for item: {0} is {1}%").format(self.item_code, max_discount))
+					throw(_("Max discount allowed for item: {0} is {1}%").format(d.item_code, max_discount))
 
 	def validate_price_list_with_currency(self):
 		if self.currency and self.for_price_list:
@@ -341,8 +342,14 @@ def apply_price_discount_rule(pricing_rule, item_details, args):
 		pricing_rule_rate = 0.0
 		if pricing_rule.currency == args.currency:
 			pricing_rule_rate = pricing_rule.rate
+
+		if pricing_rule_rate:
+			# Override already set price list rate (from item price)
+			# if pricing_rule_rate > 0
+			item_details.update({
+				"price_list_rate": pricing_rule_rate * args.get("conversion_factor", 1),
+			})
 		item_details.update({
-			"price_list_rate": pricing_rule_rate * args.get("conversion_factor", 1),
 			"discount_percentage": 0.0
 		})
 

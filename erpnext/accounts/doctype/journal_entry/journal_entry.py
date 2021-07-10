@@ -29,7 +29,11 @@ class JournalEntry(AccountsController):
 		self.validate_entries_for_advance()
 		self.validate_multi_currency()
 		self.set_amounts_in_company_currency()
-		self.validate_total_debit_and_credit()
+
+		# Do not validate while importing via data import
+		if not frappe.flags.in_import:
+			self.validate_total_debit_and_credit()
+
 		self.validate_against_jv()
 		self.validate_reference_doc()
 		self.set_against_account()
@@ -208,11 +212,11 @@ class JournalEntry(AccountsController):
 			if d.reference_type=="Journal Entry":
 				account_root_type = frappe.db.get_value("Account", d.account, "root_type")
 				if account_root_type == "Asset" and flt(d.debit) > 0:
-					frappe.throw(_("For {0}, only credit accounts can be linked against another debit entry")
-						.format(d.account))
+					frappe.throw(_("Row #{0}: For {1}, you can select reference document only if account gets credited")
+						.format(d.idx, d.account))
 				elif account_root_type == "Liability" and flt(d.credit) > 0:
-					frappe.throw(_("For {0}, only debit accounts can be linked against another credit entry")
-						.format(d.account))
+					frappe.throw(_("Row #{0}: For {1}, you can select reference document only if account gets debited")
+						.format(d.idx, d.account))
 
 				if d.reference_name == self.name:
 					frappe.throw(_("You can not enter current voucher in 'Against Journal Entry' column"))

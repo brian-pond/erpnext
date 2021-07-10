@@ -364,7 +364,7 @@ class WorkOrder(Document):
 		bom_qty = frappe.db.get_value("BOM", self.bom_no, "quantity")
 
 		for d in self.get("operations"):
-			d.time_in_mins = flt(d.time_in_mins) / flt(bom_qty) * math.ceil(flt(self.qty) / flt(d.batch_size))
+			d.time_in_mins = flt(d.time_in_mins) / flt(bom_qty) * (flt(self.qty) / flt(d.batch_size))
 
 		self.calculate_operating_cost()
 
@@ -529,7 +529,7 @@ class WorkOrder(Document):
 					and (entry.purpose = "Material Consumption for Manufacture"
 					or entry.purpose = "Manufacture")
 					and entry.docstatus = 1
-					and detail.parent = entry.name
+					and detail.parent = entry.name and IFNULL(t_warehouse, "") = ""
 					and (detail.item_code = %(item)s or detail.original_item = %(item)s)''', {
 						'name': self.name,
 						'item': d.item_code
