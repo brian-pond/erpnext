@@ -1,13 +1,16 @@
 {
+ "autoname": "BOI.######",
  "creation": "2018-05-24 07:20:04.255236",
  "doctype": "DocType",
- "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "item_code",
   "item_name",
   "column_break_1",
   "reqd_by_date",
+  "warehouse",
+  "sb_description",
+  "description",
   "sb_quantity",
   "weight_qty",
   "qty",
@@ -21,10 +24,8 @@
   "total_weight",
   "section_break_2",
   "rate",
-  "line_amount",
-  "warehouse",
   "column_break_4",
-  "description",
+  "line_amount",
   "section_break_7",
   "ordered_qty"
  ],
@@ -49,13 +50,16 @@
    "fieldtype": "Column Break"
   },
   {
+   "columns": 1,
    "fieldname": "qty",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Quantity"
+   "label": "Quantity",
+   "precision": "4"
   },
   {
    "columns": 1,
+   "default": "0",
    "fieldname": "rate",
    "fieldtype": "Currency",
    "in_list_view": 1,
@@ -77,7 +81,7 @@
    "fieldtype": "Section Break"
   },
   {
-   "columns": 1,
+   "columns": 2,
    "fieldname": "reqd_by_date",
    "fieldtype": "Date",
    "in_list_view": 1,
@@ -91,20 +95,19 @@
   },
   {
    "fieldname": "description",
-   "fieldtype": "Small Text",
-   "label": "Description"
+   "fieldtype": "Small Text"
   },
   {
-   "columns": 2,
+   "columns": 1,
    "fieldname": "line_amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Line Amount",
+   "label": "Subtotal",
    "read_only": 1
   },
   {
    "fieldname": "weight_qty",
-   "fieldtype": "Data",
+   "fieldtype": "Float",
    "label": "Qty as per Weight UOM"
   },
   {
@@ -113,21 +116,29 @@
    "label": "Quantity"
   },
   {
+   "fetch_from": "item_code.weight_uom",
+   "fetch_if_empty": 1,
    "fieldname": "uom_weight",
    "fieldtype": "Link",
    "label": "Weight UOM",
-   "options": "UOM"
+   "options": "UOM",
+   "read_only": 1
   },
   {
+   "fetch_from": "item_code.purchase_uom",
+   "fetch_if_empty": 1,
    "fieldname": "uom_buying",
    "fieldtype": "Link",
    "label": "UOM",
-   "options": "UOM"
+   "options": "UOM",
+   "reqd": 1
   },
   {
    "fieldname": "conversion_factor",
    "fieldtype": "Float",
-   "label": "UOM Conversion Factor"
+   "label": "Factor to Stock UOM",
+   "read_only": 1,
+   "reqd": 1
   },
   {
    "fieldname": "sb_weight_details",
@@ -137,7 +148,8 @@
   {
    "fieldname": "weight_per_unit",
    "fieldtype": "Float",
-   "label": "Weight Per Unit"
+   "label": "Weight Per Unit",
+   "read_only": 1
   },
   {
    "fieldname": "column_break_2",
@@ -146,7 +158,8 @@
   {
    "fieldname": "total_weight",
    "fieldtype": "Float",
-   "label": "Total Weight"
+   "label": "Total Weight",
+   "read_only": 1
   },
   {
    "fieldname": "section_break_2",
@@ -159,10 +172,18 @@
   {
    "fieldname": "column_break_4",
    "fieldtype": "Column Break"
+  },
+  {
+   "collapsible": 1,
+   "fetch_from": "item_code.description",
+   "fetch_if_empty": 1,
+   "fieldname": "sb_description",
+   "fieldtype": "Section Break",
+   "label": "Description"
   }
  ],
  "istable": 1,
- "modified": "2021-05-10 13:13:37.132845",
+ "modified": "2021-07-15 12:02:03.211199",
  "modified_by": "Administrator",
  "module": "Manufacturing",
  "name": "Blanket Order Item",

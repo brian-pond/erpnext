@@ -1,35 +1,37 @@
 // Copyright (c) 2018, Frappe Technologies Pvt. Ltd. and contributors
+// Copyright (c) 2021, Datahenge LLC
 // For license information, please see license.txt
 
-// In development, Bundling is not necessary for changes to take effect.
+frappe.provide("erpnext.manufacturing");
 
 frappe.ui.form.on('Blanket Order', {
 	onload: function(frm, cdt, cdn) {
+
+		cur_frm.dashboard.frm.fields[0].df.hidden=1  // Hide the Dashboard
+
+		if (!frm.doc.from_date){
+			frm.set_value('from_date', frappe.datetime.get_today())
+		}
+
+		// Fill-in any missing values.
+		default_reqd_by_dates(frm);
+		default_line_warehouse(frm);
+
 		// Filter 'party_billing_address' based on either Customer or Supplier
 		frm.set_query("party_billing_address", get_address_query);
 		frm.trigger('set_tc_name_filter');
 		frm.trigger('blanket_order_type');
 
-		render_grand_total(frm, cdt, cdn)
-		// var current_doc = locals[cdt][cdn];	
-		// console.log(current_doc.supplier)
+		// render_grand_total(frm, cdt, cdn)
 	},
 
-	supplier: (frm, cdt, cdn) => {
-		// When Supplier is edited, clear the address fields.
-		custom_clear_address(frm);
+	validate: function(frm) {
+		default_reqd_by_dates(frm);
+		default_line_warehouse(frm);
 	},
 
-	customer: (frm, cdt, cdn) => {
-		// When Customer is edited, clear the address fields.
-		custom_clear_address(frm);
-	},
-
-	party_billing_address: (frm, cdt, cdn) => {
-		// When address is updated, automatically change the value of "party_billing_address_display"
-		// Signature:  add_fetch(link_fieldname, source_fieldname, target_fieldname)
-		// This only works because of the Link relationship to Customer.
-	
+	items_on_form_rendered: function(frm) {
+		// Datahenge: This function is called when the child grid is opened in full-screen.
 	},
 
 	setup: function(frm) {
@@ -38,6 +40,7 @@ frappe.ui.form.on('Blanket Order', {
 		frm.add_fetch("supplier", "supplier_name", "supplier_name");
 	},
 
+	/*
 	refresh: function(frm) {
 		erpnext.hide_company();
 		if (frm.doc.customer && frm.doc.docstatus === 1) {
@@ -64,10 +67,60 @@ frappe.ui.form.on('Blanket Order', {
 			}).addClass("btn-primary");
 		}
 	},
+	*/
 
 	onload_post_render: function(frm) {
 		frm.get_field("items").grid.set_multiple_add("item_code", "qty");
 	},
+
+	toggle_conversion_factor: function(frm, item) {
+		// toggle read only property for conversion factor field if the uom and stock uom are same
+		if(frm.get_field('items').grid.fields_map.conversion_factor) {
+			frm.fields_dict.items.grid.toggle_enable("conversion_factor",
+				((item.uom != item.stock_uom) && !frappe.meta.get_docfield(cur_frm.fields_dict.items.grid.doctype, "conversion_factor").read_only)? true: false);
+		}
+	},
+
+	conversion_factor: function(doc, cdt, cdn, dont_fetch_price_list_rate) {
+		if(frappe.meta.get_docfield(cdt, "stock_qty", cdn)) {
+			var item = frappe.get_doc(cdt, cdn);
+			frappe.model.round_floats_in(item, ["qty", "conversion_factor"]);
+			item.stock_qty = flt(item.qty * item.conversion_factor, precision("stock_qty", item));
+			refresh_field("stock_qty", item.name, item.parentfield);
+			this.toggle_conversion_factor(item);
+
+			if(doc.doctype != "Material Request") {
+				item.total_weight = flt(item.stock_qty * item.weight_per_unit);
+				refresh_field("total_weight", item.name, item.parentfield);
+				this.calculate_net_weight();
+			}
+
+			if (!dont_fetch_price_list_rate &&
+				frappe.meta.has_field(doc.doctype, "price_list_currency")) {
+				this.apply_price_list(item, true);
+			}
+		}
+	},
+
+	/* ----------------
+	    DocFields
+	   ----------------*/
+	supplier: (frm) => {
+		// When Supplier is edited, clear the address fields.
+		custom_clear_address(frm);
+	},
+
+	customer: (frm) => {
+		// When Customer is edited, clear the address fields.
+		custom_clear_address(frm);
+	},
+
+	party_billing_address: (frm, cdt, cdn) => {
+		// When address is updated, automatically change the value of "party_billing_address_display"
+		// Signature:  add_fetch(link_fieldname, source_fieldname, target_fieldname)
+		// Works because of the Link relationship to Customer.
+	},
+
 
 	tc_name: function (frm) {
 		erpnext.utils.get_terms(frm.doc.tc_name, frm.doc, function (r) {
@@ -106,23 +159,183 @@ frappe.ui.form.on('Blanket Order', {
 });
 
 
+// Brian: Still not quite sure why I'm wrapping/extending form.Conroller
+// but it's necessary to call get_item_details() successfully
+erpnext.manufacturing.BlanketOrder = frappe.ui.form.Controller.extend({
+
+	refresh: function() {
+		var me = this;  // because the meaning of 'this' changes in contexts
+		erpnext.hide_company();
+
+		if (this.frm.doc.customer && frm.doc.docstatus === 1) {
+			this.frm.add_custom_button(__('View Orders'), function() {
+				frappe.set_route('List', 'Sales Order', {blanket_order: me.frm.doc.name});
+			});
+			this.frm.add_custom_button(__("Create Sales Order"), function(){
+				frappe.model.open_mapped_doc({
+					method: "erpnext.manufacturing.doctype.blanket_order.blanket_order.make_sales_order",
+					frm: me.frm
+				});
+			}).addClass("btn-primary");
+		}
+
+		if (this.frm.doc.supplier && this.frm.doc.docstatus === 1) {
+			this.frm.add_custom_button(__('View Orders'), function() {
+				frappe.set_route('List', 'Purchase Order', {blanket_order: me.frm.doc.name});
+			});
+			this.frm.add_custom_button(__("Create Purchase Order"), function(){
+				frappe.model.open_mapped_doc({
+					method: "erpnext.manufacturing.doctype.blanket_order.blanket_order.make_purchase_order",
+					frm: me.frm
+				});
+			}).addClass("btn-primary");
+		}
+	},
+});
+
+$.extend(cur_frm.cscript, new erpnext.manufacturing.BlanketOrder({frm: cur_frm}));
+
+frappe.ui.form.on("Blanket Order Item", {
+	/*
+		* Yes, the line's controller functions are defined here; not in their own JS file.  Because WTFK?
+		* Is it possible to add custom methods here that are not related to DocFields?  I'm not sure yet.
+		* CDT: Current DocType, CDN: Current DocType's name/id
+	*/
+
+	items_add: function(frm, cdt, cdn) {
+		// Datahenge: This function called when a child row is added.
+		// frappe.msgprint(__("New line added to grid for Document {0}", [parent_doc.name]));
+		const parent_doc = frm.doc;
+		let this_row = locals[cdt][cdn];
+
+		// 1. Default the requirement dates.
+		if(parent_doc.from_date) {  // use the parent's value as a default
+			this_row.reqd_by_date = parent_doc.from_date;
+			refresh_field("reqd_by_date", cdn, "items");
+		} else {
+			// use the first row's value as default
+			frm.script_manager.copy_from_first_row("items", this_row, ["reqd_by_date"]);
+		}
+		// 2. Default the warehouse
+		if(parent_doc.warehouse_default) {
+			// Default value = Parent.
+			this_row.warehouse = parent_doc.warehouse_default;
+			refresh_field("warehouse", cdn, "items");
+		}
+		else {
+			// use the first row's value as default
+			frm.script_manager.copy_from_first_row("items", this_row, ["warehouse"]);
+		}		
+	},
+
+	qty: function(frm, cdt, cdn) {
+		let blanket_line = frappe.get_doc(cdt, cdn);
+		// 1. Update the line amount.
+		recalc_line_amount(cdt, cdn);
+
+		// 2. Update 'weight_qty'
+		if (blanket_line.uom_buying === blanket_line.uom_weight) {
+			blanket_line.weight_qty = blanket_line.qty;
+		}
+		else {
+			blanket_line.weight_qty = blanket_line.qty * blanket_line.weight_per_unit;
+		}
+		refresh_field("items");  // Yes, we have to refresh in the context of the Form.
+		recalc_line_amount(cdt, cdn);
+		recalculate_total_weight(cdt, cdn);
+
+		// For now, I don't have a Stock Quantity field.
+		// frappe.model.set_value(cdt, cdn, 'stock_qty', blanket_line.qty * blanket_line.conversion_factor);
+	},
+
+	reqd_by_date: function(frm, cdt, cdn) {
+		var row = locals[cdt][cdn];
+		if (row.reqd_by_date) {
+			if(!frm.doc.reqd_by_date) {
+				erpnext.utils.copy_value_in_all_rows(frm.doc, cdt, cdn, "items", "reqd_by_date");
+			} else {
+				set_schedule_date(frm);
+			}
+		}
+	},
+
+	item_code: (frm, cdt, cdn) => {
+		let row = frappe.get_doc(cdt, cdn);
+		if (row.item_code) {
+			get_item_details(row.item_code)
+			.then(data => {
+				frappe.model.set_value(cdt, cdn, 'uom', data.stock_uom);
+				frappe.model.set_value(cdt, cdn, 'stock_uom', data.stock_uom);
+				frappe.model.set_value(cdt, cdn, 'conversion_factor', 1);
+				frappe.model.set_value(cdt, cdn, 'description', data.description);
+				frappe.model.set_value(cdt, cdn, 'uom_buying', data.purchase_uom || data.stock_uom);
+				frappe.model.set_value(cdt, cdn, 'uom_weight', data.weight_uom);
+				frappe.model.set_value(cdt, cdn, 'weight_per_unit', data.weight_per_unit);
+				if (row.qty) {
+					frappe.model.set_value(cdt, cdn, 'total_weight', data.weight_per_unit * row.qty);
+				}
+				refresh_field("weight_per_unit", cdn, "items");
+				// ['stock_uom', 'name', 'weight_per_unit'], as_dict=1)				
+			});
+		}
+	},
+
+	uom: (frm, cdt, cdn) => {
+		let row = frappe.get_doc(cdt, cdn);
+		if (row.uom) {
+			get_item_details(row.item_code, row.uom).then(data => {
+				frappe.model.set_value(cdt, cdn, 'conversion_factor', data.conversion_factor);
+			});
+		}
+	},
+
+	rate: (frm, cdt, cdn) => {
+		let row = frappe.get_doc(cdt, cdn);
+		// frappe.model.set_value(cdt, cdn, 'stock_qty', row.qty * row.conversion_factor);
+		recalc_line_amount(cdt, cdn);
+	},
+
+	conversion_factor: (frm, cdt, cdn) => {
+		let row = frappe.get_doc(cdt, cdn);
+		// frappe.model.set_value(cdt, cdn, 'stock_qty', row.qty * row.conversion_factor);
+	},
+
+	weight_qty: function(doc, cdt, cdn) {
+		// When 'weight_qty' changes, update 'qty'.  Then trigger standard code from there forward.
+		console.log("DEBUG: entered method Blanket Order Line method 'weight_qty'");
+		let row = frappe.get_doc(cdt, cdn);
+		// 1. Update qty
+		if (row.uom_buying === row.uom_weight) {
+			row.qty = row.weight_qty;
+			console.log("Making qty = weight_qty")
+		}
+		else {
+			row.qty = row.weight_qty / row.weight_per_unit;
+			console.log("Making qty a calculation.")
+		}
+		recalc_line_amount(cdt, cdn);
+		recalculate_total_weight(cdt, cdn);
+		refresh_field("items");	
+	}
+});
+
+
 function get_address_query (doc) {
 	if (doc.supplier) {
-		// Blanket Purchase Order					
+		// Blanket Purchase Order (PO)			
 		return {
 			query: 'frappe.contacts.doctype.address.address.address_query',
 			filters: { link_doctype: 'Supplier', link_name: doc.supplier }
 		};
 	}
 	if (doc.customer) {
-		// Blanket Sales Order
+		// Blanket Sales Order (SO)
 		return {
 			query: 'frappe.contacts.doctype.address.address.address_query',
 			filters: { link_doctype: 'Customer', link_name: doc.customer }
 		};
 	}			
 }	
-
 
 function custom_clear_address (frm) {
 	if (frm.doc.party_billing_address){
@@ -132,23 +345,58 @@ function custom_clear_address (frm) {
 	frm.set_query("party_billing_address", get_address_query);
 }
 
+function default_reqd_by_dates(frm) {
+	// Copy the header's From Date to any line that's missing Reqd By Date.
+	if(!frm.doc.from_date) return;
 
-function render_grand_total (frm) {
+	var lines = frm.doc['items'] || [];
+	for(var i = 0; i < lines.length; i++) {
+		if(!lines[i]['reqd_by_date']) {
+			lines[i]['reqd_by_date'] = frm.doc['from_date'];
+		}			
+	}
+	refresh_field('items');
+}
 
-	frm.doc.blanket_order.tmp_hello = "Hello";
+function default_line_warehouse(frm) {
+	// Copy the header's Warehouse to any line that's missing a warehouse.
+	if(!frm.doc.warehouse_default) return;
 
-	/*
-	const parent = $('<div class="range-selector')
+	var lines = frm.doc['items'] || [];
+	for(var i = 0; i < lines.length; i++) {
+		if(!lines[i]['warehouse']) {
+			lines[i]['warehouse'] = frm.doc['warehouse_default'];
+		}			
+	}
+	refresh_field('items');
+}
 
+function get_item_details(item_code, uom=null) {
+	if (item_code) {
+		return frappe.xcall('erpnext.manufacturing.doctype.blanket_order.blanket_order.get_item_details', {
+			item_code,
+			uom
+		});
+	}
+}
 
-	const  grand_total_field = frappe.ui.form.make_control({
-		df: {
-			label: 'Grand Total',
-			fieldname: 'blanket_grand_total',
-			fieldtype: 'Date'
-		},
-		parent: frm.field_html.wrapper,
-		render_input: true
-	})
-	*/
+function recalc_line_amount(cdt, cdn) {
+	// 1. Update line amount based on Quantity and Rate.
+	var blanket_line = locals[cdt][cdn];
+	if (blanket_line.qty && blanket_line.rate) {
+		frappe.model.set_value(cdt, cdn, 'line_amount',  blanket_line.qty * blanket_line.rate);
+	}
+	else {
+		frappe.model.set_value(cdt, cdn, 'line_amount', null);
+	}
+}
+
+function recalculate_total_weight(cdt, cdn) {
+	var blanket_line = locals[cdt][cdn];
+	if (blanket_line.weight_qty) {
+		frappe.model.set_value(cdt, cdn, 'total_weight', blanket_line.weight_qty);
+	}
+	else {
+		frappe.model.set_value(cdt, cdn, 'total_weight', blanket_line.qty * blanket_line.weight_per_unit);
+	}
 }

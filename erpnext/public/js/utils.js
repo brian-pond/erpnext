@@ -151,6 +151,7 @@ $.extend(erpnext.utils, {
 	},
 
 	copy_value_in_all_rows: function(doc, dt, dn, table_fieldname, fieldname) {
+		// Function assumes that Header and Lines have precisely the same DocField name.
 		var d = locals[dt][dn];
 		if(d[fieldname]){
 			var cl = doc[table_fieldname] || [];

@@ -11,19 +11,19 @@ from frappe.model.mapper import get_mapped_doc
 from frappe.utils import flt, getdate
 
 from erpnext.stock.doctype.item.item import get_item_defaults
-
+from erpnext.stock.get_item_details import get_conversion_factor
 
 class BlanketOrder(Document):
-	def __init__(self, *args, **kwargs):
-		super(BlanketOrder, self).__init__(*args, **kwargs)
 
 	def validate(self):
-		self.validate_dates()
+		# self.validate_dates()
 		self.set_supplier_address()
+		self.validate_required_by_dates()
 
-	def validate_dates(self):
-		if getdate(self.from_date) > getdate(self.to_date):
-			frappe.throw(_("From date cannot be greater than To date")) 
+	# Spectrum Fruits: No reason to include a date range.
+	# def validate_dates(self):
+	#	if getdate(self.from_date) > getdate(self.to_date):
+	#		frappe.throw(_("From date cannot be greater than To date")) 
 
 	def update_ordered_qty(self):
 		# SF_MOD_0001: Update each blanket order line individually.
@@ -37,6 +37,27 @@ class BlanketOrder(Document):
 		for address_field, address_display_field in address_dict.items():
 			if self.get(address_field):
 				self.set(address_display_field, get_address_display(self.get(address_field)))
+
+	def validate_required_by_dates(self):
+		if not self.get("items"):
+			return
+
+		if any(d.reqd_by_date for d in self.get("items")):
+			# Set header 'From Date' = earliest 'Required By Date' from lines.
+			self.from_date = min(d.reqd_by_date for d in self.get("items")
+							if d.reqd_by_date is not None)
+
+		if self.from_date:
+			for d in self.get('items'):
+				if not d.reqd_by_date:
+					d.reqd_by_date = self.from_date
+
+		# There's no reason for validating the 'From Date'; it's just a default
+				#if (d.reqd_by_date and self.from_date and
+				#	getdate(d.reqd_by_date) < getdate(self.from_date)):
+				#	frappe.throw(_("Row #{0}: 'Reqd by Date' cannot preceed 'From Date'").format(d.idx))
+		# else:
+		# 	frappe.throw(_("Please enter 'From Date'"))
 
 @frappe.whitelist()
 def make_sales_order(source_name):
@@ -111,3 +132,16 @@ def make_purchase_order(source_name):
 	target_doc.schedule_date = earliest_reqd_by_date
 	target_doc.naming_series = 'PO-'
 	return target_doc
+
+@frappe.whitelist()
+def get_item_details(item_code, uom=None):
+	"""
+	When selecting a new Item on a blanket order line, there are many fields
+	required from Item table.
+	"""
+	details = frappe.db.get_value('Item', item_code,
+	   ['stock_uom', 'name', 'description', 'purchase_uom', 'weight_uom', 'weight_per_unit'], as_dict=1)
+	details.uom = uom or details.stock_uom
+	if uom:
+		details.update(get_conversion_factor(item_code, uom))
+	return details

@@ -14,7 +14,6 @@
   "expected_delivery_date",
   "section_break_5",
   "description",
-  "col_break1",
   "image",
   "image_view",
   "quantity_and_rate",
@@ -164,10 +163,6 @@
    "width": "300px"
   },
   {
-   "fieldname": "col_break1",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "image",
    "fieldtype": "Attach",
    "hidden": 1,
@@ -176,6 +171,7 @@
   {
    "fieldname": "image_view",
    "fieldtype": "Image",
+   "hidden": 1,
    "label": "Image View",
    "options": "image",
    "print_hide": 1
@@ -432,7 +428,6 @@
   {
    "fieldname": "warehouse",
    "fieldtype": "Link",
-   "in_list_view": 0,
    "label": "Warehouse",
    "oldfieldname": "warehouse",
    "oldfieldtype": "Link",
@@ -734,7 +729,7 @@
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2021-04-08 10:05:38.025683",
+ "modified": "2021-07-12 18:52:22.380619",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Purchase Order Item",

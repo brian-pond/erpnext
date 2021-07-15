@@ -18,6 +18,9 @@ class TransactionBase(StatusUpdater):
 		if frappe.flags.in_import and self.posting_date:
 			self.set_posting_time = 1
 
+		# Spectrum Fruits: Default the 'set_posting_time' to 1 always
+		self.set_posting_time =1 
+
 		if not getattr(self, 'set_posting_time', None):
 			now = now_datetime()
 			self.posting_date = now.strftime('%Y-%m-%d')
