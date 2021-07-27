@@ -193,6 +193,32 @@ erpnext.buying.BuyingController = erpnext.TransactionController.extend({
 	},
 
 	received_qty: function(doc, cdt, cdn) {
+		// Begin: Spectrum Fruits
+		var this_line = locals[cdt][cdn];
+		console.log("Variables (uom, weight_uom, qty, weight_per_unit): ", this_line.uom, this_line.weight_uom, this_line.qty, this_line.weight_per_unit);
+		// Update related field = 'received_qty_weight_uom'
+		if (this_line.uom === this_line.weight_uom) {
+			this_line.received_qty_weight_uom = this_line.received_qty;
+		}
+		else {
+			this_line.received_qty_weight_uom = this_line.received_qty * this_line.weight_per_unit;
+		}
+		// End: Spectrum Fruits
+		this.calculate_accepted_qty(doc, cdt, cdn)
+	},
+
+	// Begin: Spectrum Fruits
+	received_qty_weight_uom: function(doc, cdt, cdn) {
+		// When 'received_qty_weight_uom' changes, update 'received_qty'.  Then trigger standard code.
+		var this_line = locals[cdt][cdn];
+		console.log("(uom, weight_uom, qty, weight_per_unit): ", this_line.uom, this_line.weight_uom, this_line.qty, this_line.weight_per_unit);
+		// 1. Update 'received_qty'
+		if (this_line.uom === this_line.weight_uom) {
+			this_line.received_qty = this_line.received_qty_weight_uom;
+		}
+		else {
+			this_line.received_qty = this_line.received_qty_weight_uom / this_line.weight_per_unit;
+		}
 		this.calculate_accepted_qty(doc, cdt, cdn)
 	},
 
@@ -201,6 +227,7 @@ erpnext.buying.BuyingController = erpnext.TransactionController.extend({
 	},
 
 	calculate_accepted_qty: function(doc, cdt, cdn){
+		console.log("Calculating accepted qty.")
 		var item = frappe.get_doc(cdt, cdn);
 		frappe.model.round_floats_in(item, ["received_qty", "rejected_qty"]);
 

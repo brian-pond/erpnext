@@ -68,6 +68,11 @@ frappe.ui.form.on("Purchase Receipt", {
 	}
 });
 
+/* SPECTRUM FRUITS
+
+	The JS controls for updating Qty and Weight Qty are contained in buying.js
+*/
+
 erpnext.stock.PurchaseReceiptController = erpnext.buying.BuyingController.extend({
 	setup: function(doc) {
 		this.setup_posting_date_time_check();

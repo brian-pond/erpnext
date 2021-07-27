@@ -20,6 +20,7 @@
   "image_view",
   "quantity_and_rate",
   "qty",
+  "qty_in_weight_uom",
   "stock_uom",
   "col_break2",
   "uom",
@@ -38,6 +39,7 @@
   "base_rate_with_margin",
   "section_break_1",
   "rate",
+  "rate_per_weight_uom",
   "amount",
   "col_break3",
   "base_rate",
@@ -731,12 +733,23 @@
    "no_copy": 1,
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "qty_in_weight_uom",
+   "fieldtype": "Float",
+   "label": "Quantity in Weight UOM",
+   "precision": "4"
+  },
+  {
+   "fieldname": "rate_per_weight_uom",
+   "fieldtype": "Float",
+   "label": "Rate per Weight UOM",
+   "precision": "4"
   }
  ],
  "idx": 1,
  "istable": 1,
- "links": [],
- "modified": "2020-08-20 11:18:33.131672",
+ "modified": "2021-07-21 19:55:20.708118",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Delivery Note Item",

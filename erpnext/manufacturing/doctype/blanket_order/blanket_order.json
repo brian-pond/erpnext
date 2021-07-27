@@ -14,6 +14,7 @@
   "column_break_8",
   "party_billing_address",
   "party_billing_address_display",
+  "document_date",
   "sb_defaults",
   "warehouse_default",
   "from_date",
@@ -82,7 +83,7 @@
   {
    "fieldname": "from_date",
    "fieldtype": "Date",
-   "label": "Default Required By Date"
+   "label": "Earliest Required By Date"
   },
   {
    "fieldname": "to_date",
@@ -168,10 +169,17 @@
    "fieldtype": "Link",
    "label": "Default Warehouse",
    "options": "Warehouse"
+  },
+  {
+   "fieldname": "document_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date",
+   "reqd": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2021-07-15 13:29:31.545587",
+ "modified": "2021-07-22 14:59:29.129989",
  "modified_by": "Administrator",
  "module": "Manufacturing",
  "name": "Blanket Order",

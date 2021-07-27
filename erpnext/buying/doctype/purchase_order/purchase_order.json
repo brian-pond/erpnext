@@ -128,7 +128,7 @@
   "price_list_currency",
   "plc_conversion_rate",
   "ignore_pricing_rule"
-],
+ ],
  "fields": [
   {
    "fieldname": "supplier_section",
@@ -1064,8 +1064,7 @@
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
- "links": [],
- "modified": "2021-01-22 20:27:11.418690",
+ "modified": "2021-07-26 18:48:06.551290",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Purchase Order",

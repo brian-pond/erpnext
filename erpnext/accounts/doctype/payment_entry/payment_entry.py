@@ -82,7 +82,10 @@ class PaymentEntry(AccountsController):
 		self.update_advance_paid()
 		self.update_expense_claim()
 		self.update_payment_schedule()
-		self.insert_bank_cheque()  # Spectrum Fruits
+		# Spectrum Fruits: Begin
+		if self.payment_type == 'Pay' and self.party_type == 'Supplier':
+			self.insert_bank_cheque()
+		# Spectrum Fruits: End
 		self.set_status()
 
 	def on_cancel(self):

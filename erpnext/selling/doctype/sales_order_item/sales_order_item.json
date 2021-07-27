@@ -85,7 +85,9 @@
   "section_break_63",
   "page_break",
   "item_tax_rate",
-  "transaction_date"
+  "transaction_date",
+  "qty_in_weight_uom",
+  "rate_per_weight_uom"
  ],
  "fields": [
   {
@@ -755,11 +757,23 @@
    "label": "Blanket Order Item",
    "no_copy": 1,
    "options": "Blanket Order Item"
+  },
+  {
+   "fieldname": "qty_in_weight_uom",
+   "fieldtype": "Float",
+   "label": "Qty in Weight UOM"
+  },
+  {
+   "developer_notes": "Created for Farm to People.",
+   "fieldname": "rate_per_weight_uom",
+   "fieldtype": "Float",
+   "label": "Rate per Weight UOM",
+   "precision": "4"
   }
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2020-11-16 18:32:51.315900",
+ "modified": "2021-07-21 19:37:56.256147",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order Item",

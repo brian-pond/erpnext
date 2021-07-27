@@ -97,6 +97,14 @@ erpnext.buying.PurchaseOrderController = erpnext.buying.BuyingController.extend(
 
 		this.frm.set_df_property("drop_ship", "hidden", !is_drop_ship);
 
+		// Spectrum Fruits:  Add link from PO to Blanket Order
+		if (this.frm.doc.blanket_order) {
+			this.frm.add_custom_button(__('View Blanket Orders'), function() {
+				frappe.set_route('List', 'Blanket Order', {"name": me.frm.doc.blanket_order});
+			}).addClass("btn-info");
+		}
+		// Spectrum Fruits
+
 		if(doc.docstatus == 1) {
 			if(!in_list(["Closed", "Delivered"], doc.status)) {
 				if(this.frm.doc.status !== 'Closed' && flt(this.frm.doc.per_received) < 100 && flt(this.frm.doc.per_billed) < 100) {

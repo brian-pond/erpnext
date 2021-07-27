@@ -29,14 +29,18 @@
   "received_qty",
   "qty",
   "rejected_qty",
-  "stock_qty",
   "col_break2",
   "weight_uom",
   "uom",
-  "stock_uom",
   "conversion_factor",
   "retain_sample",
   "sample_quantity",
+  "stock_section",
+  "stock_qty",
+  "weight_per_unit",
+  "cb_stock_1",
+  "stock_uom",
+  "total_weight",
   "rate_and_amount",
   "price_list_rate",
   "discount_percentage",
@@ -63,10 +67,6 @@
   "rm_supp_cost",
   "landed_cost_voucher_amount",
   "billed_amt",
-  "item_weight_details",
-  "weight_per_unit",
-  "total_weight",
-  "column_break_41",
   "warehouse_and_reference",
   "warehouse",
   "rejected_warehouse",
@@ -426,25 +426,16 @@
    "read_only": 1
   },
   {
-   "collapsible": 1,
-   "fieldname": "item_weight_details",
-   "fieldtype": "Section Break",
-   "label": "Item Weight Details"
-  },
-  {
    "fieldname": "weight_per_unit",
    "fieldtype": "Float",
-   "label": "Weight Per Unit"
+   "label": "Weight Per Unit",
+   "read_only": 1
   },
   {
    "fieldname": "total_weight",
    "fieldtype": "Float",
    "label": "Total Weight",
    "read_only": 1
-  },
-  {
-   "fieldname": "column_break_41",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "weight_uom",
@@ -724,6 +715,7 @@
    "oldfieldname": "valuation_rate",
    "oldfieldtype": "Currency",
    "options": "Company:company:default_currency",
+   "precision": "4",
    "print_hide": 1,
    "print_width": "80px",
    "read_only": 1,
@@ -851,11 +843,21 @@
    "fieldtype": "Float",
    "label": "Recvd per Weight UOM",
    "precision": "4"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "stock_section",
+   "fieldtype": "Section Break",
+   "label": "Stock"
+  },
+  {
+   "fieldname": "cb_stock_1",
+   "fieldtype": "Column Break"
   }
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2021-07-15 11:43:53.342098",
+ "modified": "2021-07-27 12:43:10.220436",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Purchase Receipt Item",

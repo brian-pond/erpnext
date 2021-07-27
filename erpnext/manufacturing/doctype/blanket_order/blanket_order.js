@@ -12,6 +12,9 @@ frappe.ui.form.on('Blanket Order', {
 		if (!frm.doc.from_date){
 			frm.set_value('from_date', frappe.datetime.get_today())
 		}
+		if (!frm.doc.document_date){
+			frm.set_value('document_date', frappe.datetime.get_today())
+		}
 
 		// Fill-in any missing values.
 		default_reqd_by_dates(frm);
@@ -39,35 +42,6 @@ frappe.ui.form.on('Blanket Order', {
 		frm.add_fetch("customer", "customer_name", "customer_name");
 		frm.add_fetch("supplier", "supplier_name", "supplier_name");
 	},
-
-	/*
-	refresh: function(frm) {
-		erpnext.hide_company();
-		if (frm.doc.customer && frm.doc.docstatus === 1) {
-			frm.add_custom_button(__('View Orders'), function() {
-				frappe.set_route('List', 'Sales Order', {blanket_order: frm.doc.name});
-			});
-			frm.add_custom_button(__("Create Sales Order"), function(){
-				frappe.model.open_mapped_doc({
-					method: "erpnext.manufacturing.doctype.blanket_order.blanket_order.make_sales_order",
-					frm: frm
-				});
-			}).addClass("btn-primary");
-		}
-
-		if (frm.doc.supplier && frm.doc.docstatus === 1) {
-			frm.add_custom_button(__('View Orders'), function() {
-				frappe.set_route('List', 'Purchase Order', {blanket_order: frm.doc.name});
-			});
-			frm.add_custom_button(__("Create Purchase Order"), function(){
-				frappe.model.open_mapped_doc({
-					method: "erpnext.manufacturing.doctype.blanket_order.blanket_order.make_purchase_order",
-					frm: frm
-				});
-			}).addClass("btn-primary");
-		}
-	},
-	*/
 
 	onload_post_render: function(frm) {
 		frm.get_field("items").grid.set_multiple_add("item_code", "qty");
@@ -159,7 +133,7 @@ frappe.ui.form.on('Blanket Order', {
 });
 
 
-// Brian: Still not quite sure why I'm wrapping/extending form.Conroller
+// Brian: Still not quite sure why I'm wrapping/extending form.Controller
 // but it's necessary to call get_item_details() successfully
 erpnext.manufacturing.BlanketOrder = frappe.ui.form.Controller.extend({
 
@@ -197,8 +171,7 @@ $.extend(cur_frm.cscript, new erpnext.manufacturing.BlanketOrder({frm: cur_frm})
 
 frappe.ui.form.on("Blanket Order Item", {
 	/*
-		* Yes, the line's controller functions are defined here; not in their own JS file.  Because WTFK?
-		* Is it possible to add custom methods here that are not related to DocFields?  I'm not sure yet.
+		* Yes, the line's controller functions are defined here; Child Tables are a 2nd class citizen in Frappe
 		* CDT: Current DocType, CDN: Current DocType's name/id
 	*/
 

@@ -203,6 +203,7 @@ def get_opening_balance(filters, columns):
 	return row
 
 def get_warehouse_condition(warehouse):
+	# Datahenge: Frappe did some cleverness here, to handle hierarchies.
 	warehouse_details = frappe.db.get_value("Warehouse", warehouse, ["lft", "rgt"], as_dict=1)
 	if warehouse_details:
 		return " exists (select name from `tabWarehouse` wh \

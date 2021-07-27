@@ -380,9 +380,9 @@ class StockController(AccountsController):
 	# Spectrum_Fruits: Begin
 	def update_blanket_order_items(self):
 		# Order lines are related to a single Blanket Order Item.
-		blanket_line_names = list(set([d.blanket_order_item for d in self.items if d.blanket_order_item]))
-		for name in blanket_line_names:
-			frappe.get_doc("Blanket Order Item", name).update_ordered_qty()
+		if hasattr(self, 'blanket_order') and self.blanket_order:
+			blanket_doc = frappe.get_doc("Blanket Order", self.blanket_order)
+			blanket_doc.update_ordered_qty()
 	# Spectrum_Fruits: End
 
 	def validate_customer_provided_item(self):
