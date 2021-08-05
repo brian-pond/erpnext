@@ -19,6 +19,8 @@ class BlanketOrder(Document):
 
 	def validate(self):
 		# self.validate_dates()
+		
+		# TODO: Check this out Brian
 		self.set_supplier_address()
 		self.validate_required_by_dates()
 

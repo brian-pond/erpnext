@@ -1115,7 +1115,10 @@ def get_payment_entry(dt, dn, party_amount=None, bank_account=None, bank_amount=
 	if dt in ("Purchase Invoice", "Purchase Order"):
 		supplier = frappe.get_doc("Supplier", doc.supplier)
 		# Brian: Remit to Address is only mandatory when Payment Method = Check
-		remit_to_doc =  supplier.get_remit_to_address(none_on_error=(pe.mode_of_payment != 'Check'))
+		try:
+			remit_to_doc =  supplier.get_remit_to_address(none_on_error=(pe.mode_of_payment != 'Check'))
+		except:
+			pass  # If cannot find a Remit To Address, that's fine; will reevaluate during Submit.
 		if remit_to_doc:
 			pe.remit_to_address = remit_to_doc.name
 	# Spectrum Fruits: End

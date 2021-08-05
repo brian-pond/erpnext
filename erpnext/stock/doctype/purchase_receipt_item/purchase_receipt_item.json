@@ -325,6 +325,7 @@
    "oldfieldname": "import_rate",
    "oldfieldtype": "Currency",
    "options": "currency",
+   "precision": "4",
    "print_width": "100px",
    "width": "100px"
   },
@@ -414,6 +415,7 @@
    "fieldtype": "Currency",
    "label": "Net Rate (Company Currency)",
    "options": "Company:company:default_currency",
+   "precision": "4",
    "print_hide": 1,
    "read_only": 1
   },
@@ -857,7 +859,7 @@
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2021-07-27 12:43:10.220436",
+ "modified": "2021-08-03 15:00:24.487360",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Purchase Receipt Item",
