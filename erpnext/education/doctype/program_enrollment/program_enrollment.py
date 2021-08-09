@@ -87,10 +87,12 @@ class ProgramEnrollment(Document):
 				fees.submit()
 				fee_list.append(fees.name)
 		if fee_list:
-			fee_list = ["""<a href="#Form/Fees/%s" target="_blank">%s</a>""" % \
+			fee_list = ["""<a href="/app/Form/Fees/%s" target="_blank">%s</a>""" % \
 				(fee, fee) for fee in fee_list]
 			msgprint(_("Fee Records Created - {0}").format(comma_and(fee_list)))
 
+
+	@frappe.whitelist()
 	def get_courses(self):
 		return frappe.db.sql('''select course from `tabProgram Course` where parent = %s and required = 1''', (self.program), as_dict=1)
 

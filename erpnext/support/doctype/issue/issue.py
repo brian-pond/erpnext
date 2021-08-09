@@ -7,7 +7,7 @@ import json
 from frappe import _
 from frappe import utils
 from frappe.model.document import Document
-from frappe.utils import now_datetime, getdate, get_weekdays, add_to_date, get_time, get_datetime, time_diff_in_seconds
+from frappe.utils import cint, now_datetime, getdate, get_weekdays, add_to_date, get_time, get_datetime, time_diff_in_seconds
 from datetime import datetime, timedelta
 from frappe.model.mapper import get_mapped_doc
 from frappe.utils.user import is_website_user
@@ -28,6 +28,9 @@ class Issue(Document):
 		self.change_service_level_agreement_and_priority()
 		self.update_status()
 		self.set_lead_contact(self.raised_by)
+
+		if not self.service_level_agreement:
+			self.reset_sla_fields()
 
 	def on_update(self):
 		# Add a communication in the issue timeline
@@ -53,6 +56,13 @@ class Issue(Document):
 			if not self.company:
 				self.company = frappe.db.get_value("Lead", self.lead, "company") or \
 					frappe.db.get_default("Company")
+
+	def reset_sla_fields(self):
+		self.agreement_status = ""
+		self.response_by = ""
+		self.resolution_by = ""
+		self.response_by_variance = 0
+		self.resolution_by_variance = 0
 
 	def update_status(self):
 		status = frappe.db.get_value("Issue", self.name, "status")
@@ -128,8 +138,8 @@ class Issue(Document):
 
 	def update_agreement_status(self):
 		if self.service_level_agreement and self.agreement_status == "Ongoing":
-			if frappe.db.get_value("Issue", self.name, "response_by_variance") < 0 or \
-				frappe.db.get_value("Issue", self.name, "resolution_by_variance") < 0:
+			if cint(frappe.db.get_value("Issue", self.name, "response_by_variance")) < 0 or \
+				cint(frappe.db.get_value("Issue", self.name, "resolution_by_variance")) < 0:
 
 				self.agreement_status = "Failed"
 			else:
@@ -165,6 +175,7 @@ class Issue(Document):
 		communication.ignore_mandatory = True
 		communication.save()
 
+	@frappe.whitelist()
 	def split_issue(self, subject, communication_id):
 		# Bug: Pressing enter doesn't send subject
 		from copy import deepcopy
@@ -207,7 +218,7 @@ class Issue(Document):
 			"comment_type": "Info",
 			"reference_doctype": "Issue",
 			"reference_name": replicated_issue.name,
-			"content": " - Split the Issue from <a href='#Form/Issue/{0}'>{1}</a>".format(self.name, frappe.bold(self.name)),
+			"content": " - Split the Issue from <a href='/app/Form/Issue/{0}'>{1}</a>".format(self.name, frappe.bold(self.name)),
 		}).insert(ignore_permissions=True)
 
 		return replicated_issue.name
@@ -259,6 +270,7 @@ class Issue(Document):
 				self.set_response_and_resolution_time(priority=self.priority, service_level_agreement=self.service_level_agreement)
 				frappe.msgprint(_("Service Level Agreement has been changed to {0}.").format(self.service_level_agreement))
 
+	@frappe.whitelist()
 	def reset_service_level_agreement(self, reason, user):
 		if not frappe.db.get_single_value("Support Settings", "allow_resetting_service_level_agreement"):
 			frappe.throw(_("Allow Resetting Service Level Agreement from Support Settings."))

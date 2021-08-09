@@ -2,15 +2,17 @@
 // License: GNU General Public License v3. See license.txt
 
 erpnext.taxes_and_totals = erpnext.payments.extend({
-	setup: function() {},
+	setup: function() {
+		this.fetch_round_off_accounts();
+	},
 
-	apply_pricing_rule_on_item: function(item){
+	apply_pricing_rule_on_item: function(item) {
 		let effective_item_rate = item.price_list_rate;
 		let item_rate = item.rate;
 		if (in_list(["Sales Order", "Quotation"], item.parenttype) && item.blanket_order_rate) {
 			effective_item_rate = item.blanket_order_rate;
 		}
-		if(item.margin_type == "Percentage"){
+		if (item.margin_type == "Percentage") {
 			item.rate_with_margin = flt(effective_item_rate)
 				+ flt(effective_item_rate) * ( flt(item.margin_rate_or_amount) / 100);
 		} else {
@@ -20,12 +22,13 @@ erpnext.taxes_and_totals = erpnext.payments.extend({
 
 		item_rate = flt(item.rate_with_margin , precision("rate", item));
 
-		if(item.discount_percentage){
+		if (item.discount_percentage) {
 			item.discount_amount = flt(item.rate_with_margin) * flt(item.discount_percentage) / 100;
 		}
 
 		if (item.discount_amount) {
 			item_rate = flt((item.rate_with_margin) - (item.discount_amount), precision('rate', item));
+			item.discount_percentage = 100 * flt(item.discount_amount) / flt(item.rate_with_margin);
 		}
 
 		frappe.model.set_value(item.doctype, item.name, "rate", item_rate);
@@ -62,8 +65,10 @@ erpnext.taxes_and_totals = erpnext.payments.extend({
 		this.frm.refresh_fields();
 	},
 
-	calculate_discount_amount: function(){
+	calculate_discount_amount: function() {
 		if (frappe.meta.get_docfield(this.frm.doc.doctype, "discount_amount")) {
+			this.calculate_item_values();
+			this.calculate_net_total();
 			this.set_discount_amount();
 			this.apply_discount_amount();
 		}
@@ -99,7 +104,7 @@ erpnext.taxes_and_totals = erpnext.payments.extend({
 	},
 
 	calculate_item_values: function() {
-		var me = this;
+		let me = this;
 		if (!this.discount_amount_applied) {
 			$.each(this.frm.doc["items"] || [], function(i, item) {
 				frappe.model.round_floats_in(item);
@@ -149,6 +154,24 @@ erpnext.taxes_and_totals = erpnext.payments.extend({
 			}
 			frappe.model.round_floats_in(tax);
 		});
+	},
+
+	fetch_round_off_accounts: function() {
+		let me = this;
+		frappe.flags.round_off_applicable_accounts = [];
+
+		if (me.frm.doc.company) {
+			return frappe.call({
+				"method": "erpnext.controllers.taxes_and_totals.get_round_off_applicable_accounts",
+				"args": {
+					"company": me.frm.doc.company,
+					"account_list": frappe.flags.round_off_applicable_accounts
+				},
+				callback: function(r) {
+					frappe.flags.round_off_applicable_accounts.push(...r.message);
+				}
+			});
+		}
 	},
 
 	determine_exclusive_rate: function() {
@@ -242,6 +265,26 @@ erpnext.taxes_and_totals = erpnext.payments.extend({
 		frappe.model.round_floats_in(this.frm.doc, ["total", "base_total", "net_total", "base_net_total"]);
 	},
 
+	add_taxes_from_item_tax_template: function(item_tax_map) {
+		let me = this;
+
+		if (item_tax_map && cint(frappe.defaults.get_default("add_taxes_from_item_tax_template"))) {
+			if (typeof (item_tax_map) == "string") {
+				item_tax_map = JSON.parse(item_tax_map);
+			}
+
+			$.each(item_tax_map, function(tax, rate) {
+				let found = (me.frm.doc.taxes || []).find(d => d.account_head === tax);
+				if (!found) {
+					let child = frappe.model.add_child(me.frm.doc, "taxes");
+					child.charge_type = "On Net Total";
+					child.account_head = tax;
+					child.rate = 0;
+				}
+			});
+		}
+	},
+
 	calculate_taxes: function() {
 		var me = this;
 		this.frm.doc.rounding_adjustment = 0;
@@ -302,12 +345,15 @@ erpnext.taxes_and_totals = erpnext.payments.extend({
 				// set precision in the last item iteration
 				if (n == me.frm.doc["items"].length - 1) {
 					me.round_off_totals(tax);
+					me.set_in_company_currency(tax,
+						["tax_amount", "tax_amount_after_discount_amount"]);
+
+					me.round_off_base_values(tax);
 
 					// in tax.total, accumulate grand total for each item
 					me.set_cumulative_total(i, tax);
 
-					me.set_in_company_currency(tax,
-						["total", "tax_amount", "tax_amount_after_discount_amount"]);
+					me.set_in_company_currency(tax, ["total"]);
 
 					// adjust Discount Amount loss in last tax iteration
 					if ((i == me.frm.doc["taxes"].length - 1) && me.discount_amount_applied
@@ -371,6 +417,7 @@ erpnext.taxes_and_totals = erpnext.payments.extend({
 		} else if (tax.charge_type == "On Item Quantity") {
 			current_tax_amount = tax_rate * item.qty;
 		}
+
 		this.set_item_wise_tax(item, tax, tax_rate, current_tax_amount);
 
 		return current_tax_amount;
@@ -381,6 +428,11 @@ erpnext.taxes_and_totals = erpnext.payments.extend({
 		let tax_detail = tax.item_wise_tax_detail;
 		let key = item.item_code || item.item_name;
 
+		if(typeof (tax_detail) == "string") {
+			tax.item_wise_tax_detail = JSON.parse(tax.item_wise_tax_detail);
+			tax_detail = tax.item_wise_tax_detail;
+		}
+
 		let item_wise_tax_amount = current_tax_amount * this.frm.doc.conversion_rate;
 		if (tax_detail && tax_detail[key])
 			item_wise_tax_amount += tax_detail[key][1];
@@ -389,8 +441,20 @@ erpnext.taxes_and_totals = erpnext.payments.extend({
 	},
 
 	round_off_totals: function(tax) {
+		if (frappe.flags.round_off_applicable_accounts.includes(tax.account_head)) {
+			tax.tax_amount= Math.round(tax.tax_amount);
+			tax.tax_amount_after_discount_amount = Math.round(tax.tax_amount_after_discount_amount);
+		}
+
 		tax.tax_amount = flt(tax.tax_amount, precision("tax_amount", tax));
 		tax.tax_amount_after_discount_amount = flt(tax.tax_amount_after_discount_amount, precision("tax_amount", tax));
+	},
+
+	round_off_base_values: function(tax) {
+		if (frappe.flags.round_off_applicable_accounts.includes(tax.account_head)) {
+			tax.base_tax_amount= Math.round(tax.base_tax_amount);
+			tax.base_tax_amount_after_discount_amount = Math.round(tax.base_tax_amount_after_discount_amount);
+		}
 	},
 
 	manipulate_grand_total_for_inclusive_tax: function() {
@@ -427,7 +491,7 @@ erpnext.taxes_and_totals = erpnext.payments.extend({
 	},
 
 	calculate_totals: function() {
-		// Changing sequence can cause rounding_adjustmentng issue and on-screen discrepency
+		// Changing sequence can because of rounding adjustment issue and on-screen discrepancy
 		var me = this;
 		var tax_count = this.frm.doc["taxes"] ? this.frm.doc["taxes"].length : 0;
 		this.frm.doc.grand_total = flt(tax_count

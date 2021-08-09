@@ -1,15 +1,17 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
-from __future__ import unicode_literals
-import frappe, erpnext
+import erpnext
+import frappe
+from erpnext.hr.doctype.employee.employee import get_holiday_list_for_employee, InactiveEmployeeStatusError
 from frappe import _
-from frappe.utils import formatdate, format_datetime, getdate, get_datetime, nowdate, flt, cstr, add_days, today
-from frappe.model.document import Document
 from frappe.desk.form import assign_to
-from erpnext.hr.doctype.employee.employee import get_holiday_list_for_employee
+from frappe.model.document import Document
+from frappe.utils import (add_days, cstr, flt, format_datetime, formatdate,
+	get_datetime, getdate, nowdate, today, unique, get_link_to_form)
 
 class DuplicateDeclarationError(frappe.ValidationError): pass
+
 
 class EmployeeBoardingController(Document):
 	'''
@@ -17,6 +19,7 @@ class EmployeeBoardingController(Document):
 		Assign to the concerned person and roles as per the onboarding/separation template
 	'''
 	def validate(self):
+		validate_active_employee(self.employee)
 		# remove the task if linked before submitting the form
 		if self.amended_from:
 			for activity in self.activities:
@@ -29,13 +32,15 @@ class EmployeeBoardingController(Document):
 			project_name += self.job_applicant
 		else:
 			project_name += self.employee
+
 		project = frappe.get_doc({
 				"doctype": "Project",
 				"project_name": project_name,
 				"expected_start_date": self.date_of_joining if self.doctype == "Employee Onboarding" else self.resignation_letter_date,
 				"department": self.department,
 				"company": self.company
-			}).insert(ignore_permissions=True)
+			}).insert(ignore_permissions=True, ignore_mandatory=True)
+
 		self.db_set("project", project.name)
 		self.db_set("boarding_status", "Pending")
 		self.reload()
@@ -48,27 +53,38 @@ class EmployeeBoardingController(Document):
 				continue
 
 			task = frappe.get_doc({
-					"doctype": "Task",
-					"project": self.project,
-					"subject": activity.activity_name + " : " + self.employee_name,
-					"description": activity.description,
-					"department": self.department,
-					"company": self.company,
-					"task_weight": activity.task_weight
-				}).insert(ignore_permissions=True)
+				"doctype": "Task",
+				"project": self.project,
+				"subject": activity.activity_name + " : " + self.employee_name,
+				"description": activity.description,
+				"department": self.department,
+				"company": self.company,
+				"task_weight": activity.task_weight
+			}).insert(ignore_permissions=True)
 			activity.db_set("task", task.name)
+
 			users = [activity.user] if activity.user else []
 			if activity.role:
-				user_list = frappe.db.sql_list('''select distinct(parent) from `tabHas Role`
-					where parenttype='User' and role=%s''', activity.role)
-				users = users + user_list
+				user_list = frappe.db.sql_list('''
+					SELECT
+						DISTINCT(has_role.parent)
+					FROM
+						`tabHas Role` has_role
+							LEFT JOIN `tabUser` user
+								ON has_role.parent = user.name
+					WHERE
+						has_role.parenttype = 'User'
+							AND user.enabled = 1
+							AND has_role.role = %s
+				''', activity.role)
+				users = unique(users + user_list)
 
 				if "Administrator" in users:
 					users.remove("Administrator")
 
 			# assign the task the users
 			if users:
-				self.assign_task_to_users(task, set(users))
+				self.assign_task_to_users(task, users)
 
 	def assign_task_to_users(self, task, users):
 		for user in users:
@@ -211,7 +227,7 @@ def get_doc_condition(doctype):
 def throw_overlap_error(doc, exists_for, overlap_doc, from_date, to_date):
 	msg = _("A {0} exists between {1} and {2} (").format(doc.doctype,
 		formatdate(from_date), formatdate(to_date)) \
-		+ """ <b><a href="#Form/{0}/{1}">{1}</a></b>""".format(doc.doctype, overlap_doc) \
+		+ """ <b><a href="/app/Form/{0}/{1}">{1}</a></b>""".format(doc.doctype, overlap_doc) \
 		+ _(") for {0}").format(exists_for)
 	frappe.throw(msg)
 
@@ -253,6 +269,7 @@ def get_total_exemption_amount(declarations):
 	total_exemption_amount = sum([flt(d.total_exemption_amount) for d in exemptions.values()])
 	return total_exemption_amount
 
+@frappe.whitelist()
 def get_leave_period(from_date, to_date, company):
 	leave_period = frappe.db.sql("""
 		select name, from_date, to_date
@@ -484,9 +501,29 @@ def get_previous_claimed_amount(employee, payroll_period, non_pro_rata=False, co
 		total_claimed_amount = sum_of_claimed_amount[0].total_amount
 	return total_claimed_amount
 
-def grant_leaves_automatically():
-	automatically_allocate_leaves_based_on_leave_policy = frappe.db.get_singles_value("HR Settings", "automatically_allocate_leaves_based_on_leave_policy")
-	if automatically_allocate_leaves_based_on_leave_policy:
-		lpa = frappe.db.get_all("Leave Policy Assignment", filters={"effective_from": getdate(), "docstatus": 1, "leaves_allocated":0})
-		for assignment in lpa:
-			frappe.get_doc("Leave Policy Assignment", assignment.name).grant_leave_alloc_for_employee()
+def share_doc_with_approver(doc, user):
+	# if approver does not have permissions, share
+	if not frappe.has_permission(doc=doc, ptype="submit", user=user):
+		frappe.share.add(doc.doctype, doc.name, user, submit=1,
+			flags={"ignore_share_permission": True})
+
+		frappe.msgprint(_("Shared with the user {0} with {1} access").format(
+			user, frappe.bold("submit"), alert=True))
+
+	# remove shared doc if approver changes
+	doc_before_save = doc.get_doc_before_save()
+	if doc_before_save:
+		approvers = {
+			"Leave Application": "leave_approver",
+			"Expense Claim": "expense_approver",
+			"Shift Request": "approver"
+		}
+
+		approver = approvers.get(doc.doctype)
+		if doc_before_save.get(approver) != doc.get(approver):
+			frappe.share.remove(doc.doctype, doc.name, doc_before_save.get(approver))
+
+def validate_active_employee(employee):
+	if frappe.db.get_value("Employee", employee, "status") == "Inactive":
+		frappe.throw(_("Transactions cannot be created for an Inactive Employee {0}.").format(
+			get_link_to_form("Employee", employee)), InactiveEmployeeStatusError)

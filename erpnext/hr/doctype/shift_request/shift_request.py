@@ -7,15 +7,20 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.utils import formatdate, getdate
+from erpnext.hr.utils import share_doc_with_approver, validate_active_employee
 
 class OverlapError(frappe.ValidationError): pass
 
 class ShiftRequest(Document):
 	def validate(self):
+		validate_active_employee(self.employee)
 		self.validate_dates()
 		self.validate_shift_request_overlap_dates()
 		self.validate_approver()
 		self.validate_default_shift()
+
+	def on_update(self):
+		share_doc_with_approver(self, self.approver)
 
 	def on_submit(self):
 		if self.status not in ["Approved", "Rejected"]:
@@ -29,6 +34,7 @@ class ShiftRequest(Document):
 			if self.to_date:
 				assignment_doc.end_date = self.to_date
 			assignment_doc.shift_request = self.name
+			assignment_doc.flags.ignore_permissions = 1
 			assignment_doc.insert()
 			assignment_doc.submit()
 
@@ -87,5 +93,5 @@ class ShiftRequest(Document):
 	def throw_overlap_error(self, d):
 		msg = _("Employee {0} has already applied for {1} between {2} and {3} : ").format(self.employee,
 			d['shift_type'], formatdate(d['from_date']), formatdate(d['to_date'])) \
-			+ """ <b><a href="#Form/Shift Request/{0}">{0}</a></b>""".format(d["name"])
+			+ """ <b><a href="/app/Form/Shift Request/{0}">{0}</a></b>""".format(d["name"])
 		frappe.throw(msg, OverlapError)

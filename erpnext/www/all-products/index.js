@@ -54,7 +54,7 @@ $(() => {
 					field_filters: JSON.stringify(if_key_exists(this.field_filters)),
 					attribute_filters: JSON.stringify(if_key_exists(this.attribute_filters)),
 				});
-				window.history.pushState('filters', '', '/all-products?' + query_string);
+				window.history.pushState('filters', '', `${location.pathname}?` + query_string);
 
 				$('.page_content input').prop('disabled', true);
 				this.get_items_with_filters()
@@ -124,6 +124,10 @@ $(() => {
 				attribute_filters: if_key_exists(attribute_filters)
 			};
 
+			const item_group = $(".item-group-content").data('item-group');
+			if (item_group) {
+				Object.assign(field_filters, { item_group });
+			}
 			return new Promise((resolve, reject) => {
 				frappe.call('erpnext.portal.product_configurator.utils.get_products_html_for_website', args)
 					.then(r => {
