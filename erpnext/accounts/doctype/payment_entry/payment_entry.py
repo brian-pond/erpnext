@@ -83,7 +83,7 @@ class PaymentEntry(AccountsController):
 		self.update_expense_claim()
 		self.update_payment_schedule()
 		# Spectrum Fruits: Begin
-		if self.payment_type == 'Pay' and self.party_type == 'Supplier':
+		if self.payment_type == 'Pay' and self.mode_of_payment == 'Bank Check':
 			self.insert_bank_cheque()
 		# Spectrum Fruits: End
 		self.set_status()
