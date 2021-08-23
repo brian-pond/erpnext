@@ -231,7 +231,7 @@ def set_batch_nos(doc, warehouse_field, throw=False):
 	# Modified for Spectrum Fruits
 	for d in doc.items:
 		qty = d.get('stock_qty') or d.get('transfer_qty') or d.get('qty') or 0
-		has_batch_no = _frappe.db.get_value('Item', d.item_code, 'has_batch_no')
+		has_batch_no = frappe.db.get_value('Item', d.item_code, 'has_batch_no')
 		warehouse = d.get(warehouse_field, None)
 		if has_batch_no and warehouse and qty > 0:
 
@@ -242,7 +242,7 @@ def set_batch_nos(doc, warehouse_field, throw=False):
 			# 3. For Stock Entries, Copy the Batch from Old to New.
 
 			if d.doctype == 'Delivery Note Item' and not d.batch_no:
-				# Nicole does not want Batches chosen automatically for Delivery Notes.
+				# Nicole does not want Batch Numbers chosen automatically for Delivery Notes.
 				pass
 			else:
 				batch_qty = batch.get_batch_qty(batch_no=d.batch_no, warehouse=warehouse)
@@ -250,9 +250,9 @@ def set_batch_nos(doc, warehouse_field, throw=False):
 									# Spectrum Fruits: Do not throw an error yet.
 					if d.doctype == 'Delivery Note Item':
 						msg = f"Warning: Batch {d.batch_no} has insufficient quantity in Warehouse {warehouse}.\nYou may Save but not Submit."
-						_frappe.msgprint(msg, 'Warning: Batch Qty')
+						frappe.msgprint(msg, 'Warning: Batch Qty')
 					else:
-						_frappe.throw(_("Row #{0}: The batch {1} has only {2} qty. Please select another batch which has {3} qty available or split the row into multiple rows, to deliver/issue from multiple batches").format(d.idx, d.batch_no, batch_qty, qty))
+						frappe.throw(_("Row #{0}: The batch {1} has only {2} qty. Please select another batch which has {3} qty available or split the row into multiple rows, to deliver/issue from multiple batches").format(d.idx, d.batch_no, batch_qty, qty))
 
 
 
