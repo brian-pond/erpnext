@@ -230,6 +230,7 @@ def set_batch_nos(doc, warehouse_field, throw=False):
 	"""Automatically select `batch_no` for outgoing items in item table"""
 	# Modified for Spectrum Fruits
 	for d in doc.items:
+		# Loop through the "items" of a parent document:
 		qty = d.get('stock_qty') or d.get('transfer_qty') or d.get('qty') or 0
 		has_batch_no = frappe.db.get_value('Item', d.item_code, 'has_batch_no')
 		warehouse = d.get(warehouse_field, None)
@@ -245,7 +246,7 @@ def set_batch_nos(doc, warehouse_field, throw=False):
 				# Nicole does not want Batch Numbers chosen automatically for Delivery Notes.
 				pass
 			else:
-				batch_qty = batch.get_batch_qty(batch_no=d.batch_no, warehouse=warehouse)
+				batch_qty = get_batch_qty(batch_no=d.batch_no, warehouse=warehouse)
 				if flt(batch_qty, d.precision("qty")) < flt(qty, d.precision("qty")):
 									# Spectrum Fruits: Do not throw an error yet.
 					if d.doctype == 'Delivery Note Item':
