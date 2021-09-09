@@ -33,7 +33,7 @@
    "fieldname": "naming_series",
    "fieldtype": "Select",
    "label": "Series",
-   "options": "MFG-BLR-.YYYY.-",
+   "options": "PC.-",
    "reqd": 1
   },
   {
@@ -65,6 +65,7 @@
    "fieldname": "supplier",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Supplier",
    "options": "Supplier"
   },
@@ -179,7 +180,7 @@
   }
  ],
  "is_submittable": 1,
- "modified": "2021-09-07 15:01:32.861282",
+ "modified": "2021-09-09 10:19:52.150430",
  "modified_by": "Administrator",
  "module": "Manufacturing",
  "name": "Blanket Order",

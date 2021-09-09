@@ -1,6 +1,7 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
+
 from __future__ import unicode_literals
 import frappe, erpnext
 import frappe.defaults
@@ -40,6 +41,17 @@ class StockEntry(StockController):
 		"""To initialize the status updater."""
 		super(StockEntry, self).__init__(*args, **kwargs)
 		self.status_updater = []
+
+	# Spectrum Fruits: If a PINV is not linked, clear the values of the 4 data fields.
+	def before_save(self):
+		if self.purpose != 'Repack':
+			self.link_purchase_invoice = False
+		if not self.link_purchase_invoice:
+			self.purchase_invoice = None
+			self.purchase_invoice_supplier = None
+			self.purchase_invoice_date = None
+			self.purchase_invoice_amount = None
+	# Spectrum Fruits: End
 
 	def get_feed(self):
 		return self.stock_entry_type

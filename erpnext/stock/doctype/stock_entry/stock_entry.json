@@ -25,6 +25,13 @@
   "set_posting_time",
   "inspection_required",
   "from_bom",
+  "link_purchase_invoice",
+  "sb_purchase_invoice",
+  "purchase_invoice",
+  "purchase_invoice_supplier",
+  "cb_pinv",
+  "purchase_invoice_date",
+  "purchase_invoice_amount",
   "sb1",
   "bom_no",
   "fg_completed_qty",
@@ -74,12 +81,7 @@
   "total_amount",
   "job_card",
   "amended_from",
-  "credit_note",
-  "pinv_linked",
-  "pinv_name",
-  "pinv_supplier_inv_num",
-  "pinv_supplier_inv_date",
-  "pinv_supplier_inv_amount"
+  "credit_note"
  ],
  "fields": [
   {
@@ -630,36 +632,54 @@
   },
   {
    "default": "0",
-   "fieldname": "pinv_linked",
+   "depends_on": "eval: doc.purpose == 'Repack'",
+   "fieldname": "link_purchase_invoice",
    "fieldtype": "Check",
    "label": "Link PINV"
   },
   {
-   "fieldname": "pinv_name",
+   "depends_on": "eval: doc.link_purchase_invoice == 1",
+   "fieldname": "sb_purchase_invoice",
+   "fieldtype": "Section Break",
+   "label": "PINV Details"
+  },
+  {
+   "fieldname": "purchase_invoice",
    "fieldtype": "Link",
    "label": "Purchase Invoice",
    "options": "Purchase Invoice"
   },
   {
-   "fieldname": "pinv_supplier_inv_num",
-   "fieldtype": "Data",
-   "label": "Supplier Invoice Num"
+   "fetch_from": "purchase_invoice.supplier",
+   "fieldname": "purchase_invoice_supplier",
+   "fieldtype": "Link",
+   "label": "PINV Supplier",
+   "options": "Supplier",
+   "read_only": 1
   },
   {
-   "fieldname": "pinv_supplier_inv_date",
+   "fieldname": "cb_pinv",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "purchase_invoice.posting_date",
+   "fieldname": "purchase_invoice_date",
    "fieldtype": "Date",
-   "label": "Supplier Invoice Date"
+   "label": "PINV Date",
+   "read_only": 1
   },
   {
-   "fieldname": "pinv_supplier_inv_amount",
+   "fetch_from": "purchase_invoice.grand_total",
+   "fieldname": "purchase_invoice_amount",
    "fieldtype": "Currency",
-   "label": "Supplier Invoice Amount"
+   "label": "Amount",
+   "read_only": 1
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 1,
  "is_submittable": 1,
- "modified": "2021-08-26 14:24:21.459933",
+ "modified": "2021-09-09 10:39:45.890875",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Stock Entry",
