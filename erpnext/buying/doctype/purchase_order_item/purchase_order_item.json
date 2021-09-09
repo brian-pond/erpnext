@@ -390,7 +390,6 @@
    "read_only": 1
   },
   {
-   "collapsible": 0,
    "fieldname": "item_weight_details",
    "fieldtype": "Section Break",
    "label": "Item Weight Details"
@@ -718,7 +717,7 @@
   {
    "fieldname": "weight_qty",
    "fieldtype": "Float",
-   "label": "Qty as per Weight UOM",
+   "label": "Qty per Weight UOM",
    "print_width": "100px",
    "width": "100px"
   },
@@ -729,7 +728,7 @@
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2021-07-12 18:52:22.380619",
+ "modified": "2021-08-26 14:11:24.011680",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Purchase Order Item",

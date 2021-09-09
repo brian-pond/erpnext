@@ -74,7 +74,12 @@
   "total_amount",
   "job_card",
   "amended_from",
-  "credit_note"
+  "credit_note",
+  "pinv_linked",
+  "pinv_name",
+  "pinv_supplier_inv_num",
+  "pinv_supplier_inv_date",
+  "pinv_supplier_inv_amount"
  ],
  "fields": [
   {
@@ -622,12 +627,39 @@
    "label": "Pick List",
    "options": "Pick List",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "pinv_linked",
+   "fieldtype": "Check",
+   "label": "Link PINV"
+  },
+  {
+   "fieldname": "pinv_name",
+   "fieldtype": "Link",
+   "label": "Purchase Invoice",
+   "options": "Purchase Invoice"
+  },
+  {
+   "fieldname": "pinv_supplier_inv_num",
+   "fieldtype": "Data",
+   "label": "Supplier Invoice Num"
+  },
+  {
+   "fieldname": "pinv_supplier_inv_date",
+   "fieldtype": "Date",
+   "label": "Supplier Invoice Date"
+  },
+  {
+   "fieldname": "pinv_supplier_inv_amount",
+   "fieldtype": "Currency",
+   "label": "Supplier Invoice Amount"
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 1,
  "is_submittable": 1,
- "modified": "2019-09-27 14:38:20.801420",
+ "modified": "2021-08-26 14:24:21.459933",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Stock Entry",

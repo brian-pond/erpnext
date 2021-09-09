@@ -20,6 +20,7 @@
   "quantity_and_rate",
   "received_qty",
   "qty",
+  "weight_qty",
   "rejected_qty",
   "stock_uom",
   "col_break2",
@@ -250,6 +251,7 @@
    "fieldtype": "Currency",
    "label": "Price List Rate (Company Currency)",
    "options": "Company:company:default_currency",
+   "precision": "4",
    "print_hide": 1,
    "read_only": 1
   },
@@ -779,11 +781,17 @@
    "no_copy": 1,
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "weight_qty",
+   "fieldtype": "Float",
+   "label": "Qty in Weight UOM",
+   "precision": "2"
   }
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2021-07-26 19:44:53.133934",
+ "modified": "2021-08-26 14:11:02.650241",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Purchase Invoice Item",

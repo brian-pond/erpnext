@@ -83,7 +83,8 @@ class PaymentEntry(AccountsController):
 		self.update_expense_claim()
 		self.update_payment_schedule()
 		# Spectrum Fruits: Begin
-		if self.payment_type == 'Pay' and self.mode_of_payment == 'Bank Check':
+		doc_mode_of_payment = frappe.get_doc("Mode of Payment", self.mode_of_payment)
+		if self.payment_type == 'Pay' and doc_mode_of_payment.create_bank_check:
 			self.insert_bank_cheque()
 		# Spectrum Fruits: End
 		self.set_status()

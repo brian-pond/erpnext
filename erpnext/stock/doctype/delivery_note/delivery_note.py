@@ -117,7 +117,8 @@ class DeliveryNote(SellingController):
 		self.validate_with_previous_doc()
 
 		if self._action != 'submit' and not self.is_return:
-			set_batch_nos(self, 'warehouse', True)
+			# Spectrum Fruits: Do not automatically assign Batch Numbers to Delivery Notes.
+			set_batch_nos(self, 'warehouse', throw=True, auto_assign_batch=False)
 
 		from erpnext.stock.doctype.packed_item.packed_item import make_packing_list
 		make_packing_list(self)

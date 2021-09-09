@@ -21,6 +21,7 @@
   "image_view",
   "quantity_and_rate",
   "qty",
+  "qty_in_weight_uom",
   "stock_uom",
   "col_break2",
   "uom",
@@ -40,6 +41,7 @@
   "section_break_simple1",
   "rate",
   "amount",
+  "rate_per_weight_uom",
   "item_tax_template",
   "col_break3",
   "base_rate",
@@ -86,8 +88,11 @@
   "page_break",
   "item_tax_rate",
   "transaction_date",
-  "qty_in_weight_uom",
-  "rate_per_weight_uom"
+  "lft",
+  "rgt",
+  "is_group",
+  "old_parent",
+  "parent_sales_order_item"
  ],
  "fields": [
   {
@@ -769,14 +774,50 @@
    "fieldtype": "Float",
    "label": "Rate per Weight UOM",
    "precision": "4"
+  },
+  {
+   "fieldname": "lft",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Left",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "rgt",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Right",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_group",
+   "fieldtype": "Check",
+   "label": "Is Group"
+  },
+  {
+   "fieldname": "old_parent",
+   "fieldtype": "Link",
+   "label": "Old Parent",
+   "options": "Sales Order Item"
+  },
+  {
+   "fieldname": "parent_sales_order_item",
+   "fieldtype": "Link",
+   "label": "Parent Sales Order Item",
+   "options": "Sales Order Item"
   }
  ],
  "idx": 1,
+ "is_tree": 1,
  "istable": 1,
- "modified": "2021-08-12 14:40:27.719743",
+ "modified": "2021-08-26 14:15:54.250887",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order Item",
+ "nsm_parent_field": "parent_sales_order_item",
  "owner": "Administrator",
  "permissions": [],
  "sort_field": "modified",

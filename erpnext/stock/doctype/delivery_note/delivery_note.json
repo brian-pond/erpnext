@@ -1,5 +1,4 @@
 {
- "actions": [],
  "allow_import": 1,
  "autoname": "naming_series:",
  "creation": "2013-05-24 19:29:09",
@@ -173,7 +172,7 @@
    "no_copy": 1,
    "oldfieldname": "naming_series",
    "oldfieldtype": "Select",
-   "options": "MAT-DN-.YYYY.-",
+   "options": "DN-",
    "print_hide": 1,
    "reqd": 1,
    "set_only_once": 1
@@ -1237,8 +1236,7 @@
  "icon": "fa fa-truck",
  "idx": 146,
  "is_submittable": 1,
- "links": [],
- "modified": "2020-05-19 17:03:45.880106",
+ "modified": "2021-08-26 15:01:12.915304",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Delivery Note",

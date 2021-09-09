@@ -116,7 +116,8 @@ class StockEntry(StockController):
 		self.update_cost_in_project()
 		self.update_transferred_qty()
 		self.update_quality_inspection()
-		self.delete_auto_created_batches()
+		# Spectrum Fruits: Do not destroy Batches when a Stock Entry is cancelled.
+		# self.delete_auto_created_batches()
 		self.delete_linked_stock_entry()
 
 	def set_job_card_data(self):

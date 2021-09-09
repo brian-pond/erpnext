@@ -226,34 +226,57 @@ def split_batch(batch_no, item_code, warehouse, qty, new_batch_id=None):
 	return batch.name
 
 
-def set_batch_nos(doc, warehouse_field, throw=False):
+def set_batch_nos(doc, warehouse_field, throw=False, auto_assign_batch=True, warn_err_on_qty=None):
 	"""Automatically select `batch_no` for outgoing items in item table"""
-	# Modified for Spectrum Fruits
-	for d in doc.items:
-		# Loop through the "items" of a parent document:
-		qty = d.get('stock_qty') or d.get('transfer_qty') or d.get('qty') or 0
+	# SPECTRUM FRUITS: Heavily modified.
+
+	if warn_err_on_qty and warn_err_on_qty not in ['Warning','Error']:
+		frappe.throw(_("Function argument 'warn_err_on_qty' must be None, Warning, or Error."))
+
+	for d in doc.items:  	# For a generic parent, loop through the child records:
 		has_batch_no = frappe.db.get_value('Item', d.item_code, 'has_batch_no')
+		if not has_batch_no:
+			continue
 		warehouse = d.get(warehouse_field, None)
-		if has_batch_no and warehouse and qty > 0:
+		if not warehouse:
+			continue
+		qty = d.get('stock_qty') or d.get('transfer_qty') or d.get('qty') or 0
+		if qty <= 0:
+			continue
 
-			# Spectrum Fruits: Do not fetch Batches automatically for Delivery Notes.
-			# TODO:  
-			# 1. If there is no Batch Number whatsoever (for Stock Entries only), then don't worry about calculating Quantity.
-			# 2. Allow it to Save.....but NOT Submit.
-			# 3. For Stock Entries, Copy the Batch from Old to New.
+		# Automatically assign missing Batches (can disable via function argument)
+		if not d.batch_no and auto_assign_batch:
+			d.batch_no = get_batch_no(d.item_code, warehouse, qty, throw, d.serial_no)
+			continue
 
-			if d.doctype == 'Delivery Note Item' and not d.batch_no:
-				# Nicole does not want Batch Numbers chosen automatically for Delivery Notes.
-				pass
-			else:
-				batch_qty = get_batch_qty(batch_no=d.batch_no, warehouse=warehouse)
-				if flt(batch_qty, d.precision("qty")) < flt(qty, d.precision("qty")):
-									# Spectrum Fruits: Do not throw an error yet.
-					if d.doctype == 'Delivery Note Item':
-						msg = f"Warning: Batch {d.batch_no} has insufficient quantity in Warehouse {warehouse}.\nYou may Save but not Submit."
-						frappe.msgprint(msg, 'Warning: Batch Qty')
-					else:
-						frappe.throw(_("Row #{0}: The batch {1} has only {2} qty. Please select another batch which has {3} qty available or split the row into multiple rows, to deliver/issue from multiple batches").format(d.idx, d.batch_no, batch_qty, qty))
+		if warn_err_on_qty:
+			batch_qty = get_batch_qty(batch_no=d.batch_no, warehouse=warehouse)
+			if flt(batch_qty, d.precision("qty")) < flt(qty, d.precision("qty")):
+				if warn_err_on_qty == "Warning":
+					# Warning Only
+					msg = f"Warning: Batch '{d.batch_no}' has insufficient quantity in Warehouse {warehouse}.\nYou may continue."
+					frappe.msgprint(msg, 'Warning: Batch Qty')
+				elif warn_err_on_qty == "Error":
+					# Error
+					frappe.throw(_("Row #{0}: The batch {1} has only {2} qty. Please select another batch which has {3} qty available or split the row into multiple rows, to deliver/issue from multiple batches").format(d.idx, d.batch_no, batch_qty, qty))
+				else:
+					frappe.throw(_("Function argument 'warn_err_on_qty' must be None, Warning, or Error."))					
+
+
+# ORIGINAL CODE:
+
+#def set_batch_nos(doc, warehouse_field, throw=False, child_table="items"):
+#	"""Automatically select `batch_no` for outgoing items in item table"""
+#	for d in doc.get(child_table):
+#		qty = d.get('stock_qty') or d.get('transfer_qty') or d.get('qty') or 0
+#		warehouse = d.get(warehouse_field, None)
+#		if warehouse and qty > 0 and frappe.db.get_value('Item', d.item_code, 'has_batch_no'):
+#			if not d.batch_no:
+#				d.batch_no = get_batch_no(d.item_code, warehouse, qty, throw, d.serial_no)
+#			else:
+#				batch_qty = get_batch_qty(batch_no=d.batch_no, warehouse=warehouse)
+#				if flt(batch_qty, d.precision("qty")) < flt(qty, d.precision("qty")):
+#					frappe.throw(_("Row #{0}: The batch {1} has only {2} qty. Please select another batch which has {3} qty available or split the row into multiple rows, to deliver/issue from multiple batches").format(d.idx, d.batch_no, batch_qty, qty))
 
 
 
