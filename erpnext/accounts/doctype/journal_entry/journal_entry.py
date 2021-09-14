@@ -20,6 +20,18 @@ class JournalEntry(AccountsController):
 	def get_feed(self):
 		return self.voucher_type
 
+	# Spectrum Fruits: Begin
+	def before_validate(self):
+		"""
+		If not printing a bank check, clear the related fields prior to saving.
+		"""
+		if not self.create_bank_check:
+			self.check_party_type = None
+			self.check_party = None
+			self.check_party_name = None
+			self.check_address_remit_to = None
+	# Spectrum Fruits: End
+
 	def validate(self):
 		if not self.is_opening:
 			self.is_opening='No'
@@ -44,7 +56,7 @@ class JournalEntry(AccountsController):
 		self.validate_empty_accounts_table()
 		self.set_account_and_party_balance()
 		self.validate_inter_company_accounts()
-		# SF: Do not change our Title Field
+		# SF: Do not change the Title Field
 		#if not self.title:
 		#	self.title = self.get_title()
 
@@ -57,6 +69,7 @@ class JournalEntry(AccountsController):
 		self.update_loan()
 		self.update_inter_company_jv()
 		self.update_invoice_discounting()
+		self.insert_bank_cheque()  # Create a Bank Check for the Journal Entry (if applicable)
 
 	def on_cancel(self):
 		from erpnext.accounts.utils import unlink_ref_doc_from_payment_entries
@@ -571,11 +584,6 @@ class JournalEntry(AccountsController):
 				jd1.reference_name = cstr(d.name)
 			elif self.write_off_based_on == 'Accounts Payable':
 				jd1.party_type = "Supplier"
-				jd1.debit_in_account_currency = flt(d.outstanding_amount, self.precision("debit", "accounts"))
-				jd1.reference_type = "Purchase Invoice"
-				jd1.reference_name = cstr(d.name)
-
-		jd2 = self.append('accounts', {})
 		if self.write_off_based_on == 'Accounts Receivable':
 			jd2.debit_in_account_currency = total
 		elif self.write_off_based_on == 'Accounts Payable':
@@ -650,7 +658,7 @@ class JournalEntry(AccountsController):
 			d.account_balance = account_balance[d.account]
 			d.party_balance = party_balance[(d.party_type, d.party)]
 
-	# Spectrum Fruits
+	# SPECTRUM_FRUITS
 	def has_cheques(self):
 		""" Returns a boolean True if Journal Entry has related Cheques. """
 		# Returns a Tuple
@@ -662,7 +670,27 @@ class JournalEntry(AccountsController):
 			if isinstance(sql_results[0][0],int) and sql_results[0][0] > 0:
 				return True
 		return False
+
+	def insert_bank_cheque(self):
+		from sf.bank.doctype.bank_check import bank_check
+		# Create a new Bank Check when checkbox is marked on Journal Entry:
+		if self.create_bank_check:
+			bank_check.create_from_doc(caller_doc=self)
+
+	def cancel_cheque(self):
+		bank_check.cancel_from_origin_doc(self)
+
+	def validate_bank_check_party(self):
+		if self.party:
+			if not frappe.db.exists(self.party_type, self.party):
+				frappe.throw(_("Invalid {0}: {1}").format(self.party_type, self.party))
+
+			if self.party_account and self.party_type in ("Customer", "Supplier"):
+				self.validate_account_type(self.party_account,
+					[erpnext.get_party_account_type(self.party_type)])
+
 	# EOM Spectrum Fruits
+
 
 @frappe.whitelist()
 def get_default_bank_cash_account(company, account_type=None, mode_of_payment=None, account=None):

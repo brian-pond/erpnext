@@ -44,8 +44,6 @@ class StockEntry(StockController):
 
 	# Spectrum Fruits: If a PINV is not linked, clear the values of the 4 data fields.
 	def before_save(self):
-		if self.purpose != 'Repack':
-			self.link_purchase_invoice = False
 		if not self.link_purchase_invoice:
 			self.purchase_invoice = None
 			self.purchase_invoice_supplier = None

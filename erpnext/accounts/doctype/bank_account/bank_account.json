@@ -1,5 +1,4 @@
 {
- "actions": [],
  "allow_import": 1,
  "allow_rename": 1,
  "creation": "2017-05-29 21:35:13.136357",
@@ -40,6 +39,7 @@
  ],
  "fields": [
   {
+   "columns": 1,
    "fieldname": "account_name",
    "fieldtype": "Data",
    "in_global_search": 1,
@@ -53,7 +53,7 @@
    "fieldname": "account",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Company Account",
+   "label": "General Ledger Account",
    "options": "Account"
   },
   {
@@ -90,7 +90,7 @@
    "default": "0",
    "fieldname": "is_company_account",
    "fieldtype": "Check",
-   "label": "Is Company Account"
+   "label": "Has a GL Account"
   },
   {
    "depends_on": "is_company_account",
@@ -131,7 +131,6 @@
   {
    "fieldname": "iban",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "IBAN",
    "length": 30
   },
@@ -149,7 +148,6 @@
   {
    "fieldname": "branch_code",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "Branch Code"
   },
   {
@@ -218,8 +216,7 @@
    "label": "Check Naming Series"
   }
  ],
- "links": [],
- "modified": "2021-04-18 13:17:20.327761",
+ "modified": "2021-09-14 11:16:14.523249",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Bank Account",
@@ -254,5 +251,6 @@
  "search_fields": "bank,account",
  "sort_field": "modified",
  "sort_order": "DESC",
+ "title_field": "account_name",
  "track_changes": 1
 }

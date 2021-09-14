@@ -8,6 +8,17 @@ frappe.provide("erpnext.journal_entry");
 frappe.ui.form.on("Journal Entry", {
 	setup: function(frm) {
 		frm.add_fetch("bank_account", "account", "account");
+
+		// Spectrum Fruits
+		frm.set_query("check_party_type", function() {
+			frm.events.validate_company(frm);
+			return{
+				filters: {
+					"name": ["in", Object.keys(frappe.boot.party_account_types)],
+				}
+			}
+		});
+
 	},
 
 	refresh: function(frm) {
@@ -135,7 +146,38 @@ frappe.ui.form.on("Journal Entry", {
 				}
 			}
 		});
+	},
+
+	// Spectrum Fruits: Begin
+	validate_company: (frm) => {
+		if (!frm.doc.company){
+			frappe.throw({message:__("Please select a Company first."), title: __("Mandatory")});
+		}
+	},
+
+	check_party: function(frm) {
+		frm.set_value("check_address_remit_to", "");  // Spectrum Fruits
+
+		return frappe.call({
+			method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_party_details",
+			args: {
+				company: frm.doc.company,
+				party_type: frm.doc.check_party_type,
+				party: frm.doc.check_party,
+				date: frm.doc.posting_date,
+				cost_center: null
+			},
+			callback: function(r, rt) {
+				if(r.message) {
+					frappe.run_serially([
+						() => frm.set_value("check_party_name", r.message.party_name),
+						() => frm.set_value("check_address_remit_to", r.message.remit_to_address.name)
+					]);
+				}
+			}
+		})
 	}
+	// Spectrum Fruits: End	
 });
 
 erpnext.accounts.JournalEntry = frappe.ui.form.Controller.extend({
@@ -143,6 +185,7 @@ erpnext.accounts.JournalEntry = frappe.ui.form.Controller.extend({
 		this.load_defaults();
 		this.setup_queries();
 		this.setup_balance_formatter();
+		this.frm.set_query("check_address_remit_to", get_address_query);  // Spectrum Fruits: Remit to Address.
 	},
 
 	onload_post_render: function() {
@@ -671,3 +714,14 @@ $.extend(erpnext.journal_entry, {
 		}
 	},
 });
+
+
+// Spectrum Fruits: Used to create a drop-down list of Remit-To Addresses.
+function get_address_query (doc) {
+	return {
+		query: 'frappe.contacts.doctype.address.address.address_query',
+		filters: { link_doctype: doc.check_party_type,
+			       link_name: doc.check_party
+		}
+	};
+}

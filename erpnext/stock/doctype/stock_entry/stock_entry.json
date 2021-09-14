@@ -106,7 +106,7 @@
    "no_copy": 1,
    "oldfieldname": "naming_series",
    "oldfieldtype": "Select",
-   "options": "MAT-STE-.YYYY.-",
+   "options": "STE-.",
    "print_hide": 1,
    "reqd": 1,
    "set_only_once": 1
@@ -632,7 +632,6 @@
   },
   {
    "default": "0",
-   "depends_on": "eval: doc.purpose == 'Repack'",
    "fieldname": "link_purchase_invoice",
    "fieldtype": "Check",
    "label": "Link PINV"
@@ -679,7 +678,7 @@
  "icon": "fa fa-file-text",
  "idx": 1,
  "is_submittable": 1,
- "modified": "2021-09-09 10:39:45.890875",
+ "modified": "2021-09-09 14:44:37.359242",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Stock Entry",

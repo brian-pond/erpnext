@@ -87,12 +87,7 @@
   "section_break_63",
   "page_break",
   "item_tax_rate",
-  "transaction_date",
-  "lft",
-  "rgt",
-  "is_group",
-  "old_parent",
-  "parent_sales_order_item"
+  "transaction_date"
  ],
  "fields": [
   {
@@ -774,46 +769,11 @@
    "fieldtype": "Float",
    "label": "Rate per Weight UOM",
    "precision": "4"
-  },
-  {
-   "fieldname": "lft",
-   "fieldtype": "Int",
-   "hidden": 1,
-   "label": "Left",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "rgt",
-   "fieldtype": "Int",
-   "hidden": 1,
-   "label": "Right",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "is_group",
-   "fieldtype": "Check",
-   "label": "Is Group"
-  },
-  {
-   "fieldname": "old_parent",
-   "fieldtype": "Link",
-   "label": "Old Parent",
-   "options": "Sales Order Item"
-  },
-  {
-   "fieldname": "parent_sales_order_item",
-   "fieldtype": "Link",
-   "label": "Parent Sales Order Item",
-   "options": "Sales Order Item"
   }
  ],
  "idx": 1,
- "is_tree": 1,
  "istable": 1,
- "modified": "2021-08-26 14:15:54.250887",
+ "modified": "2021-09-11 12:18:56.515958",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order Item",

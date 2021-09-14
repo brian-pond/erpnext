@@ -75,3 +75,17 @@ def get_party_bank_account(party_type, party):
 def get_bank_account_details(bank_account):
 	return frappe.db.get_value("Bank Account",
 		bank_account, ['account', 'bank', 'bank_account_no'], as_dict=1)
+
+# Spectrum Fruits
+def find_default_by_gl_account(ledger_account):
+	filters = {
+		"account": ledger_account,
+		"is_default": True,
+		"is_company_account": True  # poorly named field, really means "Does this Bank Account have a corresponding GL Account?"
+	}
+	ret = frappe.get_list("Bank Account", filters=filters)  # missing argument 'pluck' in version 12?
+	if (not ret) or (not ret[0]):
+		return None
+
+	doc_bank_account = frappe.get_doc("Bank Account", ret[0]['name'])
+	return doc_bank_account
