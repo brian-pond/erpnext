@@ -82,11 +82,7 @@ class PaymentEntry(AccountsController):
 		self.update_advance_paid()
 		self.update_expense_claim()
 		self.update_payment_schedule()
-		# Spectrum Fruits: Begin
-		doc_mode_of_payment = frappe.get_doc("Mode of Payment", self.mode_of_payment)
-		if self.payment_type == 'Pay' and doc_mode_of_payment.create_bank_check:
-			self.insert_bank_cheque()
-		# Spectrum Fruits: End
+		self.insert_bank_cheque()  # Spectrum Fruits: Conditions handled inside the function.
 		self.set_status()
 
 	def on_cancel(self):
@@ -664,8 +660,13 @@ class PaymentEntry(AccountsController):
 		return False
 
 	def insert_bank_cheque(self):
-		# Only creates Bank Check records if Mode of Payment = Check.
-		if self.mode_of_payment == 'Check':
+		"""
+		If using an applicable Mode of Payment, create a Bank Check.
+		"""
+		if not self.payment_type == 'Pay':
+			return
+		doc_mode_of_payment = frappe.get_doc("Mode of Payment", self.mode_of_payment)
+		if bool(doc_mode_of_payment.create_bank_check) is True:
 			bank_check.create_from_doc(caller_doc=self)
 
 	def cancel_cheque(self):
