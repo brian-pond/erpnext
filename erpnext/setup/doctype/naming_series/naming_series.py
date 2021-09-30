@@ -112,6 +112,8 @@ class NamingSeries(Document):
 		frappe.clear_cache(doctype=doctype)
 
 	def check_duplicate(self):
+		# Spectrum Fruits: Disable checking for Duplicate naming series across DocTypes.
+		return
 		parent = list(set(
 			frappe.db.sql_list("""select dt.name
 				from `tabDocField` df, `tabDocType` dt
