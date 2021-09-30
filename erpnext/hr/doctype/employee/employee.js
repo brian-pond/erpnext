@@ -36,7 +36,22 @@ erpnext.hr.EmployeeController = frappe.ui.form.Controller.extend({
 	},
 
 });
+
+// Datahenge: JS code isn't standardized; adding new Address code here:
 frappe.ui.form.on('Employee',{
+
+	refresh: function(frm) {
+		// Spectrum Fruits: Implement Address for Employees
+		if (frm.doc.__islocal) {
+			hide_field(['address_html']);
+			frappe.contacts.clear_address_and_contact(frm);
+		}
+		else {
+			unhide_field(['address_html']);
+			frappe.contacts.render_address_and_contact(frm);
+		}
+	},
+
 	setup: function(frm) {
 		frm.set_query("leave_policy", function() {
 			return {
@@ -96,4 +111,6 @@ frappe.ui.form.on('Employee',{
 		});
 	}
 });
+
+
 cur_frm.cscript = new erpnext.hr.EmployeeController({frm: cur_frm});

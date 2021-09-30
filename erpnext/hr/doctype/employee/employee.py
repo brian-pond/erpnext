@@ -14,11 +14,17 @@ from erpnext.utilities.transaction_base import delete_events
 from frappe.utils.nestedset import NestedSet
 from erpnext.hr.doctype.job_offer.job_offer import get_staffing_plan_detail
 
+from frappe.contacts.address_and_contact import load_address_and_contact, delete_contact_and_address  # Spectrum Fruits
+
 class EmployeeUserDisabledError(frappe.ValidationError): pass
 class EmployeeLeftValidationError(frappe.ValidationError): pass
 
 class Employee(NestedSet):
 	nsm_parent_field = 'reports_to'
+
+	def onload(self):
+		"""Load address and contacts in `__onload`"""
+		load_address_and_contact(self)
 
 	def autoname(self):
 		naming_method = frappe.db.get_value("HR Settings", None, "emp_created_by")
@@ -230,6 +236,38 @@ class Employee(NestedSet):
 			self.get('user_id') != prev_doc.get('user_id')):
 			frappe.cache().hdel('employees_with_number', cell_number)
 			frappe.cache().hdel('employees_with_number', prev_number)
+
+	def get_remit_to_address(self, first_only=False, none_on_error=True):
+		"""
+		Spectrum Fruits: Get an Employee's 'Remit To' address.
+		"""
+
+		# Using this function to find an appropriate address for new Bank Checks.
+		filters = [
+			["Dynamic Link", "link_doctype", "=", "Employee"],
+			["Dynamic Link", "link_name", "=", self.name],
+			["Dynamic Link", "parenttype", "=", "Address"],
+			["Address", "address_type", "=", "Remit To"],
+		]
+
+		address_list = frappe.get_all("Address", filters=filters, fields=["name"])
+		if not address_list or len(address_list) == 0:
+			if none_on_error:
+				return None
+			else:
+				raise ValueError(_(f"Unable to find default 'Remit To' address for Employee {self.name}."))
+
+		if (len(address_list) > 1) and not first_only:
+			if none_on_error:
+				return None
+			else:
+				raise ValueError(_(f"Found multiple 'Remit To' address records for Employee {self.name}."))
+		ret = frappe.get_doc("Address", address_list[0]['name'])
+		return ret
+
+# ------
+# END OF EMPLOYEE CLASS METHODS
+# ------
 
 def get_timeline_data(doctype, name):
 	'''Return timeline for attendance'''

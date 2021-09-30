@@ -10,7 +10,6 @@
   "voucher_type",
   "naming_series",
   "title",
-  "create_bank_check",
   "column_break1",
   "posting_date",
   "company",
@@ -20,6 +19,7 @@
   "check_party",
   "check_party_name",
   "cb_checks",
+  "create_bank_check",
   "check_address_remit_to",
   "2_add_edit_gl_entries",
   "accounts",
@@ -507,10 +507,9 @@
   },
   {
    "collapsible": 1,
-   "depends_on": "eval: doc.create_bank_check == 1",
    "fieldname": "sb_bank_check",
    "fieldtype": "Section Break",
-   "label": "Bank Checks"
+   "label": "Party Refs and Bank Checks"
   },
   {
    "fieldname": "check_party_type",
@@ -525,6 +524,7 @@
    "options": "check_party_type"
   },
   {
+   "depends_on": "eval: doc.create_bank_check == 1 && doc.check_party",
    "fieldname": "check_address_remit_to",
    "fieldtype": "Link",
    "label": "Remit-to Address",
@@ -544,7 +544,7 @@
  "icon": "fa fa-file-text",
  "idx": 176,
  "is_submittable": 1,
- "modified": "2021-09-14 10:34:46.066410",
+ "modified": "2021-09-30 14:06:36.624696",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Journal Entry",

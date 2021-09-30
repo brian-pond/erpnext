@@ -13,6 +13,8 @@ from erpnext.accounts.doctype.invoice_discounting.invoice_discounting import get
 
 from six import string_types, iteritems
 
+from sf.bank.doctype.bank_check import bank_check  # Spectrum Fruits
+
 class JournalEntry(AccountsController):
 	def __init__(self, *args, **kwargs):
 		super(JournalEntry, self).__init__(*args, **kwargs)
@@ -23,12 +25,9 @@ class JournalEntry(AccountsController):
 	# Spectrum Fruits: Begin
 	def before_validate(self):
 		"""
-		If not printing a bank check, clear the related fields prior to saving.
+		If not printing a bank check, clear the Remit-to Address prior to saving.
 		"""
 		if not self.create_bank_check:
-			self.check_party_type = None
-			self.check_party = None
-			self.check_party_name = None
 			self.check_address_remit_to = None
 	# Spectrum Fruits: End
 
@@ -85,6 +84,7 @@ class JournalEntry(AccountsController):
 		self.unlink_inter_company_jv()
 		self.unlink_asset_adjustment_entry()
 		self.update_invoice_discounting()
+		self.cancel_cheque()  # Spectrum Fruits
 
 	def get_title(self):
 		return self.pay_to_recd_from or self.accounts[0].account
@@ -672,9 +672,13 @@ class JournalEntry(AccountsController):
 		return False
 
 	def insert_bank_cheque(self):
+		"""
+		Create a new Bank Check when checkbox is marked on Journal Entry.
+		"""
 		from sf.bank.doctype.bank_check import bank_check
-		# Create a new Bank Check when checkbox is marked on Journal Entry:
 		if self.create_bank_check:
+			if not self.check_address_remit_to:
+				frappe.throw("Cannot create a Bank Check without a Remit-to Address.")
 			bank_check.create_from_doc(caller_doc=self)
 
 	def cancel_cheque(self):

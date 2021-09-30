@@ -201,7 +201,7 @@
   },
   {
    "fieldname": "description",
-   "fieldtype": "HTML Editor",
+   "fieldtype": "Text Editor",
    "label": "Description"
   },
   {
@@ -236,7 +236,7 @@
  "icon": "fa fa-suitcase",
  "idx": 1,
  "is_submittable": 1,
- "modified": "2021-09-23 18:52:23.346476",
+ "modified": "2021-09-28 14:48:33.443986",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Packing Slip",
