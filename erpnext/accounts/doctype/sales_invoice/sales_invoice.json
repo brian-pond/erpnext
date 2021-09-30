@@ -7,6 +7,7 @@
  "field_order": [
   "customer_section",
   "title",
+  "status",
   "naming_series",
   "customer",
   "customer_name",
@@ -157,7 +158,6 @@
   "campaign",
   "is_discounted",
   "col_break23",
-  "status",
   "source",
   "more_info",
   "debit_to",
@@ -295,7 +295,6 @@
   {
    "fieldname": "company",
    "fieldtype": "Link",
-   "in_standard_filter": 1,
    "label": "Company",
    "oldfieldname": "company",
    "oldfieldtype": "Link",
@@ -399,6 +398,7 @@
    "allow_on_submit": 1,
    "fieldname": "po_no",
    "fieldtype": "Small Text",
+   "in_list_view": 1,
    "label": "Customer's Purchase Order",
    "no_copy": 1,
    "print_hide": 1
@@ -1571,7 +1571,7 @@
  "icon": "fa fa-file-text",
  "idx": 181,
  "is_submittable": 1,
- "modified": "2021-07-29 15:17:06.263991",
+ "modified": "2021-09-30 15:13:51.278014",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Sales Invoice",
@@ -1622,7 +1622,6 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "timeline_field": "customer",
- "title_field": "title",
  "track_changes": 1,
  "track_seen": 1
 }
