@@ -91,7 +91,6 @@
   },
   {
    "allow_on_submit": 1,
-   "default": "{purpose}",
    "fieldname": "title",
    "fieldtype": "Data",
    "hidden": 1,
@@ -678,7 +677,7 @@
  "icon": "fa fa-file-text",
  "idx": 1,
  "is_submittable": 1,
- "modified": "2021-09-09 14:44:37.359242",
+ "modified": "2021-10-26 14:55:36.572941",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Stock Entry",

@@ -22,6 +22,7 @@ frappe.ui.form.on('Blanket Order', {
 
 		// Filter 'party_billing_address' based on either Customer or Supplier
 		frm.set_query("party_billing_address", get_address_query);
+
 		frm.trigger('set_tc_name_filter');
 		frm.trigger('blanket_order_type');
 
@@ -311,7 +312,11 @@ function get_address_query (doc) {
 }	
 
 function custom_clear_address (frm) {
+	// TODO: This code should only execute when the Supplier or Customer field is touched.
+	// Not all the time.
+
 	if (frm.doc.party_billing_address){
+
 		frm.set_value("party_billing_address", "");
 		frm.set_value("party_billing_address_display", "");
 	}

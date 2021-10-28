@@ -180,7 +180,7 @@
   }
  ],
  "is_submittable": 1,
- "modified": "2021-09-09 10:19:52.150430",
+ "modified": "2021-10-15 15:15:23.363662",
  "modified_by": "Administrator",
  "module": "Manufacturing",
  "name": "Blanket Order",
@@ -198,6 +198,18 @@
    "role": "System Manager",
    "share": 1,
    "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Purchase Master Manager",
+   "share": 1,
    "write": 1
   }
  ],

@@ -109,7 +109,8 @@ def make_purchase_order(blanket_order_id):
 		# Update PO lines accordingly
 		if item_defaults:
 			target_line.item_name = item_defaults.get("item_name")
-			target_line.description = item_defaults.get("description")
+			if not blanket_line.description:  # Brian: If Blanket Order line missing description, fetch from Item Master.
+				target_line.description = item_defaults.get("description")
 			target_line.stock_uom = item_defaults.get("stock_uom")
 
 	# SF_MOD_0001: Copy 'required by date'
@@ -130,6 +131,7 @@ def make_purchase_order(blanket_order_id):
 				"rate": "blanket_order_rate",
 				"parent": "blanket_order",
 				"name": "blanket_order_item",
+				"description": "description",
 				"reqd_by_date": "schedule_date",
 				"uom_weight": "weight_uom",
 				"uom_buying": "uom",

@@ -520,8 +520,7 @@
    "label": "Required By",
    "oldfieldname": "schedule_date",
    "oldfieldtype": "Date",
-   "print_hide": 1,
-   "read_only": 1
+   "print_hide": 1
   },
   {
    "fieldname": "stock_qty",
@@ -859,7 +858,7 @@
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2021-08-03 15:00:24.487360",
+ "modified": "2021-10-07 14:39:27.783455",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Purchase Receipt Item",

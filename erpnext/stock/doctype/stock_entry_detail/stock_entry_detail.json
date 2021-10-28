@@ -28,8 +28,8 @@
   "basic_rate",
   "basic_amount",
   "additional_cost",
-  "amount",
   "valuation_rate",
+  "amount",
   "col_break3",
   "uom",
   "conversion_factor",
@@ -90,6 +90,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "columns": 1,
    "fieldname": "t_warehouse",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -166,6 +167,7 @@
   },
   {
    "bold": 1,
+   "columns": 1,
    "fieldname": "qty",
    "fieldtype": "Float",
    "in_list_view": 1,
@@ -204,6 +206,7 @@
   {
    "fieldname": "amount",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Amount",
    "oldfieldname": "amount",
    "oldfieldtype": "Currency",
@@ -211,8 +214,10 @@
    "read_only": 1
   },
   {
+   "columns": 2,
    "fieldname": "valuation_rate",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Valuation Rate",
    "options": "Company:company:default_currency",
    "precision": "4",
@@ -468,7 +473,6 @@
    "fetch_from": "item_code.item_group",
    "fieldname": "item_group",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "Item Group"
   },
   {
@@ -503,7 +507,7 @@
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2021-08-26 10:47:26.753606",
+ "modified": "2021-10-21 14:48:06.016669",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Stock Entry Detail",
