@@ -112,6 +112,9 @@ def get_item_details(args, doc=None, for_validate=False, overwrite_warehouse=Tru
 	return out
 
 def update_stock(args, out):
+	# Spectrum Fruits: Disable automatic selection of Batch Numbers.
+	return
+	
 	if (args.get("doctype") == "Delivery Note" or
 		(args.get("doctype") == "Sales Invoice" and args.get('update_stock'))) \
 		and out.warehouse and out.stock_qty > 0:

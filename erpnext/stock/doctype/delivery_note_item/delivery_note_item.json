@@ -322,6 +322,7 @@
    "oldfieldname": "export_rate",
    "oldfieldtype": "Currency",
    "options": "currency",
+   "precision": "4",
    "print_width": "150px",
    "width": "150px"
   },
@@ -751,7 +752,7 @@
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2021-08-26 14:16:29.898948",
+ "modified": "2021-11-02 12:24:54.783022",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Delivery Note Item",

@@ -1368,6 +1368,20 @@ class StockEntry(StockController):
 						'reference_name': reference_name
 					})
 
+	def set_to_canceled_spectrum(self):
+		# Spectrum Fruits : Some stock entries are never Posted, but need to be kept around as Cancelled.
+		frappe.db.set_value("Stock Entry", self.name, {
+						'docstatus': 2
+					})
+
+		# Set all line items to Canceled.
+		for line in self.items:
+			frappe.db.set_value("Stock Entry Detail", line.name, {
+							'docstatus': 2
+						})
+
+
+
 @frappe.whitelist()
 def move_sample_to_retention_warehouse(company, items):
 	if isinstance(items, string_types):

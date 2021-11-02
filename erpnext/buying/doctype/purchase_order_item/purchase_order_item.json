@@ -514,7 +514,6 @@
   {
    "fieldname": "blanket_order_item",
    "fieldtype": "Link",
-   "hidden": 1,
    "label": "Blanket Order Item",
    "no_copy": 1,
    "options": "Blanket Order Item",
@@ -728,7 +727,7 @@
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2021-08-26 14:11:24.011680",
+ "modified": "2021-11-02 11:29:17.414838",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Purchase Order Item",

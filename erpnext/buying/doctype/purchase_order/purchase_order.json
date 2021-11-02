@@ -1057,6 +1057,7 @@
    "fieldname": "blanket_order",
    "fieldtype": "Link",
    "label": "Blanket Order",
+   "no_copy": 1,
    "options": "Blanket Order",
    "read_only": 1
   }
@@ -1064,7 +1065,7 @@
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
- "modified": "2021-07-26 18:48:06.551290",
+ "modified": "2021-11-02 11:31:45.044789",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Purchase Order",

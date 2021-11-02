@@ -301,6 +301,12 @@ def get_data():
 					"name": "Batch-Wise Balance History",
 					"doctype": "Batch"
 				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Custom Batch-Wise Balance History",
+					"doctype": "Batch"
+				},
 			]
 		},
 		{

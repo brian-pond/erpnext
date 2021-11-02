@@ -12,6 +12,9 @@ from frappe.utils import cint, flt
 
 class PackingSlip(Document):
 
+	def _prevalidate_links(self, **kwargs):
+		self.flags.ignore_links = True  # Spectrum Fruits: Can post a Packing Slip with invalid links.
+
 	def validate(self):
 		"""
 			* Validate existence of submitted Delivery Note
@@ -33,8 +36,10 @@ class PackingSlip(Document):
 		"""
 			Validates if delivery note has status as draft
 		"""
-		if cint(frappe.db.get_value("Delivery Note", self.delivery_note, "docstatus")) != 0:
-			frappe.throw(_("Delivery Note {0} must not be submitted").format(self.delivery_note))
+		# Datahenge: No idea why this matters, so commenting it out.
+		
+		# if cint(frappe.db.get_value("Delivery Note", self.delivery_note, "docstatus")) != 0:
+		#	frappe.throw(_("Delivery Note {0} must not be Submitted").format(self.delivery_note))
 
 	def validate_items_mandatory(self):
 		rows = [d.item_code for d in self.get("items")]
@@ -127,6 +132,7 @@ class PackingSlip(Document):
 
 		frappe.throw(_("Quantity for Item {0} must be less than {1}").format(item.get("item_code"), item.get("recommended_qty")))
 
+
 	def update_item_details(self):
 		"""
 			Fill empty columns in Packing Slip Item
@@ -141,6 +147,7 @@ class PackingSlip(Document):
 			if res and len(res)>0:
 				d.net_weight = res["weight_per_unit"]
 				d.weight_uom = res["weight_uom"]
+
 
 	def get_recommended_case_no(self):
 		"""

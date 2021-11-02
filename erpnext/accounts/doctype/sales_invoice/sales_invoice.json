@@ -16,6 +16,7 @@
   "pos_profile",
   "offline_pos_name",
   "is_return",
+  "delivery_note_date",
   "column_break1",
   "company",
   "posting_date",
@@ -1566,12 +1567,17 @@
   {
    "fieldname": "dimension_col_break",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "delivery_note_date",
+   "fieldtype": "Date",
+   "label": "Delivery Note Date"
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 181,
  "is_submittable": 1,
- "modified": "2021-09-30 15:13:51.278014",
+ "modified": "2021-11-02 12:31:11.221857",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Sales Invoice",

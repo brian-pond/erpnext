@@ -337,6 +337,7 @@
    "label": "Reason For Putting On Hold"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "bill_no",
    "fieldtype": "Data",
    "label": "Supplier Invoice No",
@@ -345,6 +346,7 @@
    "print_hide": 1
   },
   {
+   "allow_on_submit": 1,
    "fetch_if_empty": 1,
    "fieldname": "bill_date",
    "fieldtype": "Date",
@@ -1307,7 +1309,7 @@
  "icon": "fa fa-file-text",
  "idx": 204,
  "is_submittable": 1,
- "modified": "2021-09-30 15:17:28.007945",
+ "modified": "2021-11-02 12:02:35.402271",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Purchase Invoice",

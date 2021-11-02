@@ -280,6 +280,21 @@ frappe.ui.form.on('Stock Entry', {
 		}
 
 		frm.trigger("setup_quality_inspection");
+
+		// Spectrum Fruits
+		if (frm.doc.docstatus == 0) {
+			frm.add_custom_button(__('Set to Canceled'), () => {
+				return frappe.call({
+					doc: frm.doc,
+					method: 'set_to_canceled_spectrum',
+					callback: function() {
+						frappe.msgprint("Stock Entry set to 'Canceled' status.")
+						frm.reload_doc();
+					}
+				});
+			});
+		}
+		// End Spectrum Fruits
 	},
 
 	purpose: function(frm) {
