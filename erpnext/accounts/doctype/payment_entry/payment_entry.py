@@ -24,8 +24,6 @@ from erpnext.accounts.doctype.bank_account.bank_account import get_party_bank_ac
 from erpnext.controllers.accounts_controller import AccountsController, get_supplier_block_status
 from erpnext.accounts.doctype.invoice_discounting.invoice_discounting import get_party_account_based_on_invoice_discounting
 
-from sf.bank.doctype.bank_check import bank_check
-
 
 class InvalidPaymentEntry(ValidationError):
 	pass
@@ -663,6 +661,8 @@ class PaymentEntry(AccountsController):
 		"""
 		If using an applicable Mode of Payment, create a Bank Check.
 		"""
+		from sf.bank.doctype.bank_check import bank_check  # late import due to cross-app reference
+
 		if not self.payment_type == 'Pay':
 			return
 		doc_mode_of_payment = frappe.get_doc("Mode of Payment", self.mode_of_payment)
@@ -670,6 +670,7 @@ class PaymentEntry(AccountsController):
 			bank_check.create_from_doc(caller_doc=self)
 
 	def cancel_cheque(self):
+		from sf.bank.doctype.bank_check import bank_check  # late import due to cross-app reference
 		bank_check.cancel_from_origin_doc(self)
 
 	# EOM Spectrum Fruits
