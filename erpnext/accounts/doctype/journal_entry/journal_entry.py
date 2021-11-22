@@ -13,8 +13,6 @@ from erpnext.accounts.doctype.invoice_discounting.invoice_discounting import get
 
 from six import string_types, iteritems
 
-from sf.bank.doctype.bank_check import bank_check  # Spectrum Fruits
-
 class JournalEntry(AccountsController):
 	def __init__(self, *args, **kwargs):
 		super(JournalEntry, self).__init__(*args, **kwargs)
@@ -675,13 +673,14 @@ class JournalEntry(AccountsController):
 		"""
 		Create a new Bank Check when checkbox is marked on Journal Entry.
 		"""
-		from sf.bank.doctype.bank_check import bank_check
+		from sf.bank.doctype.bank_check import bank_check  # late import due to cross-module code
 		if self.create_bank_check:
 			if not self.check_address_remit_to:
 				frappe.throw("Cannot create a Bank Check without a Remit-to Address.")
 			bank_check.create_from_doc(caller_doc=self)
 
 	def cancel_cheque(self):
+		from sf.bank.doctype.bank_check import bank_check  # late import due to cross-module code
 		bank_check.cancel_from_origin_doc(self)
 
 	def validate_bank_check_party(self):
@@ -1020,7 +1019,8 @@ def get_account_balance_and_party_type(account, date, company, debit=None, credi
 @frappe.whitelist()
 def get_exchange_rate(posting_date, account=None, account_currency=None, company=None,
 		reference_type=None, reference_name=None, debit=None, credit=None, exchange_rate=None):
-	from erpnext.setup.utils import get_exchange_rate
+
+	from erpnext.setup.utils import get_exchange_rate as _get_exchange_rate
 	account_details = frappe.db.get_value("Account", account,
 		["account_type", "root_type", "account_currency", "company"], as_dict=1)
 
@@ -1042,7 +1042,7 @@ def get_exchange_rate(posting_date, account=None, account_currency=None, company
 		# The date used to retreive the exchange rate here is the date passed
 		# in as an argument to this function.
 		elif (not exchange_rate or flt(exchange_rate)==1) and account_currency and posting_date:
-			exchange_rate = get_exchange_rate(account_currency, company_currency, posting_date)
+			exchange_rate = _get_exchange_rate(account_currency, company_currency, posting_date)
 	else:
 		exchange_rate = 1
 
