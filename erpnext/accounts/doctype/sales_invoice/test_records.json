@@ -3,6 +3,7 @@
   "company": "_Test Company",
   "conversion_rate": 1.0,
   "currency": "INR",
+  "cost_center": "_Test Cost Center - _TC",
   "customer": "_Test Customer",
   "customer_name": "_Test Customer",
   "debit_to": "_Test Receivable - _TC",
@@ -29,7 +30,7 @@
   "base_grand_total": 561.8,
   "grand_total": 561.8,
   "is_pos": 0,
-  "naming_series": "_T-Sales Invoice-",
+  "naming_series": "T-SINV-",
   "base_net_total": 500.0,
   "taxes": [
    {
@@ -37,7 +38,8 @@
     "charge_type": "On Net Total",
     "description": "VAT",
     "doctype": "Sales Taxes and Charges",
-    "parentfield": "taxes",
+	"parentfield": "taxes",
+	"cost_center": "_Test Cost Center - _TC",
     "rate": 6
    },
    {
@@ -45,7 +47,8 @@
     "charge_type": "On Net Total",
     "description": "Service Tax",
     "doctype": "Sales Taxes and Charges",
-    "parentfield": "taxes",
+	"parentfield": "taxes",
+	"cost_center": "_Test Cost Center - _TC",
     "rate": 6.36
    }
   ],
@@ -76,6 +79,7 @@
   "customer_name": "_Test Customer",
   "debit_to": "_Test Receivable - _TC",
   "doctype": "Sales Invoice",
+  "cost_center": "_Test Cost Center - _TC",
   "items": [
    {
     "amount": 500.0,
@@ -99,7 +103,7 @@
   "base_grand_total": 630.0,
   "grand_total": 630.0,
   "is_pos": 0,
-  "naming_series": "_T-Sales Invoice-",
+  "naming_series": "T-SINV-",
   "base_net_total": 500.0,
   "taxes": [
    {
@@ -107,7 +111,8 @@
     "charge_type": "On Net Total",
     "description": "VAT",
     "doctype": "Sales Taxes and Charges",
-    "parentfield": "taxes",
+	"parentfield": "taxes",
+	"cost_center": "_Test Cost Center - _TC",
     "rate": 16
    },
    {
@@ -115,7 +120,8 @@
     "charge_type": "On Net Total",
     "description": "Service Tax",
     "doctype": "Sales Taxes and Charges",
-    "parentfield": "taxes",
+	"parentfield": "taxes",
+	"cost_center": "_Test Cost Center - _TC",
     "rate": 10
    }
   ],
@@ -132,6 +138,7 @@
   "customer_name": "_Test Customer",
   "debit_to": "_Test Receivable - _TC",
   "doctype": "Sales Invoice",
+  "cost_center": "_Test Cost Center - _TC",
   "items": [
    {
     "cost_center": "_Test Cost Center - _TC",
@@ -167,7 +174,7 @@
   ],
   "grand_total": 0,
   "is_pos": 0,
-  "naming_series": "_T-Sales Invoice-",
+  "naming_series": "T-SINV-",
   "taxes": [
    {
     "account_head": "_Test Account Shipping Charges - _TC",
@@ -259,6 +266,7 @@
   "customer_name": "_Test Customer",
   "debit_to": "_Test Receivable - _TC",
   "doctype": "Sales Invoice",
+  "cost_center": "_Test Cost Center - _TC",
   "items": [
    {
     "cost_center": "_Test Cost Center - _TC",
@@ -292,7 +300,7 @@
   ],
   "grand_total": 0,
   "is_pos": 0,
-  "naming_series": "_T-Sales Invoice-",
+  "naming_series": "T-SINV-",
   "taxes": [
    {
     "account_head": "_Test Account Excise Duty - _TC",

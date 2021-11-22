@@ -175,9 +175,9 @@ def install(country=None):
 		]},
 
 		# Issue Priority
-		{'doctype': 'Issue Priority', 'name': _('Low')},
-		{'doctype': 'Issue Priority', 'name': _('Medium')},
-		{'doctype': 'Issue Priority', 'name': _('High')},
+		{'doctype': 'Issue Priority', 'name': 'Low'},
+		{'doctype': 'Issue Priority', 'name': 'Medium'},
+		{'doctype': 'Issue Priority', 'name': 'High'},
 
 		#Job Applicant Source
 		{'doctype': 'Job Applicant Source', 'source_name': _('Website Listing')},
@@ -335,13 +335,14 @@ def add_uom_data():
 				"category_name": _(d.get("category"))
 			}).insert(ignore_permissions=True)
 
-		uom_conversion = frappe.get_doc({
-			"doctype": "UOM Conversion Factor",
-			"category": _(d.get("category")),
-			"from_uom": _(d.get("from_uom")),
-			"to_uom": _(d.get("to_uom")),
-			"value": d.get("value")
-		}).insert(ignore_permissions=True)
+		if not frappe.db.exists("UOM Conversion Factor", {"from_uom": _(d.get("from_uom")), "to_uom": _(d.get("to_uom"))}):
+			uom_conversion = frappe.get_doc({
+				"doctype": "UOM Conversion Factor",
+				"category": _(d.get("category")),
+				"from_uom": _(d.get("from_uom")),
+				"to_uom": _(d.get("to_uom")),
+				"value": d.get("value")
+			}).insert(ignore_permissions=True)
 
 def add_market_segments():
 	records = [

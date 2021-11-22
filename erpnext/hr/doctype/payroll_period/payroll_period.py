@@ -5,7 +5,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe import _
-from frappe.utils import date_diff, getdate, formatdate, cint, month_diff, flt
+from frappe.utils import date_diff, getdate, formatdate, cint, month_diff, flt, add_months
 from frappe.model.document import Document
 from erpnext.hr.utils import get_holidays_for_employee
 
@@ -45,8 +45,9 @@ class PayrollPeriod(Document):
 				+ _(") for {0}").format(self.company)
 			frappe.throw(msg)
 
-def get_payroll_period_days(start_date, end_date, employee):
-	company = frappe.db.get_value("Employee", employee, "company")
+def get_payroll_period_days(start_date, end_date, employee, company=None):
+	if not company:
+		company = frappe.db.get_value("Employee", employee, "company")
 	payroll_period = frappe.db.sql("""
 		select name, start_date, end_date
 		from `tabPayroll Period`
@@ -87,6 +88,8 @@ def get_period_factor(employee, start_date, end_date, payroll_frequency, payroll
 		period_start = joining_date
 	if relieving_date and getdate(relieving_date) < getdate(period_end):
 		period_end = relieving_date
+		if month_diff(period_end, start_date) > 1:
+			start_date = add_months(start_date, - (month_diff(period_end, start_date)+1))
 
 	total_sub_periods, remaining_sub_periods = 0.0, 0.0
 

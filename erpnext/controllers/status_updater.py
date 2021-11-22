@@ -3,7 +3,7 @@
 
 from __future__ import unicode_literals
 import frappe
-from frappe.utils import flt, comma_or, nowdate, getdate
+from frappe.utils import flt, comma_or, nowdate, getdate, now
 from frappe import _
 from frappe.model.document import Document
 
@@ -68,17 +68,6 @@ status_map = {
 		["Completed", "eval:self.per_billed == 100 and self.docstatus == 1"],
 		["Cancelled", "eval:self.docstatus==2"],
 		["Closed", "eval:self.status=='Closed'"],
-	],
-	"Purchase Invoice": [	
-		["Draft", None],	
-		["Submitted", "eval:self.docstatus==1"],	
-		["Paid", "eval:self.outstanding_amount==0 and self.docstatus==1"],	
-		["Return", "eval:self.is_return==1 and self.docstatus==1"],	
-		["Debit Note Issued",	
-			"eval:self.outstanding_amount <= 0 and self.docstatus==1 and self.is_return==0 and get_value('Purchase Invoice', {'is_return': 1, 'return_against': self.name, 'docstatus': 1})"],	
-		["Unpaid", "eval:self.outstanding_amount > 0 and getdate(self.due_date) >= getdate(nowdate()) and self.docstatus==1"],	
-		["Overdue", "eval:self.outstanding_amount > 0 and getdate(self.due_date) < getdate(nowdate()) and self.docstatus==1"],	
-		["Cancelled", "eval:self.docstatus==2"],	
 	],
 	"Material Request": [
 		["Draft", None],
@@ -257,22 +246,26 @@ class StatusUpdater(Document):
 				if not args.get("second_source_extra_cond"):
 					args["second_source_extra_cond"] = ""
 
-				args['second_source_condition'] = """ + ifnull((select sum(%(second_source_field)s)
+				args['second_source_condition'] = frappe.db.sql(""" select ifnull((select sum(%(second_source_field)s)
 					from `tab%(second_source_dt)s`
 					where `%(second_join_field)s`="%(detail_id)s"
-					and (`tab%(second_source_dt)s`.docstatus=1) %(second_source_extra_cond)s), 0) """ % args
+					and (`tab%(second_source_dt)s`.docstatus=1)
+					%(second_source_extra_cond)s), 0) """ % args)[0][0]
 
 			if args['detail_id']:
 				if not args.get("extra_cond"): args["extra_cond"] = ""
 
-				frappe.db.sql("""update `tab%(target_dt)s`
-					set %(target_field)s = (
+				args["source_dt_value"] = frappe.db.sql("""
 						(select ifnull(sum(%(source_field)s), 0)
 							from `tab%(source_dt)s` where `%(join_field)s`="%(detail_id)s"
 							and (docstatus=1 %(cond)s) %(extra_cond)s)
-						%(second_source_condition)s
-					)
-					%(update_modified)s
+				""" % args)[0][0] or 0.0
+
+				if args['second_source_condition']:
+					args["source_dt_value"] += flt(args['second_source_condition'])
+
+				frappe.db.sql("""update `tab%(target_dt)s`
+					set %(target_field)s = %(source_dt_value)s %(update_modified)s
 					where name='%(detail_id)s'""" % args)
 
 	def _update_percent_field_in_targets(self, args, update_modified=True):
@@ -314,10 +307,14 @@ class StatusUpdater(Document):
 				target.notify_update()
 
 	def _update_modified(self, args, update_modified):
-		args['update_modified'] = ''
-		if update_modified:
-			args['update_modified'] = ', modified = now(), modified_by = {0}'\
-				.format(frappe.db.escape(frappe.session.user))
+		if not update_modified:
+			args['update_modified'] = ''
+			return
+
+		args['update_modified'] = ', modified = {0}, modified_by = {1}'.format(
+			frappe.db.escape(now()),
+			frappe.db.escape(frappe.session.user)
+		)
 
 	def update_billing_status_for_zero_amount_refdoc(self, ref_dt):
 		ref_fieldname = frappe.scrub(ref_dt)

@@ -236,7 +236,7 @@
    "fieldname": "rate",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Rate ",
+   "label": "Rate",
    "oldfieldname": "import_rate",
    "oldfieldtype": "Currency",
    "options": "currency"
@@ -522,8 +522,7 @@
   {
    "fieldname": "manufacturer_part_no",
    "fieldtype": "Data",
-   "label": "Manufacturer Part Number",
-   "read_only": 1
+   "label": "Manufacturer Part Number"
   },
   {
    "fieldname": "column_break_15",
@@ -531,8 +530,9 @@
   }
  ],
  "idx": 1,
+ "index_web_pages_for_search": 1,
  "istable": 1,
- "modified": "2019-06-02 05:32:46.019237",
+ "modified": "2020-10-19 17:16:06.731729",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Supplier Quotation Item",

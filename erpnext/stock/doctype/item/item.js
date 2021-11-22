@@ -85,7 +85,7 @@ frappe.ui.form.on("Item", {
 		}
 		if (frm.doc.variant_of) {
 			frm.set_intro(__('This Item is a Variant of {0} (Template).',
-				[`<a href="#Form/Item/${frm.doc.variant_of}">${frm.doc.variant_of}</a>`]), true);
+				[`<a href="#Form/Item/${frm.doc.variant_of}" target="_blank">${frm.doc.variant_of}</a>`]), true);
 		}
 
 		if (frappe.defaults.get_default("item_naming_by")!="Naming Series" || frm.doc.variant_of) {
@@ -117,7 +117,7 @@ frappe.ui.form.on("Item", {
 		const stock_exists = (frm.doc.__onload
 			&& frm.doc.__onload.stock_exists) ? 1 : 0;
 
-		['is_stock_item', 'has_serial_no', 'has_batch_no'].forEach((fieldname) => {
+		['is_stock_item', 'has_serial_no', 'has_batch_no', 'has_variants'].forEach((fieldname) => {
 			frm.set_df_property(fieldname, 'read_only', stock_exists);
 		});
 

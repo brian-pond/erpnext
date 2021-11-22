@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 import frappe, erpnext
 from frappe import _
-from frappe.utils import flt, fmt_money, getdate, formatdate
+from frappe.utils import flt, fmt_money, getdate, formatdate, cint
 from frappe.model.document import Document
 from frappe.model.naming import set_name_from_naming_options
 from frappe.model.meta import get_field_precision
@@ -75,12 +75,6 @@ class GLEntry(Document):
 			if not self.cost_center and self.voucher_type != 'Period Closing Voucher':
 				frappe.throw(_("{0} {1}: Cost Center is required for 'Profit and Loss' account {2}. Please set up a default Cost Center for the Company.")
 					.format(self.voucher_type, self.voucher_no, self.account))
-		else:
-			from erpnext.accounts.utils import get_allow_cost_center_in_entry_of_bs_account
-			if not get_allow_cost_center_in_entry_of_bs_account() and self.cost_center:
-				self.cost_center = None
-			if self.project:
-				self.project = None
 
 	def validate_dimensions_for_pl_and_bs(self):
 
@@ -103,8 +97,7 @@ class GLEntry(Document):
 
 	def check_pl_account(self):
 		if self.is_opening=='Yes' and \
-				frappe.db.get_value("Account", self.account, "report_type")=="Profit and Loss" and \
-				self.voucher_type not in ['Purchase Invoice', 'Sales Invoice']:
+				frappe.db.get_value("Account", self.account, "report_type")=="Profit and Loss":
 			frappe.throw(_("{0} {1}: 'Profit and Loss' type account {2} not allowed in Opening Entry")
 				.format(self.voucher_type, self.voucher_no, self.account))
 
@@ -115,8 +108,8 @@ class GLEntry(Document):
 			from tabAccount where name=%s""", self.account, as_dict=1)[0]
 
 		if ret.is_group==1:
-			frappe.throw(_("{0} {1}: Account {2} cannot be a Group")
-				.format(self.voucher_type, self.voucher_no, self.account))
+			frappe.throw(_('''{0} {1}: Account {2} is a Group Account and group accounts cannot be used in
+				transactions''').format(self.voucher_type, self.voucher_no, self.account))
 
 		if ret.docstatus==2:
 			frappe.throw(_("{0} {1}: Account {2} is inactive")
@@ -137,9 +130,17 @@ class GLEntry(Document):
 
 			return self.cost_center_company[self.cost_center]
 
+		def _check_is_group():
+			return cint(frappe.get_cached_value('Cost Center', self.cost_center, 'is_group'))
+
 		if self.cost_center and _get_cost_center_company() != self.company:
 			frappe.throw(_("{0} {1}: Cost Center {2} does not belong to Company {3}")
 				.format(self.voucher_type, self.voucher_no, self.cost_center, self.company))
+
+		if not self.flags.from_repost and not self.voucher_type == 'Period Closing Voucher' \
+			and self.cost_center and _check_is_group():
+			frappe.throw(_("""{0} {1}: Cost Center {2} is a group cost center and group cost centers cannot
+				be used in transactions""").format(self.voucher_type, self.voucher_no, frappe.bold(self.cost_center)))
 
 	def validate_party(self):
 		validate_party_frozen_disabled(self.party_type, self.party)
@@ -292,4 +293,8 @@ def rename_temporarily_named_docs(doctype):
 		oldname = doc.name
 		set_name_from_naming_options(frappe.get_meta(doctype).autoname, doc)
 		newname = doc.name
-		frappe.db.sql("""UPDATE `tab{}` SET name = %s, to_rename = 0 where name = %s""".format(doctype), (newname, oldname))
+		frappe.db.sql(
+			"UPDATE `tab{}` SET name = %s, to_rename = 0 where name = %s".format(doctype),
+			(newname, oldname),
+			auto_commit=True
+		)

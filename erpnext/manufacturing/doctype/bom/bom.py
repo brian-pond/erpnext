@@ -51,15 +51,21 @@ class BOM(WebsiteGenerator):
 
 	def validate(self):
 		self.route = frappe.scrub(self.name).replace('_', '-')
+
+		if not self.company:
+			frappe.throw(_("Please select a Company first."), title=_("Mandatory"))
+
 		self.clear_operations()
 		self.validate_main_item()
 		self.validate_currency()
 		self.set_conversion_rate()
+		self.set_plc_conversion_rate()
 		self.validate_uom_is_interger()
 		self.set_bom_material_details()
 		self.validate_materials()
 		self.validate_operations()
 		self.calculate_cost()
+		self.update_cost(update_parent=False, from_child_bom=True, save=False)
 
 	def get_context(self, context):
 		context.parents = [{'name': 'boms', 'title': _('All BOMs') }]
@@ -99,8 +105,16 @@ class BOM(WebsiteGenerator):
 		if self.routing:
 			self.set("operations", [])
 			for d in frappe.get_all("BOM Operation", fields = ["*"],
-				filters = {'parenttype': 'Routing', 'parent': self.routing}):
-				child = self.append('operations', d)
+				filters = {'parenttype': 'Routing', 'parent': self.routing}, order_by="idx"):
+				child = self.append('operations', {
+					"operation": d.operation,
+					"workstation": d.workstation,
+					"description": d.description,
+					"time_in_mins": d.time_in_mins,
+					"batch_size": d.batch_size,
+					"operating_cost": d.operating_cost,
+					"idx": d.idx
+				})
 				child.hour_rate = flt(d.hour_rate / self.conversion_rate, 2)
 
 	def validate_rm_item(self, item):
@@ -112,6 +126,7 @@ class BOM(WebsiteGenerator):
 			self.validate_bom_currecny(item)
 
 			ret = self.get_bom_material_detail({
+				"company": self.company,
 				"item_code": item.item_code,
 				"item_name": item.item_name,
 				"bom_no": item.bom_no,
@@ -155,7 +170,7 @@ class BOM(WebsiteGenerator):
 			 'rate'			: rate,
 			 'qty'			: args.get("qty") or args.get("stock_qty") or 1,
 			 'stock_qty'	: args.get("qty") or args.get("stock_qty") or 1,
-			 'base_rate'	: rate,
+			 'base_rate'	: flt(rate) * (flt(self.conversion_rate) or 1),
 			 'include_item_in_manufacturing': cint(args['transfer_for_manufacture']) or 0
 		}
 
@@ -183,7 +198,7 @@ class BOM(WebsiteGenerator):
 					if self.rm_cost_as_per == 'Valuation Rate':
 						rate = self.get_valuation_rate(arg) * (arg.get("conversion_factor") or 1)
 					elif self.rm_cost_as_per == 'Last Purchase Rate':
-						rate = (arg.get('last_purchase_rate') \
+						rate = flt(arg.get('last_purchase_rate') \
 							or frappe.db.get_value("Item", arg['item_code'], "last_purchase_rate")) \
 								* (arg.get("conversion_factor") or 1)
 					elif self.rm_cost_as_per == "Price List":
@@ -216,7 +231,7 @@ class BOM(WebsiteGenerator):
 							frappe.msgprint(_("{0} not found for item {1}")
 								.format(self.rm_cost_as_per, arg["item_code"]), alert=True)
 
-		return flt(rate) / (self.conversion_rate or 1)
+		return flt(rate) * flt(self.plc_conversion_rate or 1) / (self.conversion_rate or 1)
 
 	def update_cost(self, update_parent=True, from_child_bom=False, save=True):
 		if self.docstatus == 2:
@@ -226,6 +241,7 @@ class BOM(WebsiteGenerator):
 
 		for d in self.get("items"):
 			rate = self.get_rm_rate({
+				"company": self.company,
 				"item_code": d.item_code,
 				"bom_no": d.bom_no,
 				"qty": d.qty,
@@ -233,15 +249,21 @@ class BOM(WebsiteGenerator):
 				"stock_uom": d.stock_uom,
 				"conversion_factor": d.conversion_factor
 			})
+
 			if rate:
 				d.rate = rate
 			d.amount = flt(d.rate) * flt(d.qty)
+			d.base_rate = flt(d.rate) * flt(self.conversion_rate)
+			d.base_amount = flt(d.amount) * flt(self.conversion_rate)
+
+			if save:
+				d.db_update()
 
 		if self.docstatus == 1:
 			self.flags.ignore_validate_update_after_submit = True
 			self.calculate_cost()
 		if save:
-			self.save()
+			self.db_update()
 		self.update_exploded_items()
 
 		# update parent BOMs
@@ -272,10 +294,20 @@ class BOM(WebsiteGenerator):
 		""" Get weighted average of valuation rate from all warehouses """
 
 		total_qty, total_value, valuation_rate = 0.0, 0.0, 0.0
-		for d in frappe.db.sql("""select actual_qty, stock_value from `tabBin`
-			where item_code=%s""", args['item_code'], as_dict=1):
-				total_qty += flt(d.actual_qty)
-				total_value += flt(d.stock_value)
+		item_bins = frappe.db.sql("""
+			select
+				bin.actual_qty, bin.stock_value
+			from
+				`tabBin` bin, `tabWarehouse` warehouse
+			where
+				bin.item_code=%(item)s
+				and bin.warehouse = warehouse.name
+				and warehouse.company=%(company)s""",
+			{"item": args['item_code'], "company": args['company']}, as_dict=1)
+
+		for d in item_bins:
+			total_qty += flt(d.actual_qty)
+			total_value += flt(d.stock_value)
 
 		if total_qty:
 			valuation_rate =  total_value / total_qty
@@ -361,6 +393,13 @@ class BOM(WebsiteGenerator):
 		elif self.conversion_rate == 1 or flt(self.conversion_rate) <= 0:
 			self.conversion_rate = get_exchange_rate(self.currency, self.company_currency(), args="for_buying")
 
+	def set_plc_conversion_rate(self):
+		if self.rm_cost_as_per in ["Valuation Rate", "Last Purchase Rate"]:
+			self.plc_conversion_rate = 1
+		elif not self.plc_conversion_rate and self.price_list_currency:
+			self.plc_conversion_rate = get_exchange_rate(self.price_list_currency,
+				self.company_currency(), args="for_buying")
+
 	def validate_materials(self):
 		""" Validate raw material entries """
 
@@ -375,25 +414,29 @@ class BOM(WebsiteGenerator):
 				frappe.throw(_("Quantity required for Item {0} in row {1}").format(m.item_code, m.idx))
 			check_list.append(m)
 
-	def check_recursion(self, bom_list=[]):
+	def check_recursion(self, bom_list=None):
 		""" Check whether recursion occurs in any bom"""
+		def _throw_error(bom_name):
+			frappe.throw(_("BOM recursion: {0} cannot be parent or child of {0}").format(bom_name))
+
 		bom_list = self.traverse_tree()
-		bom_nos = frappe.get_all('BOM Item', fields=["bom_no"],
-			filters={'parent': ('in', bom_list), 'parenttype': 'BOM'})
+		child_items = frappe.get_all('BOM Item', fields=["bom_no", "item_code"],
+			filters={'parent': ('in', bom_list), 'parenttype': 'BOM'}) or []
 
-		raise_exception = False
-		if bom_nos and self.name in [d.bom_no for d in bom_nos]:
-			raise_exception = True
+		child_bom = {d.bom_no for d in child_items}
+		child_items_codes = {d.item_code for d in child_items}
 
-		if not raise_exception:
-			bom_nos = frappe.get_all('BOM Item', fields=["parent"],
-				filters={'bom_no': self.name, 'parenttype': 'BOM'})
+		if self.name in child_bom:
+			_throw_error(self.name)
 
-			if self.name in [d.parent for d in bom_nos]:
-				raise_exception = True
+		if self.item in child_items_codes:
+			_throw_error(self.item)
 
-		if raise_exception:
-			frappe.throw(_("BOM recursion: {0} cannot be parent or child of {1}").format(self.name, self.name))
+		bom_nos = frappe.get_all('BOM Item', fields=["parent"],
+			filters={'bom_no': self.name, 'parenttype': 'BOM'}) or []
+
+		if self.name in {d.parent for d in bom_nos}:
+			_throw_error(self.name)
 
 	def update_cost_and_exploded_items(self, bom_list=[]):
 		bom_list = self.traverse_tree(bom_list)
@@ -516,7 +559,7 @@ class BOM(WebsiteGenerator):
 					'image'			: d.image,
 					'stock_uom'		: d.stock_uom,
 					'stock_qty'		: flt(d.stock_qty),
-					'rate'			: d.base_rate,
+					'rate'			: flt(d.base_rate) / (flt(d.conversion_factor) or 1.0),
 					'include_item_in_manufacturing': d.include_item_in_manufacturing
 				}))
 

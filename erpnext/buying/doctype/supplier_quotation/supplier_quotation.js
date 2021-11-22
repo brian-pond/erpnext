@@ -4,15 +4,17 @@
 // attach required files
 {% include 'erpnext/public/js/controllers/buying.js' %};
 
-frappe.ui.form.on('Suppier Quotation', {
-	setup: function(frm) {
-		frm.custom_make_buttons = {
-			'Purchase Order': 'Purchase Order'
-		}
-	}
-});
-
 erpnext.buying.SupplierQuotationController = erpnext.buying.BuyingController.extend({
+	setup: function() {
+		this.frm.custom_make_buttons = {
+			'Purchase Order': 'Purchase Order',
+			'Quotation': 'Quotation',
+			'Subscription': 'Subscription'
+		}
+
+		this._super();
+	},
+
 	refresh: function() {
 		var me = this;
 		this._super();
@@ -44,7 +46,7 @@ erpnext.buying.SupplierQuotationController = erpnext.buying.BuyingController.ext
 							material_request_type: "Purchase",
 							docstatus: 1,
 							status: ["!=", "Stopped"],
-							per_ordered: ["<", 99.99]
+							per_ordered: ["<", 100]
 						}
 					})
 				}, __("Get items from"));

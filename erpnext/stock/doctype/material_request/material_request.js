@@ -17,13 +17,14 @@ frappe.ui.form.on('Material Request', {
 
 		// formatter for material request item
 		frm.set_indicator_formatter('item_code',
-			function(doc) { return (doc.qty<=doc.ordered_qty) ? "green" : "orange"; });
+			function(doc) { return (doc.stock_qty<=doc.ordered_qty) ? "green" : "orange"; });
 
-		frm.set_query("item_code", "items", function() {
+		frm.set_query("from_warehouse", "items", function(doc) {
 			return {
-				query: "erpnext.controllers.queries.item_query"
+				filters: {'company': doc.company}
 			};
 		});
+
 	},
 
 	onload: function(frm) {
@@ -32,11 +33,24 @@ frappe.ui.form.on('Material Request', {
 
 		// set schedule_date
 		set_schedule_date(frm);
-		frm.fields_dict["items"].grid.get_field("warehouse").get_query = function(doc) {
+
+		frm.set_query("warehouse", "items", function(doc) {
 			return {
 				filters: {'company': doc.company}
 			};
-		};
+		});
+
+		frm.set_query("set_warehouse", function(doc){
+			return {
+				filters: {'company': doc.company}
+			};
+		});
+
+		frm.set_query("set_from_warehouse", function(doc){
+			return {
+				filters: {'company': doc.company}
+			};
+		});
 	},
 
 	onload_post_render: function(frm) {
@@ -55,7 +69,8 @@ frappe.ui.form.on('Material Request', {
 		}
 
 		if (frm.doc.docstatus == 1 && frm.doc.status != 'Stopped') {
-			if (flt(frm.doc.per_ordered, 2) < 100) {
+			let precision = frappe.defaults.get_default("float_precision");
+			if (flt(frm.doc.per_ordered, precision) < 100) {
 				let add_create_pick_list_button = () => {
 					frm.add_custom_button(__('Pick List'),
 						() => frm.events.create_pick_list(frm), __('Create'));
@@ -145,6 +160,8 @@ frappe.ui.form.on('Material Request', {
 	},
 
 	get_item_data: function(frm, item) {
+		if (item && !item.item_code) { return; }
+
 		frm.call({
 			method: "erpnext.stock.get_item_details.get_item_details",
 			child: item,
@@ -357,6 +374,22 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 
 	validate: function() {
 		set_schedule_date(this.frm);
+	},
+
+	onload: function(doc, cdt, cdn) {
+		this.frm.set_query("item_code", "items", function() {
+			if (doc.material_request_type == "Customer Provided") {
+				return{
+					query: "erpnext.controllers.queries.item_query",
+					filters:{ 'customer': me.frm.doc.customer }
+				}
+			} else if (doc.material_request_type != "Manufacture") {
+				return{
+					query: "erpnext.controllers.queries.item_query",
+					filters: {'is_purchase_item': 1}
+				}
+			}
+		});
 	},
 
 	items_add: function(doc, cdt, cdn) {

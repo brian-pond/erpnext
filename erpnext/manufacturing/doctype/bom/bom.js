@@ -6,7 +6,6 @@ frappe.provide("erpnext.bom");
 frappe.ui.form.on("BOM", {
 	setup: function(frm) {
 		frm.custom_make_buttons = {
-			'BOM': 'Duplicate BOM',
 			'Work Order': 'Work Order',
 			'Quality Inspection': 'Quality Inspection'
 		};
@@ -91,10 +90,6 @@ frappe.ui.form.on("BOM", {
 		}
 
 		if(frm.doc.docstatus!=0) {
-			frm.add_custom_button(__("Duplicate BOM"), function() {
-				frm.copy_doc();
-			}, __("Create"));
-
 			frm.add_custom_button(__("Work Order"), function() {
 				frm.trigger("make_work_order");
 			}, __("Create"));
@@ -140,6 +135,7 @@ frappe.ui.form.on("BOM", {
 			frappe.call({
 				method: "erpnext.manufacturing.doctype.work_order.work_order.make_work_order",
 				args: {
+					bom_no: frm.doc.name,
 					item: frm.doc.item,
 					qty: data.qty || 0.0,
 					project: frm.doc.project
@@ -179,6 +175,12 @@ frappe.ui.form.on("BOM", {
 		});
 	},
 
+	rm_cost_as_per: function(frm) {
+		if (in_list(["Valuation Rate", "Last Purchase Rate"], frm.doc.rm_cost_as_per)) {
+			frm.set_value("plc_conversion_rate", 1.0);
+		}
+	},
+
 	routing: function(frm) {
 		if (frm.doc.routing) {
 			frappe.call({
@@ -209,7 +211,7 @@ erpnext.bom.BomController = erpnext.TransactionController.extend({
 	item_code: function(doc, cdt, cdn){
 		var scrap_items = false;
 		var child = locals[cdt][cdn];
-		if(child.doctype == 'BOM Scrap Item') {
+		if (child.doctype == 'BOM Scrap Item') {
 			scrap_items = true;
 		}
 
@@ -219,8 +221,19 @@ erpnext.bom.BomController = erpnext.TransactionController.extend({
 
 		get_bom_material_detail(doc, cdt, cdn, scrap_items);
 	},
+
+	buying_price_list: function(doc) {
+		this.apply_price_list();
+	},
+
+	plc_conversion_rate: function(doc) {
+		if (!this.in_apply_price_list) {
+			this.apply_price_list(null, true);
+		}
+	},
+
 	conversion_factor: function(doc, cdt, cdn) {
-		if(frappe.meta.get_docfield(cdt, "stock_qty", cdn)) {
+		if (frappe.meta.get_docfield(cdt, "stock_qty", cdn)) {
 			var item = frappe.get_doc(cdt, cdn);
 			frappe.model.round_floats_in(item, ["qty", "conversion_factor"]);
 			item.stock_qty = flt(item.qty * item.conversion_factor, precision("stock_qty", item));
@@ -240,7 +253,7 @@ cur_frm.cscript.hour_rate = function(doc) {
 
 cur_frm.cscript.time_in_mins = cur_frm.cscript.hour_rate;
 
-cur_frm.cscript.bom_no	= function(doc, cdt, cdn) {
+cur_frm.cscript.bom_no = function(doc, cdt, cdn) {
 	get_bom_material_detail(doc, cdt, cdn, false);
 };
 
@@ -248,17 +261,22 @@ cur_frm.cscript.is_default = function(doc) {
 	if (doc.is_default) cur_frm.set_value("is_active", 1);
 };
 
-var get_bom_material_detail= function(doc, cdt, cdn, scrap_items) {
+var get_bom_material_detail = function(doc, cdt, cdn, scrap_items) {
+	if (!doc.company) {
+		frappe.throw({message: __("Please select a Company first."), title: __("Mandatory")});
+	}
+
 	var d = locals[cdt][cdn];
 	if (d.item_code) {
 		return frappe.call({
 			doc: doc,
 			method: "get_bom_material_detail",
 			args: {
-				'item_code': d.item_code,
-				'bom_no': d.bom_no != null ? d.bom_no: '',
+				"company": doc.company,
+				"item_code": d.item_code,
+				"bom_no": d.bom_no != null ? d.bom_no: '',
 				"scrap_items": scrap_items,
-				'qty': d.qty,
+				"qty": d.qty,
 				"stock_qty": d.stock_qty,
 				"include_item_in_manufacturing": d.include_item_in_manufacturing,
 				"uom": d.uom,
@@ -296,7 +314,7 @@ cur_frm.cscript.rate = function(doc, cdt, cdn) {
 	}
 
 	if (d.bom_no) {
-		frappe.msgprint(__("You can not change rate if BOM mentioned agianst any item"));
+		frappe.msgprint(__("You cannot change the rate if BOM is mentioned against any Item."));
 		get_bom_material_detail(doc, cdt, cdn, scrap_items);
 	} else {
 		erpnext.bom.calculate_rm_cost(doc);

@@ -86,6 +86,10 @@ class Project(Document):
 		if self.sales_order:
 			frappe.db.set_value("Sales Order", self.sales_order, "project", self.name)
 
+	def on_trash(self):
+		for so in frappe.get_all("Sales Order", {"project": self.name}, ["name"]):
+			frappe.db.set_value("Sales Order", so.get('name'), "project", "")
+
 	def update_percent_complete(self):
 		if self.percent_complete_method == "Manual":
 			if self.status == "Completed":
@@ -124,9 +128,6 @@ class Project(Document):
 
 		if self.percent_complete == 100:
 			self.status = "Completed"
-
-		else:
-			self.status = "Open"
 
 	def update_costing(self):
 		from_time_sheet = frappe.db.sql("""select
@@ -238,6 +239,8 @@ def get_list_context(context=None):
 		"row_template": "templates/includes/projects/project_row.html"
 	}
 
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
 def get_users_for_project(doctype, txt, searchfield, start, page_len, filters):
 	conditions = []
 	return frappe.db.sql("""select name, concat_ws(' ', first_name, middle_name, last_name)

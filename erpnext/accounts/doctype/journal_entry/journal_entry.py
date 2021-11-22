@@ -29,7 +29,11 @@ class JournalEntry(AccountsController):
 		self.validate_entries_for_advance()
 		self.validate_multi_currency()
 		self.set_amounts_in_company_currency()
-		self.validate_total_debit_and_credit()
+
+		# Do not validate while importing via data import
+		if not frappe.flags.in_import:
+			self.validate_total_debit_and_credit()
+
 		self.validate_against_jv()
 		self.validate_reference_doc()
 		self.set_against_account()
@@ -207,11 +211,11 @@ class JournalEntry(AccountsController):
 			if d.reference_type=="Journal Entry":
 				account_root_type = frappe.db.get_value("Account", d.account, "root_type")
 				if account_root_type == "Asset" and flt(d.debit) > 0:
-					frappe.throw(_("For {0}, only credit accounts can be linked against another debit entry")
-						.format(d.account))
+					frappe.throw(_("Row #{0}: For {1}, you can select reference document only if account gets credited")
+						.format(d.idx, d.account))
 				elif account_root_type == "Liability" and flt(d.credit) > 0:
-					frappe.throw(_("For {0}, only debit accounts can be linked against another credit entry")
-						.format(d.account))
+					frappe.throw(_("Row #{0}: For {1}, you can select reference document only if account gets debited")
+						.format(d.idx, d.account))
 
 				if d.reference_name == self.name:
 					frappe.throw(_("You can not enter current voucher in 'Against Journal Entry' column"))
@@ -561,20 +565,20 @@ class JournalEntry(AccountsController):
 
 			if self.write_off_based_on == 'Accounts Receivable':
 				jd1.party_type = "Customer"
-				jd1.credit = flt(d.outstanding_amount, self.precision("credit", "accounts"))
+				jd1.credit_in_account_currency = flt(d.outstanding_amount, self.precision("credit", "accounts"))
 				jd1.reference_type = "Sales Invoice"
 				jd1.reference_name = cstr(d.name)
 			elif self.write_off_based_on == 'Accounts Payable':
 				jd1.party_type = "Supplier"
-				jd1.debit = flt(d.outstanding_amount, self.precision("debit", "accounts"))
+				jd1.debit_in_account_currency = flt(d.outstanding_amount, self.precision("debit", "accounts"))
 				jd1.reference_type = "Purchase Invoice"
 				jd1.reference_name = cstr(d.name)
 
 		jd2 = self.append('accounts', {})
 		if self.write_off_based_on == 'Accounts Receivable':
-			jd2.debit = total
+			jd2.debit_in_account_currency = total
 		elif self.write_off_based_on == 'Accounts Payable':
-			jd2.credit = total
+			jd2.credit_in_account_currency = total
 
 		self.validate_total_debit_and_credit()
 
@@ -836,13 +840,34 @@ def get_opening_accounts(company):
 	return [{"account": a, "balance": get_balance_on(a)} for a in accounts]
 
 
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
 def get_against_jv(doctype, txt, searchfield, start, page_len, filters):
-	return frappe.db.sql("""select jv.name, jv.posting_date, jv.user_remark
-		from `tabJournal Entry` jv, `tabJournal Entry Account` jv_detail
-		where jv_detail.parent = jv.name and jv_detail.account = %s and ifnull(jv_detail.party, '') = %s
-		and (jv_detail.reference_type is null or jv_detail.reference_type = '')
-		and jv.docstatus = 1 and jv.`{0}` like %s order by jv.name desc limit %s, %s""".format(searchfield),
-		(filters.get("account"), cstr(filters.get("party")), "%{0}%".format(txt), start, page_len))
+	if not frappe.db.has_column('Journal Entry', searchfield):
+		return []
+
+	return frappe.db.sql("""
+		SELECT jv.name, jv.posting_date, jv.user_remark
+		FROM `tabJournal Entry` jv, `tabJournal Entry Account` jv_detail
+		WHERE jv_detail.parent = jv.name
+			AND jv_detail.account = %(account)s
+			AND IFNULL(jv_detail.party, '') = %(party)s
+			AND (
+				jv_detail.reference_type IS NULL
+				OR jv_detail.reference_type = ''
+			)
+			AND jv.docstatus = 1
+			AND jv.`{0}` LIKE %(txt)s
+		ORDER BY jv.name DESC
+		LIMIT %(offset)s, %(limit)s
+		""".format(searchfield), dict(
+				account=filters.get("account"),
+				party=cstr(filters.get("party")),
+				txt="%{0}%".format(txt),
+				offset=start,
+				limit=page_len
+			)
+		)
 
 
 @frappe.whitelist()
@@ -996,3 +1021,34 @@ def make_inter_company_journal_entry(name, voucher_type, company):
 	journal_entry.posting_date = nowdate()
 	journal_entry.inter_company_journal_entry_reference = name
 	return journal_entry.as_dict()
+
+@frappe.whitelist()
+def make_reverse_journal_entry(source_name, target_doc=None):
+	from frappe.model.mapper import get_mapped_doc
+
+	def update_accounts(source, target, source_parent):
+		target.reference_type = "Journal Entry"
+		target.reference_name = source_parent.name
+
+	doclist = get_mapped_doc("Journal Entry", source_name, {
+		"Journal Entry": {
+			"doctype": "Journal Entry",
+			"validation": {
+				"docstatus": ["=", 1]
+			}
+		},
+		"Journal Entry Account": {
+			"doctype": "Journal Entry Account",
+			"field_map": {
+				"account_currency": "account_currency",
+				"exchange_rate": "exchange_rate",
+				"debit_in_account_currency": "credit_in_account_currency",
+				"debit": "credit",
+				"credit_in_account_currency": "debit_in_account_currency",
+				"credit": "debit",
+			},
+			"postprocess": update_accounts,
+		},
+	}, target_doc)
+
+	return doclist

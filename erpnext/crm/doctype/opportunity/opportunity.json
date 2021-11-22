@@ -208,7 +208,8 @@
   {
    "fieldname": "opportunity_amount",
    "fieldtype": "Currency",
-   "label": "Opportunity Amount"
+   "label": "Opportunity Amount",
+   "options": "currency"
   },
   {
    "default": "0",
@@ -276,7 +277,6 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval:",
    "fieldname": "territory",
    "fieldtype": "Link",
    "label": "Territory",
@@ -400,7 +400,7 @@
    "fieldname": "lost_reasons",
    "fieldtype": "Table MultiSelect",
    "label": "Lost Reasons",
-   "options": "Lost Reason Detail",
+   "options": "Opportunity Lost Reason Detail",
    "read_only": 1
   },
   {
@@ -412,7 +412,7 @@
  ],
  "icon": "fa fa-info-sign",
  "idx": 195,
- "modified": "2019-09-30 12:58:37.385400",
+ "modified": "2021-06-04 10:11:22.831139",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Opportunity",

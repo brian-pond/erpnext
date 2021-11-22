@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import frappe, erpnext
 from frappe import _
 import json
-from frappe.utils import flt, cstr, nowdate, nowtime
+from frappe.utils import flt, cstr, nowdate, nowtime, get_link_to_form
 
 from six import string_types
 
@@ -74,7 +74,8 @@ def get_stock_value_on(warehouse=None, posting_date=None, item_code=None):
 	return sum(sle_map.values())
 
 @frappe.whitelist()
-def get_stock_balance(item_code, warehouse, posting_date=None, posting_time=None, with_valuation_rate=False):
+def get_stock_balance(item_code, warehouse, posting_date=None, posting_time=None,
+	with_valuation_rate=False, with_serial_no=False):
 	"""Returns stock balance quantity at given warehouse on given posting date or current date.
 
 	If `with_valuation_rate` is True, will return tuple (qty, rate)"""
@@ -84,16 +85,53 @@ def get_stock_balance(item_code, warehouse, posting_date=None, posting_time=None
 	if not posting_date: posting_date = nowdate()
 	if not posting_time: posting_time = nowtime()
 
-	last_entry = get_previous_sle({
+	args = {
 		"item_code": item_code,
 		"warehouse":warehouse,
 		"posting_date": posting_date,
-		"posting_time": posting_time })
+		"posting_time": posting_time
+	}
+
+	last_entry = get_previous_sle(args)
 
 	if with_valuation_rate:
-		return (last_entry.qty_after_transaction, last_entry.valuation_rate) if last_entry else (0.0, 0.0)
+		if with_serial_no:
+			serial_nos = get_serial_nos_data_after_transactions(args)
+
+			return ((last_entry.qty_after_transaction, last_entry.valuation_rate, serial_nos)
+				if last_entry else (0.0, 0.0, 0.0))
+		else:
+			return (last_entry.qty_after_transaction, last_entry.valuation_rate) if last_entry else (0.0, 0.0)
 	else:
 		return last_entry.qty_after_transaction if last_entry else 0.0
+
+def get_serial_nos_data_after_transactions(args):
+	serial_nos = []
+	data = frappe.db.sql(""" SELECT serial_no, actual_qty
+		FROM `tabStock Ledger Entry`
+		WHERE
+			item_code = %(item_code)s and warehouse = %(warehouse)s
+			and timestamp(posting_date, posting_time) < timestamp(%(posting_date)s, %(posting_time)s)
+			order by posting_date, posting_time asc """, args, as_dict=1)
+
+	for d in data:
+		for sn in get_serial_nos_data(d.serial_no):
+			if d.actual_qty > 0:
+				if sn not in serial_nos:
+					serial_nos.append(sn)
+				else:
+					serial_nos.remove(sn)
+			elif d.actual_qty < 0:
+				if sn in serial_nos:
+					serial_nos.remove(sn)
+				else:
+					serial_nos.append(sn)
+
+	return '\n'.join(serial_nos)
+
+def get_serial_nos_data(serial_nos):
+	from erpnext.stock.doctype.serial_no.serial_no import get_serial_nos
+	return get_serial_nos(serial_nos)
 
 @frappe.whitelist()
 def get_latest_stock_qty(item_code, warehouse=None):
@@ -195,12 +233,12 @@ def get_valuation_method(item_code):
 
 def get_fifo_rate(previous_stock_queue, qty):
 	"""get FIFO (average) Rate from Queue"""
-	if qty >= 0:
+	if flt(qty) >= 0:
 		total = sum(f[0] for f in previous_stock_queue)
 		return sum(flt(f[0]) * flt(f[1]) for f in previous_stock_queue) / flt(total) if total else 0.0
 	else:
 		available_qty_for_outgoing, outgoing_cost = 0, 0
-		qty_to_pop = abs(qty)
+		qty_to_pop = abs(flt(qty))
 		while qty_to_pop and previous_stock_queue:
 			batch = previous_stock_queue[0]
 			if 0 < batch[0] <= qty_to_pop:
@@ -248,12 +286,15 @@ def is_group_warehouse(warehouse):
 	if frappe.db.get_value("Warehouse", warehouse, "is_group"):
 		frappe.throw(_("Group node warehouse is not allowed to select for transactions"))
 
+def validate_disabled_warehouse(warehouse):
+	if frappe.db.get_value("Warehouse", warehouse, "disabled"):
+		frappe.throw(_("Disabled Warehouse {0} cannot be used for this transaction.").format(get_link_to_form('Warehouse', warehouse)))
+
 def update_included_uom_in_report(columns, result, include_uom, conversion_factors):
 	if not include_uom or not conversion_factors:
 		return
 
 	convertible_cols = {}
-
 	is_dict_obj = False
 	if isinstance(result[0], dict):
 		is_dict_obj = True
@@ -275,8 +316,11 @@ def update_included_uom_in_report(columns, result, include_uom, conversion_facto
 	for row_idx, row in enumerate(result):
 		data = row.items() if is_dict_obj else enumerate(row)
 		for key, value in data:
-			if not key in convertible_columns or not conversion_factors[row_idx]:
+			if key not in convertible_columns:
 				continue
+			# If no conversion factor for the UOM, defaults to 1
+			if not conversion_factors[row_idx]:
+				conversion_factors[row_idx] = 1
 
 			if convertible_columns.get(key) == 'rate':
 				new_value = flt(value) * conversion_factors[row_idx]

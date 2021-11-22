@@ -54,8 +54,8 @@ class Gstr1Report(object):
 		return self.columns, self.data
 
 	def get_data(self):
-		if self.filters.get("type_of_business") ==  "B2C Small":
-			self.get_b2cs_data()
+		if self.filters.get("type_of_business") in  ("B2C Small", "B2C Large"):
+			self.get_b2c_data()
 		else:
 			for inv, items_based_on_rate in self.items_based_on_tax_rate.items():
 				invoice_details = self.invoices.get(inv)
@@ -69,7 +69,7 @@ class Gstr1Report(object):
 					if taxable_value:
 						self.data.append(row)
 
-	def get_b2cs_data(self):
+	def get_b2c_data(self):
 		b2cs_output = {}
 
 		for inv, items_based_on_rate in self.items_based_on_tax_rate.items():
@@ -84,7 +84,10 @@ class Gstr1Report(object):
 					"rate": "",
 					"taxable_value": 0,
 					"cess_amount": 0,
-					"type": ""
+					"type": "",
+					"invoice_number": invoice_details.get("invoice_number"),
+					"posting_date": invoice_details.get("posting_date"),
+					"invoice_value": invoice_details.get("base_grand_total"),
 				})
 
 				row = b2cs_output.get((rate, place_of_supply, ecommerce_gstin))
@@ -114,12 +117,23 @@ class Gstr1Report(object):
 			else:
 				row.append(invoice_details.get(fieldname))
 		taxable_value = 0
+
+		if invoice in self.cgst_sgst_invoices:
+			division_factor = 2
+		else:
+			division_factor = 1
+
 		for item_code, net_amount in self.invoice_items.get(invoice).items():
-				if item_code in items:
-					if self.item_tax_rate.get(invoice) and tax_rate in self.item_tax_rate.get(invoice, {}).get(item_code, []):
-						taxable_value += abs(net_amount)
-					elif not self.item_tax_rate.get(invoice):
-						taxable_value += abs(net_amount)
+			if item_code in items:
+				if self.item_tax_rate.get(invoice) and tax_rate/division_factor in self.item_tax_rate.get(invoice, {}).get(item_code, []):
+					taxable_value += abs(net_amount)
+				elif not self.item_tax_rate.get(invoice):
+					taxable_value += abs(net_amount)
+				elif tax_rate:
+					taxable_value += abs(net_amount)
+				elif not tax_rate and self.filters.get('type_of_business') == 'EXPORT' \
+					and invoice_details.get('export_type') == "Without Payment of Tax":
+					taxable_value += abs(net_amount)
 
 		row += [tax_rate or 0, taxable_value]
 
@@ -137,6 +151,7 @@ class Gstr1Report(object):
 				{select_columns}
 			from `tab{doctype}`
 			where docstatus = 1 {where_conditions}
+			and is_opening = 'No'
 			order by posting_date desc
 			""".format(select_columns=self.select_columns, doctype=self.doctype,
 				where_conditions=conditions), self.filters, as_dict=1)
@@ -164,7 +179,7 @@ class Gstr1Report(object):
 				frappe.throw(_("Please set B2C Limit in GST Settings."))
 
 		if self.filters.get("type_of_business") ==  "B2C Large":
-			conditions += """ and SUBSTR(place_of_supply, 1, 2) != SUBSTR(company_gstin, 1, 2)
+			conditions += """ and ifnull(SUBSTR(place_of_supply, 1, 2),'') != ifnull(SUBSTR(company_gstin, 1, 2),'')
 				and grand_total > {0} and is_return != 1 and gst_category ='Unregistered' """.format(flt(b2c_limit))
 
 		elif self.filters.get("type_of_business") ==  "B2C Small":
@@ -184,7 +199,7 @@ class Gstr1Report(object):
 		self.item_tax_rate = frappe._dict()
 
 		items = frappe.db.sql("""
-			select item_code, parent, base_net_amount, item_tax_rate
+			select item_code, parent, taxable_value, base_net_amount, item_tax_rate
 			from `tab%s Item`
 			where parent in (%s)
 		""" % (self.doctype, ', '.join(['%s']*len(self.invoices))), tuple(self.invoices), as_dict=1)
@@ -192,8 +207,8 @@ class Gstr1Report(object):
 		for d in items:
 			if d.item_code not in self.invoice_items.get(d.parent, {}):
 				self.invoice_items.setdefault(d.parent, {}).setdefault(d.item_code,
-					sum(i.get('base_net_amount', 0) for i in items
-					    if i.item_code == d.item_code and i.parent == d.parent))
+					sum((i.get('taxable_value', 0) or i.get('base_net_amount', 0)) for i in items
+						if i.item_code == d.item_code and i.parent == d.parent))
 
 				item_tax_rate = {}
 
@@ -218,7 +233,10 @@ class Gstr1Report(object):
 
 		self.items_based_on_tax_rate = {}
 		self.invoice_cess = frappe._dict()
+		self.cgst_sgst_invoices = []
+
 		unidentified_gst_accounts = []
+		unidentified_gst_accounts_invoice = []
 		for parent, account, item_wise_tax_detail, tax_amount in self.tax_details:
 			if account in self.gst_accounts.cess_account:
 				self.invoice_cess.setdefault(parent, tax_amount)
@@ -234,17 +252,21 @@ class Gstr1Report(object):
 						if not (cgst_or_sgst or account in self.gst_accounts.igst_account):
 							if "gst" in account.lower() and account not in unidentified_gst_accounts:
 								unidentified_gst_accounts.append(account)
+								unidentified_gst_accounts_invoice.append(parent)
 							continue
 
 						for item_code, tax_amounts in item_wise_tax_detail.items():
 							tax_rate = tax_amounts[0]
-							if cgst_or_sgst:
-								tax_rate *= 2
+							if tax_rate:
+								if cgst_or_sgst:
+									tax_rate *= 2
+									if parent not in self.cgst_sgst_invoices:
+										self.cgst_sgst_invoices.append(parent)
 
-							rate_based_dict = self.items_based_on_tax_rate\
-								.setdefault(parent, {}).setdefault(tax_rate, [])
-							if item_code not in rate_based_dict:
-								rate_based_dict.append(item_code)
+								rate_based_dict = self.items_based_on_tax_rate\
+									.setdefault(parent, {}).setdefault(tax_rate, [])
+								if item_code not in rate_based_dict:
+									rate_based_dict.append(item_code)
 					except ValueError:
 						continue
 		if unidentified_gst_accounts:
@@ -253,7 +275,7 @@ class Gstr1Report(object):
 
 		# Build itemised tax for export invoices where tax table is blank
 		for invoice, items in iteritems(self.invoice_items):
-			if invoice not in self.items_based_on_tax_rate \
+			if invoice not in self.items_based_on_tax_rate  and invoice not in unidentified_gst_accounts_invoice \
 				and frappe.db.get_value(self.doctype, invoice, "export_type") == "Without Payment of Tax":
 					self.items_based_on_tax_rate.setdefault(invoice, {}).setdefault(0, items.keys())
 
@@ -581,6 +603,11 @@ def get_b2b_json(res, gstin):
 		if not gst_in: continue
 
 		for number, invoice in iteritems(res[gst_in]):
+			if not invoice[0]["place_of_supply"]:
+				frappe.throw(_("""{0} not entered in Invoice {1}.
+					Please update and try again""").format(frappe.bold("Place Of Supply"),
+					frappe.bold(invoice[0]['invoice_number'])))
+
 			inv_item = get_basic_invoice_detail(invoice[0])
 			inv_item["pos"] = "%02d" % int(invoice[0]["place_of_supply"].split('-')[0])
 			inv_item["rchrg"] = invoice[0]["reverse_charge"]
@@ -606,6 +633,9 @@ def get_b2cs_json(data, gstin):
 
 	out = []
 	for d in data:
+		if not d.get("place_of_supply"):
+			frappe.throw(_("""{0} not entered in some invoices.
+				Please update and try again""").format(frappe.bold("Place Of Supply")))
 
 		pos = d.get('place_of_supply').split('-')[0]
 		tax_details = {}
@@ -642,6 +672,10 @@ def get_b2cs_json(data, gstin):
 def get_b2cl_json(res, gstin):
 	out = []
 	for pos in res:
+		if not pos:
+			frappe.throw(_("""{0} not entered in some invoices.
+				Please update and try again""").format(frappe.bold("Place Of Supply")))
+
 		b2cl_item, inv = {"pos": "%02d" % int(pos.split('-')[0]), "inv": []}, []
 
 		for row in res[pos]:

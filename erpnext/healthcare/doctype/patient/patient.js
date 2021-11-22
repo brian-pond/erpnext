@@ -15,7 +15,7 @@ frappe.ui.form.on('Patient', {
 		} else {
 			erpnext.toggle_naming_series();
 		}
-		if (frappe.defaults.get_default("collect_registration_fee") && frm.doc.disabled == 1) {
+		if (frappe.defaults.get_default("collect_registration_fee") && frm.doc.status == 'Disabled') {
 			frm.add_custom_button(__('Invoice Patient Registration'), function () {
 				btn_invoice_registration(frm);
 			});
@@ -43,7 +43,7 @@ frappe.ui.form.on('Patient', {
 			$(frm.fields_dict['age_html'].wrapper).html("");
 		}
 		if(frm.doc.dob){
-			$(frm.fields_dict['age_html'].wrapper).html("AGE : " + get_age(frm.doc.dob));
+			$(frm.fields_dict['age_html'].wrapper).html(`${__('AGE')} : ${get_age(frm.doc.dob)}`);
 		}
 	}
 });
@@ -58,7 +58,7 @@ frappe.ui.form.on("Patient", "dob", function(frm) {
 		}
 		else{
 			var age_str = get_age(frm.doc.dob);
-			$(frm.fields_dict['age_html'].wrapper).html("AGE : " + age_str);
+			$(frm.fields_dict['age_html'].wrapper).html(`${__('AGE')} : ${age_str}`);
 		}
 	}
 	else {
@@ -81,7 +81,7 @@ var get_age = function (birth) {
 	var age = new Date();
 	age.setTime(ageMS);
 	var years = age.getFullYear() - 1970;
-	return years + " Year(s) " + age.getMonth() + " Month(s) " + age.getDate() + " Day(s)";
+	return `${years} ${__('Years(s)')} ${age.getMonth()} ${__('Month(s)')} ${age.getDate()} ${__('Day(s)')}`;
 };
 
 var btn_create_vital_signs = function (frm) {

@@ -244,7 +244,6 @@ def make_quotation(source_name, target_doc=None):
 			"doctype": "Quotation",
 			"field_map": {
 				"opportunity_from": "quotation_to",
-				"opportunity_type": "order_type",
 				"name": "enq_no",
 			}
 		},
@@ -321,7 +320,7 @@ def auto_close_opportunity():
 		doc.save()
 
 @frappe.whitelist()
-def make_opportunity_from_communication(communication, ignore_communication_links=False):
+def make_opportunity_from_communication(communication, company, ignore_communication_links=False):
 	from erpnext.crm.doctype.lead.lead import make_lead_from_communication
 	doc = frappe.get_doc("Communication", communication)
 
@@ -333,8 +332,9 @@ def make_opportunity_from_communication(communication, ignore_communication_link
 
 	opportunity = frappe.get_doc({
 		"doctype": "Opportunity",
+		"company": company,
 		"opportunity_from": opportunity_from,
-		"lead": lead
+		"party_name": lead
 	}).insert(ignore_permissions=True)
 
 	link_communication_to_document(doc, "Opportunity", opportunity.name, ignore_communication_links)

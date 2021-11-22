@@ -18,10 +18,11 @@ def get_columns():
 	"""return columns"""
 	columns = [
 		_("Item") + ":Link/Item:150",
-		_("Description") + "::500",
-		_("Qty per BOM Line") + ":Float:100",
-		_("Required Qty") + ":Float:100",
-		_("In Stock Qty") + ":Float:100",
+		_("Description") + "::300",
+		_("BOM Qty") + ":Float:160",
+		_("BOM UoM") + "::160",
+		_("Required Qty") + ":Float:120",
+		_("In Stock Qty") + ":Float:120",
 		_("Enough Parts to Build") + ":Float:200",
 	]
 
@@ -32,7 +33,7 @@ def get_bom_stock(filters):
 	bom = filters.get("bom")
 
 	table = "`tabBOM Item`"
-	qty_field = "qty"
+	qty_field = "stock_qty"
 
 	qty_to_produce = filters.get("qty_to_produce", 1)
 	if  int(qty_to_produce) <= 0:
@@ -40,7 +41,6 @@ def get_bom_stock(filters):
 
 	if filters.get("show_exploded_view"):
 		table = "`tabBOM Explosion Item`"
-		qty_field = "stock_qty"
 
 	if filters.get("warehouse"):
 		warehouse_details = frappe.db.get_value("Warehouse", filters.get("warehouse"), ["lft", "rgt"], as_dict=1)
@@ -59,13 +59,15 @@ def get_bom_stock(filters):
 				bom_item.item_code,
 				bom_item.description ,
 				bom_item.{qty_field},
-				bom_item.{qty_field} * {qty_to_produce},
+				bom_item.stock_uom,
+				bom_item.{qty_field} * {qty_to_produce} / bom.quantity,
 				sum(ledger.actual_qty) as actual_qty,
-				sum(FLOOR(ledger.actual_qty / (bom_item.{qty_field} * {qty_to_produce})))
+				sum(FLOOR(ledger.actual_qty / (bom_item.{qty_field} * {qty_to_produce} / bom.quantity)))
 			FROM
-				{table} AS bom_item
+				`tabBOM` AS bom INNER JOIN {table} AS bom_item
+					ON bom.name = bom_item.parent
 				LEFT JOIN `tabBin` AS ledger
-				ON bom_item.item_code = ledger.item_code
+					ON bom_item.item_code = ledger.item_code
 				{conditions}
 			WHERE
 				bom_item.parent = '{bom}' and bom_item.parenttype='BOM'

@@ -8,7 +8,6 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import getdate, nowdate, flt
 from erpnext.hr.utils import set_employee_name
-from erpnext.hr.doctype.leave_application.leave_application import get_leave_balance_on
 from erpnext.hr.doctype.salary_structure_assignment.salary_structure_assignment import get_assigned_salary_structure
 from erpnext.hr.doctype.leave_ledger_entry.leave_ledger_entry import create_leave_ledger_entry
 from erpnext.hr.doctype.leave_allocation.leave_allocation import get_unused_leaves
@@ -96,7 +95,11 @@ class LeaveEncashment(Document):
 		create_leave_ledger_entry(self, args, submit)
 
 		# create reverse entry for expired leaves
-		to_date = self.get_leave_allocation().get('to_date')
+		leave_allocation = self.get_leave_allocation()
+		if not leave_allocation:
+			return
+
+		to_date = leave_allocation.get('to_date')
 		if to_date < getdate(nowdate()):
 			args = frappe._dict(
 				leaves=self.encashable_days,

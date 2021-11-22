@@ -5,20 +5,22 @@ from __future__ import unicode_literals
 
 import frappe, os, json
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+from frappe.custom.doctype.property_setter.property_setter import make_property_setter
 from frappe.permissions import add_permission, update_permission_property
 from erpnext.regional.india import states
-from erpnext.accounts.utils import get_fiscal_year
+from erpnext.accounts.utils import get_fiscal_year, FiscalYearError
 from frappe.utils import today
 
 def setup(company=None, patch=True):
-	setup_company_independent_fixtures()
+	setup_company_independent_fixtures(patch=patch)
 	if not patch:
 		update_address_template()
 		make_fixtures(company)
 
 # TODO: for all countries
-def setup_company_independent_fixtures():
+def setup_company_independent_fixtures(patch=False):
 	make_custom_fields()
+	make_property_setters(patch=patch)
 	add_permissions()
 	add_custom_roles_for_reports()
 	frappe.enqueue('erpnext.regional.india.setup.add_hsn_sac_codes', now=frappe.flags.in_test)
@@ -77,19 +79,32 @@ def add_custom_roles_for_reports():
 			)).insert()
 
 def add_permissions():
-	for doctype in ('GST HSN Code', 'GST Settings'):
+	for doctype in ('GST HSN Code', 'GST Settings', 'GSTR 3B Report', 'Lower Deduction Certificate', 'E Invoice Settings'):
 		add_permission(doctype, 'All', 0)
-		for role in ('Accounts Manager', 'System Manager', 'Item Manager', 'Stock Manager'):
+		for role in ('Accounts Manager', 'Accounts User', 'System Manager'):
 			add_permission(doctype, role, 0)
 			update_permission_property(doctype, role, 0, 'write', 1)
 			update_permission_property(doctype, role, 0, 'create', 1)
 
+		if doctype == 'GST HSN Code':
+			for role in ('Item Manager', 'Stock Manager'):
+				add_permission(doctype, role, 0)
+				update_permission_property(doctype, role, 0, 'write', 1)
+				update_permission_property(doctype, role, 0, 'create', 1)
+
 def add_print_formats():
 	frappe.reload_doc("regional", "print_format", "gst_tax_invoice")
 	frappe.reload_doc("accounts", "print_format", "gst_pos_invoice")
+	frappe.reload_doc("accounts", "print_format", "GST E-Invoice")
 
 	frappe.db.sql(""" update `tabPrint Format` set disabled = 0 where
-		name in('GST POS Invoice', 'GST Tax Invoice') """)
+		name in('GST POS Invoice', 'GST Tax Invoice', 'GST E-Invoice') """)
+
+def make_property_setters(patch=False):
+	# GST rules do not allow for an invoice no. bigger than 16 characters
+	if not patch:
+		make_property_setter('Sales Invoice', 'naming_series', 'options', 'SINV-.YY.-\nSRET-.YY.-', '')
+		make_property_setter('Purchase Invoice', 'naming_series', 'options', 'PINV-.YY.-\nPRET-.YY.-', '')
 
 def make_custom_fields(update=True):
 	hsn_sac_field = dict(fieldname='gst_hsn_code', label='HSN/SAC',
@@ -100,6 +115,9 @@ def make_custom_fields(update=True):
 		print_hide=1)
 	is_non_gst = dict(fieldname='is_non_gst', label='Is Non GST',
 		fieldtype='Check', fetch_from='item_code.is_non_gst', insert_after='is_nil_exempt',
+		print_hide=1)
+	taxable_value = dict(fieldname='taxable_value', label='Taxable Value',
+		fieldtype='Currency', insert_after='base_net_amount', hidden=1, options="Company:company:default_currency",
 		print_hide=1)
 
 	purchase_invoice_gst_category = [
@@ -267,10 +285,20 @@ def make_custom_fields(update=True):
 			'print_hide': 1
 		},
 		{
+			'fieldname': 'transporter_name',
+			'label': 'Transporter Name',
+			'fieldtype': 'Data',
+			'insert_after': 'transporter',
+			'fetch_from': 'transporter.name',
+			'read_only': 1,
+			'print_hide': 1,
+			'translatable': 0
+		},
+		{
 			'fieldname': 'gst_transporter_id',
 			'label': 'GST Transporter ID',
 			'fieldtype': 'Data',
-			'insert_after': 'transporter',
+			'insert_after': 'transporter_name',
 			'fetch_from': 'transporter.gst_transporter_id',
 			'print_hide': 1,
 			'translatable': 0
@@ -312,11 +340,18 @@ def make_custom_fields(update=True):
 			'insert_after': 'distance'
 		},
 		{
-			'fieldname': 'transporter_name',
-			'label': 'Transporter Name',
-			'fieldtype': 'Data',
+			'fieldname': 'transporter_address',
+			'label': 'Transporter Address Name',
+			'fieldtype': 'Link',
 			'insert_after': 'transporter_col_break',
-			'fetch_from': 'transporter.name',
+			'options': 'Address',
+			'print_hide': 1
+		},
+		{
+			'fieldname': 'transporter_address_display',
+			'label': 'Transporter Address Preview',
+			'fieldtype': 'Small Text',
+			'insert_after': 'transporter_address',
 			'read_only': 1,
 			'print_hide': 1,
 			'translatable': 0
@@ -327,7 +362,7 @@ def make_custom_fields(update=True):
 			'fieldtype': 'Select',
 			'options': '\nRoad\nAir\nRail\nShip',
 			'default': 'Road',
-			'insert_after': 'transporter_name',
+			'insert_after': 'transporter_address_display',
 			'print_hide': 1,
 			'translatable': 0
 		},
@@ -363,11 +398,32 @@ def make_custom_fields(update=True):
 			'fieldname': 'ewaybill',
 			'label': 'e-Way Bill No.',
 			'fieldtype': 'Data',
-			'depends_on': 'eval:(doc.docstatus === 1)',
+			'depends_on': 'eval:((doc.docstatus === 1 || doc.ewaybill) && doc.eway_bill_cancelled === 0)',
 			'allow_on_submit': 1,
 			'insert_after': 'tax_id',
 			'translatable': 0
 		}
+	]
+
+	si_einvoice_fields = [
+		dict(fieldname='irn', label='IRN', fieldtype='Data', read_only=1, insert_after='customer', no_copy=1, print_hide=1,
+			depends_on='eval:in_list(["Registered Regular", "SEZ", "Overseas", "Deemed Export"], doc.gst_category) && doc.irn_cancelled === 0'),
+
+		dict(fieldname='ack_no', label='Ack. No.', fieldtype='Data', read_only=1, hidden=1, insert_after='irn', no_copy=1, print_hide=1),
+
+		dict(fieldname='ack_date', label='Ack. Date', fieldtype='Data', read_only=1, hidden=1, insert_after='ack_no', no_copy=1, print_hide=1),
+
+		dict(fieldname='irn_cancelled', label='IRN Cancelled', fieldtype='Check', no_copy=1, print_hide=1,
+			depends_on='eval: doc.irn', allow_on_submit=1, insert_after='customer'),
+
+		dict(fieldname='eway_bill_cancelled', label='E-Way Bill Cancelled', fieldtype='Check', no_copy=1, print_hide=1,
+			depends_on='eval:(doc.eway_bill_cancelled === 1)', read_only=1, allow_on_submit=1, insert_after='customer'),
+
+		dict(fieldname='signed_einvoice', fieldtype='Code', options='JSON', hidden=1, no_copy=1, print_hide=1, read_only=1),
+
+		dict(fieldname='signed_qr_code', fieldtype='Code', options='JSON', hidden=1, no_copy=1, print_hide=1, read_only=1),
+
+		dict(fieldname='qrcode_image', label='QRCode', fieldtype='Attach Image', hidden=1, no_copy=1, print_hide=1, read_only=1)
 	]
 
 	custom_fields = {
@@ -382,7 +438,7 @@ def make_custom_fields(update=True):
 		'Purchase Invoice': purchase_invoice_gst_category + invoice_gst_fields + purchase_invoice_itc_fields + purchase_invoice_gst_fields,
 		'Purchase Order': purchase_invoice_gst_fields,
 		'Purchase Receipt': purchase_invoice_gst_fields,
-		'Sales Invoice': sales_invoice_gst_category + invoice_gst_fields + sales_invoice_shipping_fields + sales_invoice_gst_fields + si_ewaybill_fields,
+		'Sales Invoice': sales_invoice_gst_category + invoice_gst_fields + sales_invoice_shipping_fields + sales_invoice_gst_fields + si_ewaybill_fields + si_einvoice_fields,
 		'Delivery Note': sales_invoice_gst_fields + ewaybill_fields + sales_invoice_shipping_fields,
 		'Sales Order': sales_invoice_gst_fields,
 		'Tax Category': inter_state_gst_field,
@@ -398,8 +454,8 @@ def make_custom_fields(update=True):
 		'Supplier Quotation Item': [hsn_sac_field, nil_rated_exempt, is_non_gst],
 		'Sales Order Item': [hsn_sac_field, nil_rated_exempt, is_non_gst],
 		'Delivery Note Item': [hsn_sac_field, nil_rated_exempt, is_non_gst],
-		'Sales Invoice Item': [hsn_sac_field, nil_rated_exempt, is_non_gst],
-		'Purchase Order Item': [hsn_sac_field, nil_rated_exempt, is_non_gst],
+		'Sales Invoice Item': [hsn_sac_field, nil_rated_exempt, is_non_gst, taxable_value],
+		'Purchase Order Item': [hsn_sac_field, nil_rated_exempt, is_non_gst, taxable_value],
 		'Purchase Receipt Item': [hsn_sac_field, nil_rated_exempt, is_non_gst],
 		'Purchase Invoice Item': [hsn_sac_field, nil_rated_exempt, is_non_gst],
 		'Material Request Item': [hsn_sac_field, nil_rated_exempt, is_non_gst],
@@ -524,23 +580,34 @@ def make_fixtures(company=None):
 
 def set_salary_components(docs):
 	docs.extend([
-		{'doctype': 'Salary Component', 'salary_component': 'Professional Tax', 'description': 'Professional Tax', 'type': 'Deduction'},
-		{'doctype': 'Salary Component', 'salary_component': 'Provident Fund', 'description': 'Provident fund', 'type': 'Deduction'},
-		{'doctype': 'Salary Component', 'salary_component': 'House Rent Allowance', 'description': 'House Rent Allowance', 'type': 'Earning'},
-		{'doctype': 'Salary Component', 'salary_component': 'Basic', 'description': 'Basic', 'type': 'Earning'},
-		{'doctype': 'Salary Component', 'salary_component': 'Arrear', 'description': 'Arrear', 'type': 'Earning'},
-		{'doctype': 'Salary Component', 'salary_component': 'Leave Encashment', 'description': 'Leave Encashment', 'type': 'Earning'}
+		{'doctype': 'Salary Component', 'salary_component': 'Professional Tax',
+			'description': 'Professional Tax', 'type': 'Deduction', 'exempted_from_income_tax': 1},
+		{'doctype': 'Salary Component', 'salary_component': 'Provident Fund',
+			'description': 'Provident fund', 'type': 'Deduction', 'is_tax_applicable': 1},
+		{'doctype': 'Salary Component', 'salary_component': 'House Rent Allowance',
+			'description': 'House Rent Allowance', 'type': 'Earning', 'is_tax_applicable': 1},
+		{'doctype': 'Salary Component', 'salary_component': 'Basic',
+			'description': 'Basic', 'type': 'Earning', 'is_tax_applicable': 1},
+		{'doctype': 'Salary Component', 'salary_component': 'Arrear',
+			'description': 'Arrear', 'type': 'Earning', 'is_tax_applicable': 1},
+		{'doctype': 'Salary Component', 'salary_component': 'Leave Encashment',
+			'description': 'Leave Encashment', 'type': 'Earning', 'is_tax_applicable': 1}
 	])
 
 def set_tax_withholding_category(company):
 	accounts = []
+	fiscal_year = None
 	abbr = frappe.get_value("Company", company, "abbr")
 	tds_account = frappe.get_value("Account", 'TDS Payable - {0}'.format(abbr), 'name')
 
 	if company and tds_account:
 		accounts = [dict(company=company, account=tds_account)]
 
-	fiscal_year = get_fiscal_year(today(), company=company)[0]
+	try:
+		fiscal_year = get_fiscal_year(today(), verbose=0, company=company)[0]
+	except FiscalYearError:
+		pass
+
 	docs = get_tds_details(accounts, fiscal_year)
 
 	for d in docs:
@@ -555,11 +622,14 @@ def set_tax_withholding_category(company):
 			if accounts:
 				doc.append("accounts", accounts[0])
 
-			# if fiscal year don't match with any of the already entered data, append rate row
-			fy_exist = [k for k in doc.get('rates') if k.get('fiscal_year')==fiscal_year]
-			if not fy_exist:
-				doc.append("rates", d.get('rates')[0])
+			if fiscal_year:
+				# if fiscal year don't match with any of the already entered data, append rate row
+				fy_exist = [k for k in doc.get('rates') if k.get('fiscal_year')==fiscal_year]
+				if not fy_exist:
+					doc.append("rates", d.get('rates')[0])
 
+			doc.flags.ignore_permissions = True
+			doc.flags.ignore_mandatory = True
 			doc.save()
 
 def set_tds_account(docs, company):

@@ -117,11 +117,11 @@ def call_mws_method(mws_method, *args, **kwargs):
 			return response
 		except Exception as e:
 			delay = math.pow(4, x) * 125
-			frappe.log_error(message=e, title=str(mws_method))
+			frappe.log_error(message=e, title="Method {} failed".format(mws_method.__name__))
 			time.sleep(delay)
 			continue
 
-	mws_settings.enable_synch = 0
+	mws_settings.enable_sync = 0
 	mws_settings.save()
 
 	frappe.throw(_("Sync has been temporarily disabled because maximum retries have been exceeded"))

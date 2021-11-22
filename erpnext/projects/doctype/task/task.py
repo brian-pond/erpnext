@@ -7,10 +7,11 @@ import json
 
 import frappe
 from frappe import _, throw
+from frappe.desk.form.assign_to import clear, close_all_assignments
+from frappe.model.mapper import get_mapped_doc
 from frappe.utils import add_days, cstr, date_diff, get_link_to_form, getdate, today
 from frappe.utils.nestedset import NestedSet
-from frappe.desk.form.assign_to import close_all_assignments, clear
-from frappe.utils import date_diff
+
 
 class CircularReferenceError(frappe.ValidationError): pass
 class EndDateCannotBeGreaterThanProjectEndDateError(frappe.ValidationError): pass
@@ -29,6 +30,7 @@ class Task(NestedSet):
 
 	def validate(self):
 		self.validate_dates()
+		self.validate_parent_expected_end_date()
 		self.validate_parent_project_dates()
 		self.validate_progress()
 		self.validate_status()
@@ -42,6 +44,12 @@ class Task(NestedSet):
 		if self.act_start_date and self.act_end_date and getdate(self.act_start_date) > getdate(self.act_end_date):
 			frappe.throw(_("{0} can not be greater than {1}").format(frappe.bold("Actual Start Date"), \
 				frappe.bold("Actual End Date")))
+
+	def validate_parent_expected_end_date(self):
+		if self.parent_task:
+			parent_exp_end_date = frappe.db.get_value("Task", self.parent_task, "exp_end_date")
+			if parent_exp_end_date and getdate(self.get("exp_end_date")) > getdate(parent_exp_end_date):
+				frappe.throw(_("Expected End Date should be less than or equal to parent task's Expected End Date {0}.").format(getdate(parent_exp_end_date)))
 
 	def validate_parent_project_dates(self):
 		if not self.project or frappe.flags.in_test:
@@ -64,9 +72,6 @@ class Task(NestedSet):
 	def validate_progress(self):
 		if (self.progress or 0) > 100:
 			frappe.throw(_("Progress % for a task cannot be more than 100."))
-
-		if self.progress == 100:
-			self.status = 'Completed'
 
 		if self.status == 'Completed':
 			self.progress = 100
@@ -188,6 +193,8 @@ def check_if_child_exists(name):
 	return child_tasks
 
 
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
 def get_project(doctype, txt, searchfield, start, page_len, filters):
 	from erpnext.controllers.queries import get_match_cond
 	return frappe.db.sql(""" select name from `tabProject`
@@ -218,6 +225,26 @@ def set_tasks_as_overdue():
 			if getdate(task.review_date) > getdate(today()):
 				continue
 		frappe.get_doc("Task", task.name).update_status()
+
+
+@frappe.whitelist()
+def make_timesheet(source_name, target_doc=None, ignore_permissions=False):
+	def set_missing_values(source, target):
+		target.append("time_logs", {
+			"hours": source.actual_time,
+			"completed": source.status == "Completed",
+			"project": source.project,
+			"task": source.name
+		})
+
+	doclist = get_mapped_doc("Task", source_name, {
+			"Task": {
+				"doctype": "Timesheet"
+			}
+		}, target_doc, postprocess=set_missing_values, ignore_permissions=ignore_permissions)
+
+	return doclist
+
 
 @frappe.whitelist()
 def get_children(doctype, parent, task=None, project=None, is_root=False):

@@ -166,7 +166,8 @@ frappe.ui.form.on("Request for Quotation",{
 				{	"fieldtype": "Select", "label": __("Supplier"),
 					"fieldname": "supplier",
 					"options": doc.suppliers.map(d => d.supplier),
-					"reqd": 1 },
+					"reqd": 1,
+					"default": doc.suppliers.length === 1 ? doc.suppliers[0].supplier_name : "" },
 				{	"fieldtype": "Button", "label": __('Create Supplier Quotation'),
 					"fieldname": "make_supplier_quotation", "cssClass": "btn-primary" },
 			]
@@ -270,7 +271,7 @@ erpnext.buying.RequestforQuotationController = erpnext.buying.BuyingController.e
 							material_request_type: "Purchase",
 							docstatus: 1,
 							status: ["!=", "Stopped"],
-							per_ordered: ["<", 99.99]
+							per_ordered: ["<", 100]
 						}
 					})
 				}, __("Get items from"));
@@ -315,7 +316,7 @@ erpnext.buying.RequestforQuotationController = erpnext.buying.BuyingController.e
 								material_request_type: "Purchase",
 								docstatus: 1,
 								status: ["!=", "Stopped"],
-								per_ordered: ["<", 99.99]
+								per_ordered: ["<", 100]
 							}
 						});
 						$(btn).done_working();

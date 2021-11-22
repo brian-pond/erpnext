@@ -63,7 +63,7 @@ class TestGSTR3BReport(unittest.TestCase):
 		self.assertEqual(output["sup_details"]["osup_zero"]["iamt"], 18),
 		self.assertEqual(output["inter_sup"]["unreg_details"][0]["iamt"], 18),
 		self.assertEqual(output["sup_details"]["osup_nil_exmp"]["txval"], 100),
-		self.assertEqual(output["inward_sup"]["isup_details"][0]["inter"], 250)
+		self.assertEqual(output["inward_sup"]["isup_details"][0]["intra"], 250)
 		self.assertEqual(output["itc_elg"]["itc_avl"][4]["samt"], 22.50)
 		self.assertEqual(output["itc_elg"]["itc_avl"][4]["camt"], 22.50)
 
@@ -189,6 +189,19 @@ def create_purchase_invoices():
 	pi1.save()
 
 	pi1.submit()
+
+	pi2 = make_purchase_invoice(company="_Test Company GST",
+			customer = '_Test Registered Supplier',
+			currency = 'INR',
+			item = 'Milk',
+			warehouse = 'Finished Goods - _GST',
+			expense_account = 'Cost of Goods Sold - _GST',
+			cost_center = 'Main - _GST',
+			rate=250,
+			qty=1,
+			do_not_save=1
+		)
+	pi2.submit()
 
 def make_suppliers():
 
@@ -387,6 +400,10 @@ def make_company():
 
 def set_account_heads():
 
+	from erpnext.accounts.doctype.account.test_account import create_account
+
+	create_account(account_name="Cess", parent_account = "Duties and Taxes - _GST", company="_Test Company GST")
+
 	gst_settings = frappe.get_doc("GST Settings")
 
 	gst_account = frappe.get_all(
@@ -400,6 +417,7 @@ def set_account_heads():
 			"cgst_account": "CGST - _GST",
 			"sgst_account": "SGST - _GST",
 			"igst_account": "IGST - _GST",
+			"cess_account": "Cess - _GST"
 		})
 
 		gst_settings.save()

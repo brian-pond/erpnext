@@ -186,21 +186,24 @@ class ItemConfigure {
 		this.dialog.$status_area.empty();
 	}
 
-	get_html_for_item_found({ filtered_items_count, filtered_items, exact_match, product_info }) {
+	get_html_for_item_found({ filtered_items_count, filtered_items, exact_match, product_info, allow_items_not_in_stock }) {
 		const exact_match_message = __('1 exact match.');
 		const one_item = exact_match.length === 1 ?
 			exact_match[0] :
 			filtered_items_count === 1 ?
 				filtered_items[0] : '';
 
+		// Allow Add to Cart if adding out of stock items enabled in Shopping Cart else check stock.
+		const in_stock = allow_items_not_in_stock ? 1 : product_info && product_info.in_stock;
+		const add_to_cart = `<a href data-action="btn_add_to_cart" data-item-code="${one_item}">${__('Add to cart')}</a>`;
+		const product_action =  in_stock ? add_to_cart : `<a style="color:#74808b;">${__('Not in Stock')}</a>`;
+
 		const item_add_to_cart = one_item ? `
 			<div class="alert alert-success d-flex justify-content-between align-items-center" role="alert">
 				<div>
 					<div>${one_item} ${product_info && product_info.price ? '(' + product_info.price.formatted_price_sales_uom + ')' : ''}</div>
 				</div>
-				<a href data-action="btn_add_to_cart" data-item-code="${one_item}">
-					${__('Add to cart')}
-				</a>
+				${product_action}
 			</div>
 		`: '';
 
