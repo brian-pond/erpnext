@@ -15,6 +15,7 @@
   "party_billing_address",
   "party_billing_address_display",
   "document_date",
+  "amount_grand_total",
   "sb_defaults",
   "warehouse_default",
   "from_date",
@@ -84,7 +85,7 @@
   {
    "fieldname": "from_date",
    "fieldtype": "Date",
-   "label": "Earliest Required By Date"
+   "label": "Default Required By Date"
   },
   {
    "fieldname": "to_date",
@@ -110,8 +111,7 @@
    "fieldname": "items",
    "fieldtype": "Table",
    "label": "Item",
-   "options": "Blanket Order Item",
-   "reqd": 1
+   "options": "Blanket Order Item"
   },
   {
    "fieldname": "amended_from",
@@ -177,10 +177,18 @@
    "in_list_view": 1,
    "label": "Document Date",
    "reqd": 1
+  },
+  {
+   "developer_notes": "It's not ideal storing this field in the SQL table.  Mostly this will be a waste of space.  But there's no easy workaround for implementing \"Display Methods\" in ERPNext right now, and getting this value to appear on the web page.",
+   "fieldname": "amount_grand_total",
+   "fieldtype": "Currency",
+   "label": "Grand Total",
+   "precision": "2",
+   "read_only": 1
   }
  ],
  "is_submittable": 1,
- "modified": "2021-10-15 15:15:23.363662",
+ "modified": "2021-11-26 14:02:58.556014",
  "modified_by": "Administrator",
  "module": "Manufacturing",
  "name": "Blanket Order",
@@ -213,7 +221,6 @@
    "write": 1
   }
  ],
- "quick_entry": 1,
  "search_fields": "blanket_order_type, to_date",
  "sort_field": "modified",
  "sort_order": "DESC",

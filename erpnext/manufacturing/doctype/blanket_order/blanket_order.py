@@ -6,11 +6,11 @@ from __future__ import unicode_literals
 from datetime import date
 
 import frappe
-from frappe import _
+from frappe import _  # pylint: disable=unused-import
 from frappe.contacts.doctype.address.address import get_address_display
 from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import flt, getdate, today as today_str
+from frappe.utils import flt, today as today_str
 
 from erpnext.stock.doctype.item.item import get_item_defaults
 from erpnext.stock.get_item_details import get_conversion_factor
@@ -19,15 +19,23 @@ class BlanketOrder(Document):
 
 	def validate(self):
 		# self.validate_dates()
-		
+
 		# TODO: Check this out Brian
 		self.set_supplier_address()
 		self.validate_required_by_dates()
 
-	# Spectrum Fruits: No reason to include a date range.
+	def on_update(self):
+
+		# Recalculate the Grand Total after each insert/update.
+		self.amount_grand_total = 0.0
+		for order_line in self.items:
+			order_line.line_amount = order_line.qty * order_line.rate
+			self.amount_grand_total += order_line.line_amount if order_line.line_amount else 0.0
+
+	# Spectrum Fruits: No reason to include a -range- of Dates for blanket orders.
 	# def validate_dates(self):
 	#	if getdate(self.from_date) > getdate(self.to_date):
-	#		frappe.throw(_("From date cannot be greater than To date")) 
+	#		frappe.throw(_("From date cannot be greater than To date"))
 
 	def update_ordered_qty(self):
 		"""
@@ -54,9 +62,9 @@ class BlanketOrder(Document):
 							if d.reqd_by_date is not None)
 
 		if self.from_date:
-			for d in self.get('items'):
-				if not d.reqd_by_date:
-					d.reqd_by_date = self.from_date
+			for order_line in self.get('items'):
+				if not order_line.reqd_by_date:
+					order_line.reqd_by_date = self.from_date
 
 		# There's no reason for validating the 'From Date'; it's just a default
 				#if (d.reqd_by_date and self.from_date and

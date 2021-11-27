@@ -767,14 +767,14 @@
   {
    "developer_notes": "Created for Farm to People.",
    "fieldname": "rate_per_weight_uom",
-   "fieldtype": "Float",
+   "fieldtype": "Currency",
    "label": "Rate per Weight UOM",
    "precision": "4"
   }
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2021-11-02 14:55:07.989170",
+ "modified": "2021-11-27 14:54:42.961171",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order Item",

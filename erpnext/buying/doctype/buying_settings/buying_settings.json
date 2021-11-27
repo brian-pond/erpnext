@@ -16,7 +16,8 @@
   "subcontract",
   "backflush_raw_materials_of_subcontract_based_on",
   "column_break_11",
-  "over_transfer_allowance"
+  "over_transfer_allowance",
+  "single_blanket_per_po"
  ],
  "fields": [
   {
@@ -88,12 +89,19 @@
   {
    "fieldname": "column_break_11",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "description": "If marked, a purchase order may reference no-more-than 1 blanket order.",
+   "fieldname": "single_blanket_per_po",
+   "fieldtype": "Check",
+   "label": "Enforce 1 Blanket per PO"
   }
  ],
  "icon": "fa fa-cog",
  "idx": 1,
  "issingle": 1,
- "modified": "2021-03-02 18:16:03.947813",
+ "modified": "2021-11-26 14:43:10.766389",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Buying Settings",

@@ -142,25 +142,47 @@ erpnext.manufacturing.BlanketOrder = frappe.ui.form.Controller.extend({
 		var me = this;  // because the meaning of 'this' changes in contexts
 		erpnext.hide_company();
 
+
+		frappe.run_serially([
+			() => {		// First action
+				return frappe.db.get_single_value('Buying Settings', 'single_blanket_per_po');
+			},
+			(single_blanket_per_po) => {  // Second action
+				// console.log("Single Blanket per PO? ", single_blanket_per_po);
+				if (this.frm.doc.supplier && this.frm.doc.docstatus === 1 && single_blanket_per_po) {
+					this.frm.add_custom_button(__('View Purchase Orders'), function() {
+						frappe.set_route('List', 'Purchase Order', {blanket_order: me.frm.doc.name});
+					});
+				}
+				else {
+					this.frm.add_custom_button(__(`<div style="text-decoration: line-through;">
+					View Purchase Orders</div>`), function() {
+						frappe.msgprint(`In 'Buying Settings', the value for 'Enforce 1 Blanket per PO' is False.<br><br>
+						This means the relationship between Blanket PO and Regular PO is purely at the <b>line</b> level.
+						<br><br>The code to handle this and 'View Purchase Orders' is not implemented yet.
+						`);
+					});
+				}
+			},
+			() => {  // Third action
+				if (this.frm.doc.supplier && this.frm.doc.docstatus === 1) {
+					this.frm.add_custom_button(__("Create Purchase Order"), function(){
+						frappe.model.open_mapped_doc({
+							method: "erpnext.manufacturing.doctype.blanket_order.blanket_order.make_purchase_order",
+							frm: me.frm
+						});
+					}).addClass("btn-primary");
+				}
+			}
+		]);
+
 		if (this.frm.doc.customer && frm.doc.docstatus === 1) {
-			this.frm.add_custom_button(__('View Orders'), function() {
+			this.frm.add_custom_button(__('View Sales Orders'), function() {
 				frappe.set_route('List', 'Sales Order', {blanket_order: me.frm.doc.name});
 			});
 			this.frm.add_custom_button(__("Create Sales Order"), function(){
 				frappe.model.open_mapped_doc({
 					method: "erpnext.manufacturing.doctype.blanket_order.blanket_order.make_sales_order",
-					frm: me.frm
-				});
-			}).addClass("btn-primary");
-		}
-
-		if (this.frm.doc.supplier && this.frm.doc.docstatus === 1) {
-			this.frm.add_custom_button(__('View Orders'), function() {
-				frappe.set_route('List', 'Purchase Order', {blanket_order: me.frm.doc.name});
-			});
-			this.frm.add_custom_button(__("Create Purchase Order"), function(){
-				frappe.model.open_mapped_doc({
-					method: "erpnext.manufacturing.doctype.blanket_order.blanket_order.make_purchase_order",
 					frm: me.frm
 				});
 			}).addClass("btn-primary");
