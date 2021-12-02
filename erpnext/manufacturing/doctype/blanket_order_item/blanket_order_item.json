@@ -13,7 +13,7 @@
   "sb_description",
   "description",
   "sb_quantity",
-  "weight_qty",
+  "qty_in_weight_uom",
   "qty",
   "column_break_2",
   "uom_weight",
@@ -111,11 +111,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "weight_qty",
-   "fieldtype": "Float",
-   "label": "Qty as per Weight UOM"
-  },
-  {
    "fieldname": "sb_quantity",
    "fieldtype": "Section Break",
    "label": "Quantity"
@@ -185,10 +180,15 @@
    "fieldname": "sb_description",
    "fieldtype": "Section Break",
    "label": "Description"
+  },
+  {
+   "fieldname": "qty_in_weight_uom",
+   "fieldtype": "Float",
+   "label": "Qty as per Weight UOM"
   }
  ],
  "istable": 1,
- "modified": "2021-11-26 14:06:31.277745",
+ "modified": "2021-11-27 20:46:48.678777",
  "modified_by": "Administrator",
  "module": "Manufacturing",
  "name": "Blanket Order Item",

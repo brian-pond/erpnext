@@ -9,7 +9,7 @@
 
 
 from __future__ import unicode_literals
-import frappe
+# import frappe
 
 from frappe.model.document import Document
 from erpnext.controllers.print_settings import print_settings_for_item_table

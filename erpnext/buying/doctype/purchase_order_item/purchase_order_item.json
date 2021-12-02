@@ -17,7 +17,7 @@
   "image",
   "image_view",
   "quantity_and_rate",
-  "weight_qty",
+  "qty_in_weight_uom",
   "qty",
   "stock_qty",
   "col_break2",
@@ -714,20 +714,20 @@
    "read_only": 1
   },
   {
-   "fieldname": "weight_qty",
+   "fieldname": "column_break_100",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "qty_in_weight_uom",
    "fieldtype": "Float",
    "label": "Qty per Weight UOM",
    "print_width": "100px",
    "width": "100px"
-  },
-  {
-   "fieldname": "column_break_100",
-   "fieldtype": "Column Break"
   }
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2021-11-02 11:29:17.414838",
+ "modified": "2021-11-27 20:48:50.787034",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Purchase Order Item",

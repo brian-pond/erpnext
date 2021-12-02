@@ -56,9 +56,11 @@ frappe.ui.form.on("Purchase Order Item", {
 
 	/* Spectrum Fruits
 
-	  * When 'weight_qty' is modified, the code that triggers updates is:
-	    erpnext/public/js/controllers/transaction.js.  Method is weight_qty() around line 1058
-	  * This change also triggers changes in Stock Quantity, Total Weight, etc.
+	  * When 'qty_in_weight_uom' is modified, the code that triggers updates is:
+	        erpnext/public/js/controllers/transaction.js.
+			Method is qty_in_weight_uom() around line 1058
+	  
+			* This change also triggers changes in Stock Quantity, Total Weight, etc.
 	*/
 
 });
@@ -99,8 +101,9 @@ erpnext.buying.PurchaseOrderController = erpnext.buying.BuyingController.extend(
 
 		// Spectrum Fruits:  Add link from PO to Blanket Order
 		if (this.frm.doc.blanket_order) {
-			this.frm.add_custom_button(__('View Blanket Orders'), function() {
-				frappe.set_route('List', 'Blanket Order', {"name": me.frm.doc.blanket_order});
+			this.frm.add_custom_button(__('View Blanket Order'), function() {
+				frappe.set_route('Form', 'Blanket Order', me.frm.doc.blanket_order, {reload_target_doc: true});
+				// window.location.reload();  // Alternate workaround, but not as seemless to the user.
 			}).addClass("btn-info");
 		}
 		// Spectrum Fruits

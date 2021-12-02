@@ -17,7 +17,7 @@ def get_data():
 					"type": "doctype",
 					"name": "Quotation",
 					"description": _("Quotes to Leads or Customers."),
-					"onboard": 1,
+					"onboard": 0,
 					"dependencies": ["Item", "Customer"],
 				},
 				{
@@ -27,6 +27,15 @@ def get_data():
 					"onboard": 1,
 					"dependencies": ["Item", "Customer"],
 				},
+				# Spectrum Fruits
+				{
+					"type": "doctype",
+					"name": "Delivery Note",
+					"description": _("Delivery of Sales Orders."),
+					"onboard": 1,
+					"dependencies": ["Item", "Customer"],
+				},
+				# Spectrum Fruits
 				{
 					"type": "doctype",
 					"name": "Sales Invoice",
@@ -38,7 +47,7 @@ def get_data():
 					"type": "doctype",
 					"name": "Blanket Order",
 					"description": _("Blanket Orders from Costumers."),
-					"onboard": 1,
+					"onboard": 0,
 					"dependencies": ["Item", "Customer"],
 				},
 				{
@@ -316,5 +325,4 @@ def get_data():
 				}
 			]
 		},
-		
 	]

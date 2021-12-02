@@ -229,8 +229,6 @@ class PurchaseOrder(BuyingController):
 		frappe.get_doc('Authorization Control').validate_approving_authority(self.doctype,
 			self.company, self.base_grand_total)
 
-		self.update_blanket_order_items()
-
 		update_linked_doc(self.doctype, self.name, self.inter_company_order_reference)
 
 	def on_cancel(self):
@@ -255,12 +253,36 @@ class PurchaseOrder(BuyingController):
 		self.update_requested_qty()
 		self.update_ordered_qty()
 		self.update_receiving_percentage()  # Spectrum Fruits: Should be set to zero for a cancelled PO.
-		self.update_blanket_order_items()
 
 		unlink_inter_company_doc(self.doctype, self.name, self.inter_company_order_reference)
 
 	def on_update(self):
-		pass
+		# Spectrum Fruits:  When the PO Qty is updated, indicate this on the Blanket Order Line also.
+		for order_line in self.items:
+			if order_line.blanket_order_item:
+
+				# 1. First, fetch the quantities from other, non-cancelled PO lines, related to the same Blanket Line.
+				query = """
+				SELECT SUM(qty) FROM `tabPurchase Order Item` WHERE
+				docstatus != 2
+				AND blanket_order_item = %(blanket_order_item)s
+				AND name != %(name)s """
+				query_result = frappe.db.sql(query, values={"blanket_order_item": order_line.blanket_order_item,
+				                                            "name": order_line.name})
+				if query_result and query_result[0]:
+					other_po_qty = query_result[0][0] or 0
+				else:
+					other_po_qty = 0
+
+				# 2. Get quantity for this line (substituting a value of zero, if this PO is cancelled.)
+				if (self.docstatus == 2) or (self.status == 'Cancelled') or \
+					(order_line.docstatus == 2):
+					this_quantity = 0
+				else:
+					this_quantity = order_line.qty
+				# 3. Update the quantity on the related Blanket Order line.
+				#    Annoying side-effect.  If you update the value, and "set_route", the old Document value is still shown!
+				frappe.db.set_value("Blanket Order Item", order_line.blanket_order_item, "ordered_qty", this_quantity + other_po_qty)
 
 	def update_status_updater(self):
 		self.status_updater.append({
@@ -346,7 +368,7 @@ def close_or_unclose_purchase_orders(names, status):
 					po.update_status("Draft")
 			po.update_blanket_order_items()
 
-	frappe.local.message_log = []
+	frappe.local.message_log = []  # pylint: disable=assigning-non-slot
 
 def set_missing_values(source, target):
 	target.ignore_pricing_rule = 1

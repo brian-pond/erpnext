@@ -20,8 +20,8 @@
   "image_view",
   "quantity_and_rate",
   "qty",
-  "weight_qty",
-  "rate_per_weight_unit",
+  "qty_in_weight_uom",
+  "rate_per_weight_uom",
   "stock_uom",
   "col_break2",
   "uom",
@@ -807,20 +807,20 @@
    "read_only": 1
   },
   {
-   "fieldname": "weight_qty",
-   "fieldtype": "Float",
-   "label": "Qty per Weight UOM"
-  },
-  {
-   "fieldname": "rate_per_weight_unit",
+   "fieldname": "rate_per_weight_uom",
    "fieldtype": "Currency",
    "label": "Rate per Weight Unit ($)",
    "precision": "4"
+  },
+  {
+   "fieldname": "qty_in_weight_uom",
+   "fieldtype": "Float",
+   "label": "Qty per Weight UOM"
   }
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2021-11-02 11:42:11.731482",
+ "modified": "2021-11-27 20:51:56.849238",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Sales Invoice Item",

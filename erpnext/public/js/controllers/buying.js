@@ -1,3 +1,4 @@
+// buying.js
 // Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 // License: GNU General Public License v3. See license.txt
 
@@ -227,7 +228,6 @@ erpnext.buying.BuyingController = erpnext.TransactionController.extend({
 	},
 
 	calculate_accepted_qty: function(doc, cdt, cdn){
-		console.log("Calculating accepted qty.")
 		var item = frappe.get_doc(cdt, cdn);
 		frappe.model.round_floats_in(item, ["received_qty", "rejected_qty"]);
 

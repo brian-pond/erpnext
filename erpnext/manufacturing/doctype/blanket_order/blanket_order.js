@@ -154,7 +154,7 @@ erpnext.manufacturing.BlanketOrder = frappe.ui.form.Controller.extend({
 						frappe.set_route('List', 'Purchase Order', {blanket_order: me.frm.doc.name});
 					});
 				}
-				else {
+				else if (this.frm.doc.supplier && this.frm.doc.docstatus === 1) {
 					this.frm.add_custom_button(__(`<div style="text-decoration: line-through;">
 					View Purchase Orders</div>`), function() {
 						frappe.msgprint(`In 'Buying Settings', the value for 'Enforce 1 Blanket per PO' is False.<br><br>
@@ -229,12 +229,12 @@ frappe.ui.form.on("Blanket Order Item", {
 		// 1. Update the line amount.
 		recalc_line_amount(cdt, cdn);
 
-		// 2. Update 'weight_qty'
+		// 2. Update 'qty_in_weight_uom'
 		if (blanket_line.uom_buying === blanket_line.uom_weight) {
-			blanket_line.weight_qty = blanket_line.qty;
+			blanket_line.qty_in_weight_uom = blanket_line.qty;
 		}
 		else {
-			blanket_line.weight_qty = blanket_line.qty * blanket_line.weight_per_unit;
+			blanket_line.qty_in_weight_uom = blanket_line.qty * blanket_line.weight_per_unit;
 		}
 		refresh_field("items");  // Yes, we have to refresh in the context of the Form.
 		recalc_line_amount(cdt, cdn);
@@ -296,17 +296,17 @@ frappe.ui.form.on("Blanket Order Item", {
 		// frappe.model.set_value(cdt, cdn, 'stock_qty', row.qty * row.conversion_factor);
 	},
 
-	weight_qty: function(doc, cdt, cdn) {
-		// When 'weight_qty' changes, update 'qty'.  Then trigger standard code from there forward.
-		console.log("DEBUG: entered method Blanket Order Line method 'weight_qty'");
+	qty_in_weight_uom: function(doc, cdt, cdn) {
+		// When 'qty_in_weight_uom' changes, update 'qty'.  Then trigger standard code from there forward.
+		// console.log("DEBUG: entered method Blanket Order Line method 'qty_in_weight_uom'");
 		let row = frappe.get_doc(cdt, cdn);
 		// 1. Update qty
 		if (row.uom_buying === row.uom_weight) {
-			row.qty = row.weight_qty;
-			console.log("Making qty = weight_qty")
+			row.qty = row.qty_in_weight_uom;
+			console.log("Making qty = qty_in_weight_uom")
 		}
 		else {
-			row.qty = row.weight_qty / row.weight_per_unit;
+			row.qty = row.qty_in_weight_uom / row.weight_per_unit;
 			console.log("Making qty a calculation.")
 		}
 		recalc_line_amount(cdt, cdn);
@@ -393,8 +393,8 @@ function recalc_line_amount(cdt, cdn) {
 
 function recalculate_total_weight(cdt, cdn) {
 	var blanket_line = locals[cdt][cdn];
-	if (blanket_line.weight_qty) {
-		frappe.model.set_value(cdt, cdn, 'total_weight', blanket_line.weight_qty);
+	if (blanket_line.qty_in_weight_uom) {
+		frappe.model.set_value(cdt, cdn, 'total_weight', blanket_line.qty_in_weight_uom);
 	}
 	else {
 		frappe.model.set_value(cdt, cdn, 'total_weight', blanket_line.qty * blanket_line.weight_per_unit);

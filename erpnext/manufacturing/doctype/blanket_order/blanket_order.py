@@ -101,7 +101,9 @@ def make_sales_order(source_name):
 
 @frappe.whitelist()
 def make_purchase_order(blanket_order_id):
-	""" Create a new Purchase Order based on Blanket Order. """
+	"""
+	Create a new Purchase Order based on Blanket Order.
+	"""
 
 	def update_lines(blanket_line, target_line, blanket_order):
 		# How much Blanket Qty is not-yet allocated to POs?
@@ -149,12 +151,14 @@ def make_purchase_order(blanket_order_id):
 			"postprocess": update_lines
 		}
 	})
-
-	# blanket_order = frappe.get_doc('Blanket Order', source_name)
-	# earliest_reqd_by_date = min([d.reqd_by_date for d in blanket_order.get("items")])
 	target_doc.schedule_date = today_str()
 	target_doc.naming_series = 'PO-'
+	# If Buying Settings require that a PO link to 1 (and only 1) Blanket Order?
+	# Then indicate that blanket order on the PO's header.
+	if bool(frappe.db.get_single_value('Buying Settings', 'single_blanket_per_po')) is True:
+		target_doc.blanket_order = blanket_order_id
 	return target_doc
+
 
 @frappe.whitelist()
 def get_item_details(item_code, uom=None):

@@ -243,6 +243,7 @@
    "oldfieldname": "ref_rate",
    "oldfieldtype": "Currency",
    "options": "currency",
+   "precision": "4",
    "print_hide": 1,
    "print_width": "70px",
    "read_only": 1,
@@ -287,6 +288,7 @@
    "fieldtype": "Currency",
    "label": "Rate With Margin",
    "options": "currency",
+   "precision": "4",
    "print_hide": 1,
    "read_only": 1
   },
@@ -336,6 +338,7 @@
    "oldfieldname": "export_rate",
    "oldfieldtype": "Currency",
    "options": "currency",
+   "precision": "4",
    "print_width": "100px",
    "width": "100px"
   },
@@ -405,6 +408,7 @@
    "fieldtype": "Currency",
    "label": "Net Rate",
    "options": "currency",
+   "precision": "4",
    "print_hide": 1,
    "read_only": 1
   },
@@ -584,6 +588,7 @@
    "fieldtype": "Currency",
    "label": "Blanket Order Rate",
    "no_copy": 1,
+   "precision": "4",
    "print_hide": 1,
    "read_only": 1
   },
@@ -774,7 +779,7 @@
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2021-11-27 14:54:42.961171",
+ "modified": "2021-11-27 16:54:34.189018",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order Item",

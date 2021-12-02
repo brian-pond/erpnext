@@ -1,3 +1,4 @@
+// sales_order.js
 // Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 // License: GNU General Public License v3. See license.txt
 
@@ -92,6 +93,13 @@ frappe.ui.form.on("Sales Order Item", {
 		}
 	}
 });
+
+/* Spectrum Fruits
+
+	* When 'qty_in_weight_uom' is modified, the code that triggers updates is:
+	erpnext/public/js/controllers/transaction.js.  Method is qty_in_weight_uom() around line 1058
+	* This change also triggers changes in Stock Quantity, Total Weight, etc.
+*/
 
 erpnext.selling.SalesOrderController = erpnext.selling.SellingController.extend({
 	onload: function(doc, dt, dn) {

@@ -106,8 +106,8 @@ def get_item_details(args, doc=None, for_validate=False, overwrite_warehouse=Tru
 		out.rate = args.rate or out.price_list_rate
 		out.amount = flt(args.qty) * flt(out.rate)
 
-	# Spectrum Fruits: Add the 'weight_qty' to the result.
-	out['weight_qty'] = out.qty * out.weight_per_unit
+	# Spectrum Fruits: Add the 'qty_in_weight_uom' to the result.
+	out['qty_in_weight_uom'] = out.qty * out.weight_per_unit
 
 	return out
 

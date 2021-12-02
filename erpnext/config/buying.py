@@ -11,7 +11,7 @@ def get_data():
 				{
 					"type": "doctype",
 					"name": "Material Request",
-					"onboard": 1,
+					"onboard": 0,
 					"dependencies": ["Item"],
 					"description": _("Request for purchase."),
 				},
@@ -31,6 +31,15 @@ def get_data():
 					"dependencies": ["Item", "Supplier"],
 					"description": _("Purchase Orders given to Suppliers."),
 				},
+				# Spectrum_Fruits_Begin
+				{
+					"type": "doctype",
+					"name": "Purchase Receipt",
+					"onboard": 1,
+					"dependencies": ["Item", "Supplier"],
+					"description": _("Purchase Receipts of goods."),
+				},
+				# Spectrum_Fruits End
 				{
 					"type": "doctype",
 					"name": "Purchase Invoice",
@@ -40,7 +49,7 @@ def get_data():
 				{
 					"type": "doctype",
 					"name": "Request for Quotation",
-					"onboard": 1,
+					"onboard": 0,
 					"dependencies": ["Item", "Supplier"],
 					"description": _("Request for quotation."),
 				},
