@@ -10,3 +10,21 @@ python-youtube~=0.8.0
 taxjar~=1.9.2
 tweepy~=3.10.0
 Unidecode~=1.2.0
+WooCommerce==2.1.1
+
+
+# Python package requirements ERPNext v13
+# Datahenge version.
+#
+# Notes
+# GoCardless allows you to pull payments from customer's banks.
+#   * https://developer.gocardless.com/getting-started/api/introduction/
+# Pandas is for Python data tables.
+# Plaid is some kind of financial API (more research required)
+# pycountry has ISO country, subdivision, language, currency, and translations.
+# pycryptodome: Mostly pure-Python cryptography library
+# PyGithub is a Python wrapper for the GitHub API
+# python-stdnum validates all sorts of numbering conventions: Mac Address, Phone Number, IP, SSN, tons more.
+# TaxJar has an API for sales tax.  Seems like a modern Avalara
+# Tweepy: Library for Twitter API
+# WooCommerce: Built on Wordpress, alternative to Shopify.

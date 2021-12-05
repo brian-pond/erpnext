@@ -3,6 +3,9 @@
 
 frappe.ui.form.on('Coupon Code', {
 	setup: function(frm) {
+
+		frm.disable_autoname_check = true;  // Datahenge: See change to "frappe/frappe/public/js/frappe/form/controls/data.js"
+
 		frm.set_query("pricing_rule", function() {
 			return {
 				filters: [

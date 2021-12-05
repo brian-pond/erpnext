@@ -319,6 +319,9 @@ class AccountsController(TransactionBase):
 
 	def set_missing_item_details(self, for_validate=False):
 		"""set missing item values"""
+		# Datahenge:  Another horribly-named function.  No Items are missing.  No Items details are missing.
+		# Instead, this is just a function to construct 
+
 		from erpnext.stock.doctype.serial_no.serial_no import get_serial_nos
 
 		if hasattr(self, "items"):
@@ -418,8 +421,15 @@ class AccountsController(TransactionBase):
 							.format(item.idx, frappe.bold(title), frappe.bold(item.item_code)))
 
 	def set_pricing_rule_details(self, item_row, args):
+		"""
+		On documents like 'Sales Order', there exists a child table named 'Pricing Rules'
+		The purpose of this table 'appears' to be simply documenting what Pricing Rules
+		were applied to particular Order Lines.
+		"""
+
 		pricing_rules = get_applied_pricing_rules(args.get("pricing_rules"))
-		if not pricing_rules: return
+		if not pricing_rules:
+			return
 
 		for pricing_rule in pricing_rules:
 			self.append("pricing_rules", {
@@ -1262,6 +1272,9 @@ def get_taxes_and_charges(master_doctype, master_name):
 
 def validate_conversion_rate(currency, conversion_rate, conversion_rate_label, company):
 	"""common validation for currency and price list currency"""
+
+	if not currency:
+		frappe.throw("Argument 'currency' is mandatory for function 'validate_conversion_rate'")
 
 	company_currency = frappe.get_cached_value('Company',  company,  "default_currency")
 

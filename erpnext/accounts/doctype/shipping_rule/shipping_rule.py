@@ -4,7 +4,8 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
-import frappe, erpnext
+import frappe
+import erpnext
 from frappe import _, msgprint, throw
 from frappe.utils import flt, fmt_money
 from frappe.model.document import Document
@@ -18,6 +19,21 @@ class ShippingRule(Document):
 		self.validate_from_to_values()
 		self.sort_shipping_rule_conditions()
 		self.validate_overlapping_shipping_rule_conditions()
+
+	def on_update(self):
+		"""
+		If this rule is the Default, ensure no other rules are the default.
+		"""
+		# Another mistake in Frappe framework.  Checkboxes should automatically be Booleans, not Integers.
+		# I understand that MySQL stores them as TinyINT. That's no excuse for not correctly casting them to Boolean
+		# in the Document framework. `1 == True` is True.  But `1 is True` equals False.
+		#
+		# Demonstration:  frappe.whatis(self.is_default_rule)
+		#
+		if bool(self.is_default_rule) is True:
+			statement = """ UPDATE `tabShipping Rule` SET is_default_rule = 0 WHERE name <> %(rule_name)s """
+			frappe.db.sql(statement, values={'rule_name': self.name}, debug=False, explain=False)
+
 
 	def validate_from_to_values(self):
 		zero_to_values = []
@@ -154,3 +170,13 @@ class ShippingRule(Document):
 					_("and") + " %s-%s = %s" % (d2.from_value, d2.to_value, fmt_money(d2.shipping_amount, currency=company_currency)))
 
 			msgprint("\n".join(messages), raise_exception=OverlappingConditionError)
+
+
+def get_default_shipping_rule_id():
+	"""
+	Datahenge: Return the ID of the default Shipping Rule.
+	"""
+	filters = { "is_default_rule": 1 }
+	rule = frappe.get_list("Shipping Rule", filters=filters, pluck='name', ignore_permissions=True)
+	return rule[0]  # assuming there is only 1 value
+

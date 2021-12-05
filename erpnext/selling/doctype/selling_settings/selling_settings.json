@@ -43,6 +43,7 @@
    "options": "Campaign Name\nNaming Series"
   },
   {
+   "description": "This is the default value for new Customers; not the default filter.",
    "fieldname": "customer_group",
    "fieldtype": "Link",
    "in_list_view": 1,

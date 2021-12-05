@@ -1,6 +1,8 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
+# pylint: disable=protected-access,pointless-string-statement
+
 from __future__ import unicode_literals
 import frappe
 from frappe import _, throw
@@ -46,11 +48,11 @@ def get_item_details(args, doc=None, for_validate=False, overwrite_warehouse=Tru
 		}
 	"""
 
-	args = process_args(args)
+	args = process_args(args)  # convert args into a frappe._dict
 	for_validate = process_string_args(for_validate)
 	overwrite_warehouse = process_string_args(overwrite_warehouse)
 	item = frappe.get_cached_doc("Item", args.item_code)
-	validate_item_details(args, item)
+	validate_item_details(args, item)  # This step also validates the arguments.
 
 	out = get_basic_details(args, item, overwrite_warehouse)
 
@@ -61,8 +63,12 @@ def get_item_details(args, doc=None, for_validate=False, overwrite_warehouse=Tru
 		args['bill_date'] = doc.get('bill_date')
 
 	if doc:
-		args['posting_date'] = doc.get('posting_date')
-		args['transaction_date'] = doc.get('transaction_date')
+		# Datahenge: But what if the Document doesn't have a DocField named `posting_date` or `transaction-date`?
+		#            Then respect the args!
+		if doc.get('posting_date'):
+			args['posting_date'] = doc.get('posting_date')
+		if doc.get('transaction_date'):
+			args['transaction_date'] = doc.get('transaction_date')
 
 	get_item_tax_template(args, item, out)
 	out["item_tax_rate"] = get_item_tax_map(args.company, args.get("item_tax_template") if out.get("item_tax_template") is None \
@@ -190,7 +196,10 @@ def get_item_code(barcode=None, serial_no=None):
 
 def validate_item_details(args, item):
 	if not args.company:
-		throw(_("Please specify Company"))
+		throw(_("Please specify Company in arguments."))
+
+	if not args.doctype:
+		throw(_("Please include 'doctype' in arguments."))
 
 	from erpnext.stock.doctype.item.item import validate_end_of_life
 	validate_end_of_life(item.name, item.end_of_life, item.disabled)
@@ -373,7 +382,7 @@ def get_basic_details(args, item, overwrite_warehouse=True):
 
 	return out
 
-def get_item_warehouse(item, args, overwrite_warehouse, defaults={}):
+def get_item_warehouse(item, args, overwrite_warehouse, defaults=None):
 	if not defaults:
 		defaults = frappe._dict({
 			'item_defaults' : get_item_defaults(item.name, args.company),
@@ -476,7 +485,8 @@ def get_item_tax_template(args, item, out):
 			"item_tax_template": None
 		}
 	"""
-	item_tax_template = args.get("item_tax_template")
+	# Datahenge: Commenting this out.  It literally gets redefined the very next line.
+	# item_tax_template = args.get("item_tax_template")
 	item_tax_template = _get_item_tax_template(args, item.taxes, out)
 
 	if not item_tax_template:

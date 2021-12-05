@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
 from frappe import _
 
+# pylint: disable=invalid-name
+
 app_name = "erpnext"
 app_title = "ERPNext"
 app_publisher = "Frappe Technologies Pvt. Ltd."
@@ -220,7 +222,8 @@ has_website_permission = {
 
 dump_report_map = "erpnext.startup.report_data_map.data_map"
 
-before_tests = "erpnext.setup.utils.before_tests"
+# Datahenge: Cease the running of 'before_tests'
+# before_tests = "erpnext.setup.utils.before_tests"
 
 standard_queries = {
 	"Customer": "erpnext.selling.doctype.customer.customer.get_customer_list",
@@ -314,27 +317,30 @@ auto_cancel_exempted_doctypes= [
 after_migrate = ["erpnext.setup.install.update_select_perm_after_install"]
 
 scheduler_events = {
-	"cron": {
-		"0/30 * * * *": [
-			"erpnext.utilities.doctype.video.video.update_youtube_data",
-		]
-	},
+
+	# Datahenge: Disabling several events, so Log Files are not flooded with false negatives.
+
+	# "cron": {
+	# 	"0/30 * * * *": [
+	# 		"erpnext.utilities.doctype.video.video.update_youtube_data",
+	# 	]
+	# },
 	"all": [
-		"erpnext.projects.doctype.project.project.project_status_update_reminder",
-		"erpnext.healthcare.doctype.patient_appointment.patient_appointment.send_appointment_reminder",
-		"erpnext.crm.doctype.social_media_post.social_media_post.process_scheduled_social_media_posts"
+		"erpnext.projects.doctype.project.project.project_status_update_reminder"
+		# "erpnext.healthcare.doctype.patient_appointment.patient_appointment.send_appointment_reminder",
+		# "erpnext.crm.doctype.social_media_post.social_media_post.process_scheduled_social_media_posts"
 	],
 	"hourly": [
 		'erpnext.hr.doctype.daily_work_summary_group.daily_work_summary_group.trigger_emails',
 		"erpnext.accounts.doctype.subscription.subscription.process_all",
-		"erpnext.erpnext_integrations.doctype.amazon_mws_settings.amazon_mws_settings.schedule_get_order_details",
+		# "erpnext.erpnext_integrations.doctype.amazon_mws_settings.amazon_mws_settings.schedule_get_order_details",
 		"erpnext.accounts.doctype.gl_entry.gl_entry.rename_gle_sle_docs",
-		"erpnext.erpnext_integrations.doctype.plaid_settings.plaid_settings.automatic_synchronization",
+		# "erpnext.erpnext_integrations.doctype.plaid_settings.plaid_settings.automatic_synchronization",
 		"erpnext.projects.doctype.project.project.hourly_reminder",
 		"erpnext.projects.doctype.project.project.collect_project_status",
 		"erpnext.hr.doctype.shift_type.shift_type.process_auto_attendance_for_all_shifts",
 		"erpnext.support.doctype.issue.issue.set_service_level_agreement_variance",
-		"erpnext.erpnext_integrations.connectors.shopify_connection.sync_old_orders"
+		# "erpnext.erpnext_integrations.connectors.shopify_connection.sync_old_orders"
 	],
 	"hourly_long": [
 		"erpnext.stock.doctype.repost_item_valuation.repost_item_valuation.repost_entries"
@@ -385,11 +391,12 @@ scheduler_events = {
 
 email_brand_image = "assets/erpnext/images/erpnext-logo.jpg"
 
+# Datahenge : Changing the default mail footer.
 default_mail_footer = """
 	<span>
-		Sent via
-		<a class="text-muted" href="https://erpnext.com?source=via_email_footer" target="_blank">
-			ERPNext
+		Sent from
+		<a class="text-muted" href="https://datahenge.com?source=via_email_footer" target="_blank">
+			Datahenge
 		</a>
 	</span>
 """

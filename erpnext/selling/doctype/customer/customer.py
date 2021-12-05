@@ -631,6 +631,7 @@ def make_address(args, is_primary_address=1):
 
 	return address
 
+# NOTE: Datahenge: This Frappe script looks incorrect.  Doesn't even filter on Boolean 'is_primary_contact'
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_customer_primary_contact(doctype, txt, searchfield, start, page_len, filters):

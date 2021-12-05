@@ -24,6 +24,12 @@ def get_ancestors_of(doctype, name):
 
 def before_tests():
 	frappe.clear_cache()
+
+	# Datahenge: This is some INCREDIBLY dangerous code.
+	# If you execute a `bench run-tests`, this would wipe out or alter Business Data.
+	# I'm commenting-out the entire block.  It's just awful.
+
+	"""
 	# complete setup if missing
 	from frappe.desk.page.setup_wizard.setup_wizard import setup_complete
 	if not frappe.get_list("Company"):
@@ -54,6 +60,7 @@ def before_tests():
 	enable_all_roles_and_domains()
 
 	frappe.db.commit()
+	"""  # pylint: disable=pointless-string-statement
 
 @frappe.whitelist()
 def get_exchange_rate(from_currency, to_currency, transaction_date=None, args=None):

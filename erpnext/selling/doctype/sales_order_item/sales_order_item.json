@@ -145,13 +145,14 @@
    "label": "Description"
   },
   {
+   "fetch_from": "item_code.item_name",
    "fieldname": "description",
    "fieldtype": "Text Editor",
    "label": "Description",
    "oldfieldname": "description",
    "oldfieldtype": "Small Text",
    "print_width": "300px",
-   "reqd": 1,
+   "reqd_in_database": 1,
    "width": "300px"
   },
   {

@@ -30,6 +30,7 @@ def get_qty_in_stock(item_code, item_warehouse_field, warehouse=None):
 			stock_qty = adjust_qty_for_expired_items(item_code, stock_qty, warehouse)
 			in_stock = stock_qty[0][0] > 0 and 1 or 0
 
+	# pylint: disable=protected-access
 	return frappe._dict({"in_stock": in_stock, "stock_qty": stock_qty, "is_stock_item": is_stock_item})
 
 
@@ -79,7 +80,7 @@ def get_price(item_code, price_list, customer_group, company, qty=1):
 				filters={"price_list": price_list, "item_code": template_item_code})
 
 		if price:
-			pricing_rule = get_pricing_rule_for_item(frappe._dict({
+			pricing_rule = get_pricing_rule_for_item(args=frappe._dict({  # pylint: disable=protected-access
 				"item_code": item_code,
 				"qty": qty,
 				"stock_qty": qty,
@@ -90,7 +91,7 @@ def get_price(item_code, price_list, customer_group, company, qty=1):
 				"conversion_rate": 1,
 				"for_shopping_cart": True,
 				"currency": frappe.db.get_value("Price List", price_list, "currency")
-			}))
+			}), doc=None)
 
 			if pricing_rule:
 				if pricing_rule.pricing_rule_for == "Discount Percentage":

@@ -134,6 +134,9 @@ def make_property_setters(patch=False):
 		make_property_setter('Journal Entry', 'voucher_type', 'options', '\n'.join(journal_entry_types), '')
 
 def make_custom_fields(update=True):
+
+	raise Exception("Datahenge: So far as I an tell, this function will not be called.")
+
 	hsn_sac_field = dict(fieldname='gst_hsn_code', label='HSN/SAC',
 		fieldtype='Data', fetch_from='item_code.gst_hsn_code', insert_after='description',
 		allow_on_submit=1, print_hide=1, fetch_if_empty=1)

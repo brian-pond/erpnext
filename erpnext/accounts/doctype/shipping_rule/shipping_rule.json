@@ -136,11 +136,18 @@
   {
    "fieldname": "dimension_col_break",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_default_rule",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is default Rule?"
   }
  ],
  "icon": "fa fa-truck",
  "idx": 1,
- "modified": "2019-05-25 23:12:26.156405",
+ "modified": "2021-12-05 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Shipping Rule",
@@ -189,5 +196,6 @@
    "write": 1
   }
  ],
+ "sort_field": "name",
  "sort_order": "ASC"
 }

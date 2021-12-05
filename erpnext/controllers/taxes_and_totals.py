@@ -63,7 +63,7 @@ class calculate_taxes_and_totals(object):
 				}
 
 				item_group = item_doc.item_group
-				item_group_taxes = []
+				item_group_taxes = []  # this is a List of document "Item Tax"
 
 				while item_group:
 					item_group_doc = frappe.get_cached_doc('Item Group', item_group)
@@ -88,6 +88,7 @@ class calculate_taxes_and_totals(object):
 	def validate_conversion_rate(self):
 		# validate conversion rate
 		company_currency = erpnext.get_company_currency(self.doc.company)
+		# If not specified, set currency and conversion rate to defaults.
 		if not self.doc.currency or self.doc.currency == company_currency:
 			self.doc.currency = company_currency
 			self.doc.conversion_rate = 1.0
@@ -98,6 +99,12 @@ class calculate_taxes_and_totals(object):
 		self.doc.conversion_rate = flt(self.doc.conversion_rate)
 
 	def calculate_item_values(self):
+		"""
+		This function potentially modifies:
+			* Order Line 'rate'
+			* Order Line 'discount_amount'
+			* Order Line 'net_rate'
+		"""
 		if not self.discount_amount_applied:
 			for item in self.doc.get("items"):
 				self.doc.round_floats_in(item)

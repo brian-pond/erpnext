@@ -508,6 +508,9 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 	},
 
 	item_code: function(doc, cdt, cdn) {
+
+		// This function called when an Order Line's 'item_code' field is added/modified.
+
 		var me = this;
 		var item = frappe.get_doc(cdt, cdn);
 		var update_stock = 0, show_batch_dialog = 0;
@@ -661,15 +664,25 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 	},
 
 	price_list_rate: function(doc, cdt, cdn) {
-		var item = frappe.get_doc(cdt, cdn);
-		frappe.model.round_floats_in(item, ["price_list_rate", "discount_percentage"]);
+		//
+		// This function is rarely called "directly" by the touching 'price_list_rate'.
+		// Because that's typically a non-editable field.
+		// Rather this function is "triggered" by other JS code.  Look around for something like 'trigger("price_list_rate"'
+		//
+		var order_line = frappe.get_doc(cdt, cdn);
+		frappe.model.round_floats_in(order_line, ["price_list_rate", "discount_percentage"]);
 
 		// check if child doctype is Sales Order Item/Qutation Item and calculate the rate
 		if (in_list(["Quotation Item", "Sales Order Item", "Delivery Note Item", "Sales Invoice Item", "POS Invoice Item", "Purchase Invoice Item", "Purchase Order Item", "Purchase Receipt Item"]), cdt)
-			this.apply_pricing_rule_on_item(item);
+		{
+			// NOTE:  Call to poorly-named function.  Does not "apply" any Pricing Rules whatsosever.
+			// Only takes the value of the *current* 'price_list_rate, and copies it into the Order Line's rate.
+			// There's nothing interesting in this call besides that.
+			this.apply_pricing_rule_on_item(order_line);
+		}
 		else
-			item.rate = flt(item.price_list_rate * (1 - item.discount_percentage / 100.0),
-				precision("rate", item));
+			order_line.rate = flt(order_line.price_list_rate * (1 - order_line.discount_percentage / 100.0),
+				precision("rate", order_line));
 
 		this.calculate_taxes_and_totals();
 	},
@@ -1129,7 +1142,7 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 		}
 
 		if(!this.in_apply_price_list) {
-			this.apply_price_list(null, true);
+			this.apply_price_list(null, reset_plc_conversion=true);
 		}
 	},
 
@@ -1174,7 +1187,7 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 
 			if (!dont_fetch_price_list_rate &&
 				frappe.meta.has_field(doc.doctype, "price_list_currency")) {
-				this.apply_price_list(item, true);
+				this.apply_price_list(item, reset_plc_conversion=true);
 			}
 			this.calculate_stock_uom_rate(doc, cdt, cdn);
 		}
@@ -1182,7 +1195,7 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 
 	batch_no: function(doc, cdt, cdn) {
 		let item = frappe.get_doc(cdt, cdn);
-		this.apply_price_list(item, true);
+		this.apply_price_list(item, reset_plc_conversion=true);
 	},
 
 	toggle_conversion_factor: function(item) {

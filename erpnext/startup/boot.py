@@ -15,6 +15,7 @@ def boot_session(bootinfo):
 		update_page_info(bootinfo)
 
 		load_country_and_currency(bootinfo)
+		# Datahenge: There is a big difference between a default VALUE and a default FILTER
 		bootinfo.sysdefaults.territory = frappe.db.get_single_value('Selling Settings',
 			'territory')
 		bootinfo.sysdefaults.customer_group = frappe.db.get_single_value('Selling Settings',

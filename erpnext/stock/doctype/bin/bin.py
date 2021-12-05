@@ -7,6 +7,27 @@ from frappe.utils import flt, nowdate
 import frappe.defaults
 from frappe.model.document import Document
 
+# tabBin: A table for storing On Hand Stock data.
+#
+# SELECT
+# 	warehouse, item_code, stock_uom, reserved_qty, actual_qty, ordered_qty, indented_qty, planned_qty, projected_qty,
+# 	reserved_qty_for_production, reserved_qty_for_sub_contract, valuation_rate, stock_value
+# FROM
+#	`tabBin`
+# WHERE item_code = 'ADD-VEG-2389'
+#
+#
+# DEFINITIONS:
+#
+# reserved_qty = Sales Orders Submitted, not-yet Shipped
+#
+# ordered_qty = Purchase Orders Submitted, but not-yet received.
+#               Note: Currently this does not reflect FTP's special rules 'include_draft_qty_ftp'
+#               Note: Currently this does not reflect FTP's special rules 'exclude_submitted_qty_ftp'
+#
+# projected_qty = A sum of all the other Quantity Fields.
+#
+
 class Bin(Document):
 	def before_save(self):
 		if self.get("__islocal") or not self.stock_uom:

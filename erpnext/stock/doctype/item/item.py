@@ -163,6 +163,7 @@ class Item(WebsiteGenerator):
 				"currency": erpnext.get_default_currency(),
 				"price_list_rate": self.standard_rate
 			})
+			item_price.uom = self.stock_uom  # Datahenge: Ensure the default Sales Price is in stocking Unit of Measure.
 			item_price.insert()
 
 	def set_opening_stock(self):
@@ -882,11 +883,11 @@ class Item(WebsiteGenerator):
 
 		frappe.throw(message, title=_("Variant Attribute Error"), is_minimizable=True, wide=True)
 
-
+	# Datahenge: Bug Fix, replacing _doc_before_save() with get_doc_before_save()
 	def validate_stock_exists_for_template_item(self):
-		if self.stock_ledger_created() and self._doc_before_save:
-			if (cint(self._doc_before_save.has_variants) != cint(self.has_variants)
-				or self._doc_before_save.variant_of != self.variant_of):
+		if self.stock_ledger_created() and self.get_doc_before_save():
+			if (cint(self.get_doc_before_save().has_variants) != cint(self.has_variants)
+				or self.get_doc_before_save().variant_of != self.variant_of):
 				frappe.throw(_("Cannot change Variant properties after stock transaction. You will have to make a new Item to do this.").format(self.name),
 					StockExistsForTemplate)
 
