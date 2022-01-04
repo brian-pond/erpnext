@@ -73,6 +73,17 @@ class BlanketOrder(Document):
 		# else:
 		# 	frappe.throw(_("Please enter 'From Date'"))
 
+	@frappe.whitelist()
+	def revert_to_draft(self):
+		"""
+		Update the Blanket Order so that it's back into a Draft status.
+		"""
+		frappe.db.set_value(self.doctype, self.name, "docstatus", 0)
+		# Order Lines:
+		frappe.db.sql("""UPDATE `tabBlanket Order Item` SET docstatus = 0 WHERE parent = %s""", self.name)
+
+
+
 @frappe.whitelist()
 def make_sales_order(source_name):
 	def update_item(source, target, source_parent):

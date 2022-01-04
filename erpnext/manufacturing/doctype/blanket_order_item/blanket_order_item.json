@@ -25,6 +25,7 @@
   "total_weight",
   "section_break_2",
   "rate",
+  "rate_per_weight_unit",
   "column_break_4",
   "line_amount",
   "section_break_7",
@@ -98,8 +99,9 @@
    "options": "Warehouse"
   },
   {
+   "developer_notes": "Making this a \"Text Editor\" to maintain consistency with other DocType descriptions like Purchase and Sales Order.",
    "fieldname": "description",
-   "fieldtype": "Small Text"
+   "fieldtype": "Text Editor"
   },
   {
    "columns": 1,
@@ -136,7 +138,7 @@
   {
    "fieldname": "conversion_factor",
    "fieldtype": "Float",
-   "label": "Factor to Stock UOM",
+   "label": "Conversion to Stock UOM",
    "read_only": 1,
    "reqd": 1
   },
@@ -185,10 +187,17 @@
    "fieldname": "qty_in_weight_uom",
    "fieldtype": "Float",
    "label": "Qty as per Weight UOM"
+  },
+  {
+   "fieldname": "rate_per_weight_unit",
+   "fieldtype": "Currency",
+   "label": "Rate per Weight Unit",
+   "precision": "4",
+   "reqd": 1
   }
  ],
  "istable": 1,
- "modified": "2021-11-27 20:46:48.678777",
+ "modified": "2021-12-24 13:42:53.441651",
  "modified_by": "Administrator",
  "module": "Manufacturing",
  "name": "Blanket Order Item",

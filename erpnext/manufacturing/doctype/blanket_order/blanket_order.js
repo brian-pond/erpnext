@@ -1,5 +1,5 @@
 // Copyright (c) 2018, Frappe Technologies Pvt. Ltd. and contributors
-// Copyright (c) 2021, Datahenge LLC
+// Copyright (c) 2022, Datahenge LLC
 // For license information, please see license.txt
 
 frappe.provide("erpnext.manufacturing");
@@ -131,6 +131,16 @@ frappe.ui.form.on('Blanket Order', {
 	},
 
 	/* eslint-enable */
+	_revert_to_draft(frm) {
+		frappe.call({
+			doc: frm.doc,
+			method: 'revert_to_draft',
+			callback: function() {
+				frm.reload_doc() && frm.refresh();
+			}
+		});
+	},
+
 });
 
 
@@ -142,14 +152,13 @@ erpnext.manufacturing.BlanketOrder = frappe.ui.form.Controller.extend({
 		var me = this;  // because the meaning of 'this' changes in contexts
 		erpnext.hide_company();
 
-
 		frappe.run_serially([
 			() => {		// First action
 				return frappe.db.get_single_value('Buying Settings', 'single_blanket_per_po');
 			},
 			(single_blanket_per_po) => {  // Second action
 				// console.log("Single Blanket per PO? ", single_blanket_per_po);
-				if (this.frm.doc.supplier && this.frm.doc.docstatus === 1 && single_blanket_per_po) {
+				if (this.frm.doc.supplier && single_blanket_per_po) {
 					this.frm.add_custom_button(__('View Purchase Orders'), function() {
 						frappe.set_route('List', 'Purchase Order', {blanket_order: me.frm.doc.name});
 					});
@@ -187,7 +196,15 @@ erpnext.manufacturing.BlanketOrder = frappe.ui.form.Controller.extend({
 				});
 			}).addClass("btn-primary");
 		}
-	},
+
+		// Add a button to revert a Blanket Order back into Draft status.
+		if (this.frm.doc.docstatus == 1) {
+			this.frm.add_custom_button(__('Revert to Draft'), () => this.frm.events._revert_to_draft(this.frm)
+			, __())
+		}
+
+	} // end of refresh()
+
 });
 
 $.extend(cur_frm.cscript, new erpnext.manufacturing.BlanketOrder({frm: cur_frm}));
