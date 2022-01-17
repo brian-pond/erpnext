@@ -32,17 +32,15 @@ class BlanketOrder(Document):
 			order_line.line_amount = order_line.qty * order_line.rate
 			self.amount_grand_total += order_line.line_amount if order_line.line_amount else 0.0
 
-	# Spectrum Fruits: No reason to include a -range- of Dates for blanket orders.
-	# def validate_dates(self):
-	#	if getdate(self.from_date) > getdate(self.to_date):
-	#		frappe.throw(_("From date cannot be greater than To date"))
-
 	def update_ordered_qty(self):
 		"""
 		Spectrum Fruits: Loop through blanket lines, and update their 'ordered_qty' from POs.
 		"""
 		for line in self.items:
 			line.update_ordered_qty()
+			# frappe.msgprint(f"Blanket Order Line {line.idx} : Quantity on Submitted POs = {ret}")
+		frappe.msgprint("Finished updating PO Qty for all Blanket Order lines.")
+		self.reload()
 
 	def set_supplier_address(self):
 		address_dict = {
@@ -82,6 +80,15 @@ class BlanketOrder(Document):
 		# Order Lines:
 		frappe.db.sql("""UPDATE `tabBlanket Order Item` SET docstatus = 0 WHERE parent = %s""", self.name)
 
+	def view_allocated_po_lines(self):
+		html_message = []
+		for blanket_line in self.items:
+			row = f"Blanket Line {blanket_line.idx}: {blanket_line.item_code} ---- Quantity {blanket_line.qty}"
+			po_lines = frappe.get_list("Purchase Order Item", fields=["parent", "qty"], filters={"blanket_order_item": blanket_line.name})
+			for purchase_line in po_lines:
+				row += f"PO {purchase_line.parent}, Line {purchase_line.idx}, Quantity {purchase_line.qty}"
+		html_message.append(row)
+		frappe.msgprint(html_message, as_table=True)
 
 
 @frappe.whitelist()

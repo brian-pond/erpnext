@@ -365,12 +365,16 @@ def validate_due_date(posting_date, due_date, party_type, party, company=None, b
 			return
 
 		if default_due_date != posting_date and getdate(due_date) > getdate(default_due_date):
-			is_credit_controller = frappe.db.get_single_value("Accounts Settings", "credit_controller") in frappe.get_roles()
+			# Spectrum Fruits : Adding some extra text and validation here.
+			credit_controller_role = frappe.db.get_single_value("Accounts Settings", "credit_controller")
+			if not credit_controller_role:
+				msgprint(_("Warning: No 'Credit Manager' has been configured under 'Accounts Settings'."))
+			is_credit_controller = credit_controller_role in frappe.get_roles()
 			if is_credit_controller:
 				msgprint(_("Note: Due / Reference Date exceeds allowed customer credit days by {0} day(s)")
 					.format(date_diff(due_date, default_due_date)))
 			else:
-				frappe.throw(_("Due / Reference Date cannot be after {0}")
+				frappe.throw(_("Due / Reference Date cannot be after {0}\n(to override, contact a User who is a Credit Manager in Account Settings)")
 					.format(formatdate(default_due_date)))
 
 @frappe.whitelist()

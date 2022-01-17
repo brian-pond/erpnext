@@ -500,7 +500,6 @@
   },
   {
    "default": "0",
-   "depends_on": "eval: doc.voucher_type == 'Bank Entry'",
    "fieldname": "create_bank_check",
    "fieldtype": "Check",
    "label": "Create a Bank Check"
@@ -544,7 +543,7 @@
  "icon": "fa fa-file-text",
  "idx": 176,
  "is_submittable": 1,
- "modified": "2021-09-30 14:06:36.624696",
+ "modified": "2022-01-11 13:29:46.064539",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Journal Entry",

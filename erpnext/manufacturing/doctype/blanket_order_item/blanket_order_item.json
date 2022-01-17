@@ -18,17 +18,16 @@
   "column_break_2",
   "uom_weight",
   "uom_buying",
-  "conversion_factor",
+  "column_break_3",
+  "rate_per_weight_uom",
+  "rate",
   "sb_weight_details",
   "weight_per_unit",
-  "column_break_3",
+  "conversion_factor",
+  "column_break_4",
   "total_weight",
   "section_break_2",
-  "rate",
-  "rate_per_weight_unit",
-  "column_break_4",
   "line_amount",
-  "section_break_7",
   "ordered_qty"
  ],
  "fields": [
@@ -66,7 +65,7 @@
    "fieldname": "rate",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Rate Per Unit",
+   "label": "Rate",
    "precision": "4",
    "reqd": 1
   },
@@ -77,13 +76,9 @@
    "fieldname": "ordered_qty",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Qty on POs",
+   "label": "PO Qty",
    "no_copy": 1,
    "read_only": 1
-  },
-  {
-   "fieldname": "section_break_7",
-   "fieldtype": "Section Break"
   },
   {
    "columns": 2,
@@ -172,10 +167,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "column_break_4",
-   "fieldtype": "Column Break"
-  },
-  {
    "collapsible": 1,
    "fetch_from": "item_code.description",
    "fetch_if_empty": 1,
@@ -189,15 +180,19 @@
    "label": "Qty as per Weight UOM"
   },
   {
-   "fieldname": "rate_per_weight_unit",
+   "fieldname": "rate_per_weight_uom",
    "fieldtype": "Currency",
-   "label": "Rate per Weight Unit",
+   "label": "Rate per Weight UOM",
    "precision": "4",
    "reqd": 1
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
   }
  ],
  "istable": 1,
- "modified": "2021-12-24 13:42:53.441651",
+ "modified": "2022-01-16 19:29:13.362059",
  "modified_by": "Administrator",
  "module": "Manufacturing",
  "name": "Blanket Order Item",

@@ -149,6 +149,7 @@ class SalesInvoice(SellingController):
 						frappe.throw(_("Row #{0}: Asset {1} cannot be submitted, it is already {2}").format(d.idx, d.asset, asset.status))
 
 	def before_save(self):
+		self.delivery_note_date = self.get_firstonly_delivery_note_date()  # SPECTRUM FRUITS
 		set_account_for_mode_of_payment(self)
 
 	def on_submit(self):
@@ -1287,6 +1288,30 @@ class SalesInvoice(SellingController):
 
 		if update:
 			self.db_set('status', self.status, update_modified = update_modified)
+
+
+	def get_firstonly_delivery_note_date(self):
+		"""
+		Spectrum Fruits Modification:  They require a Delivery Note Date on Sales Invoices.
+
+		There is nothing in ERPNext that will prevent 2+ Delivery Notes to be referenced by a single Sales Invoice.
+		Therefore, this function chooses the most-recent date of all results.
+		"""
+		delivery_note_names = [ invoice_line.delivery_note for invoice_line in self.items ]
+		if len(delivery_note_names) == 0:
+			return None
+
+		fields = [ "posting_date" ]
+		filters = [
+			["name", "in", delivery_note_names ]
+		]
+		delivery_note_dates = frappe.get_all('Delivery Note', fields=fields, filters = filters)  # list of dict
+		delivery_note_dates = sorted([ each['posting_date'] for each in delivery_note_dates], reverse=True)  # list of dates
+
+		if not delivery_note_dates:
+			return None
+		return max(delivery_note_dates)
+
 
 def get_discounting_status(sales_invoice):
 	status = None

@@ -137,6 +137,10 @@ erpnext.accounts.PurchaseInvoice = erpnext.buying.BuyingController.extend({
 		}
 	},
 
+	// Spectrum Fruits.
+	due_date: function() {
+	},
+
 	unblock_invoice: function() {
 		const me = this;
 		frappe.call({

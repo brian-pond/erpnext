@@ -52,6 +52,26 @@ class PurchaseInvoice(BuyingController):
 		supplier_tds = frappe.db.get_value("Supplier", self.supplier, "tax_withholding_category")
 		self.set_onload("supplier_tds", supplier_tds)
 
+	def before_validate(self):
+		"""
+		Execute code prior to 'validate()' Controller Method.
+		"""
+
+		# Spectrum Fruits: Try to clear the Payment Schedule table, if the Due Date is manually altered.
+		doc_orig = self.get_doc_before_save()
+
+		if doc_orig and (doc_orig.due_date != self.due_date):
+			# Due Date was altered.
+			# doc_payment_term = self.get_doc("Payment Term")
+			self.payment_schedule = []   # clear the table, then Rebuild it.
+			self.payment_terms_template = None
+			self.append('payment_schedule', {'payment_term': 'Term_Override',
+			                                 'description': 'Due date chosen manually.',
+										     'due_date': self.due_date,
+										     'invoice_portion': 100,
+										     'payment_amount': self.outstanding_amount
+			})
+
 	def before_save(self):
 		if not self.on_hold:
 			self.release_date = ''

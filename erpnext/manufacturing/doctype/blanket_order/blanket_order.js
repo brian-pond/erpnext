@@ -5,6 +5,7 @@
 frappe.provide("erpnext.manufacturing");
 
 frappe.ui.form.on('Blanket Order', {
+
 	onload: function(frm, cdt, cdn) {
 
 		cur_frm.dashboard.frm.fields[0].df.hidden=1  // Hide the Dashboard
@@ -144,13 +145,38 @@ frappe.ui.form.on('Blanket Order', {
 });
 
 
-// Brian: Still not quite sure why I'm wrapping/extending form.Controller
-// but it's necessary to call get_item_details() successfully
+/* 
+	Brian: Still not quite sure why I'm wrapping/extending form.Controller?
+	But it's necessary to call get_item_details() successfully
+*/
+	
 erpnext.manufacturing.BlanketOrder = frappe.ui.form.Controller.extend({
 
 	refresh: function() {
 		var me = this;  // because the meaning of 'this' changes in contexts
 		erpnext.hide_company();
+
+		this.frm.add_custom_button(__('Recalculate Quantity on PO'), function() {
+			me.frm.call({
+				method: "update_ordered_qty",
+				doc: me.frm.doc,
+				callback: function() {
+					frappe.msgprint(`Finished recalculating PO Qty Ordered, per blanket order line.`);
+					console.log('Finished recalculating PO quantities.');
+				}
+			});
+		});
+
+		this.frm.add_custom_button(__('View PO Line Allocations'), function() {
+			me.frm.call({
+				method: "view_allocated_po_lines",
+				doc: me.frm.doc,
+				callback: function() {
+					frappe.msgprint(`Finished recalculating PO Qty Ordered, per blanket order line.`);
+					console.log('Finished recalculating PO quantities.');
+				}
+			});
+		}, "View");
 
 		frappe.run_serially([
 			() => {		// First action
@@ -161,7 +187,7 @@ erpnext.manufacturing.BlanketOrder = frappe.ui.form.Controller.extend({
 				if (this.frm.doc.supplier && single_blanket_per_po) {
 					this.frm.add_custom_button(__('View Purchase Orders'), function() {
 						frappe.set_route('List', 'Purchase Order', {blanket_order: me.frm.doc.name});
-					});
+					}, "View");
 				}
 				else if (this.frm.doc.supplier && this.frm.doc.docstatus === 1) {
 					this.frm.add_custom_button(__(`<div style="text-decoration: line-through;">
@@ -209,6 +235,7 @@ erpnext.manufacturing.BlanketOrder = frappe.ui.form.Controller.extend({
 
 $.extend(cur_frm.cscript, new erpnext.manufacturing.BlanketOrder({frm: cur_frm}));
 
+
 frappe.ui.form.on("Blanket Order Item", {
 	/*
 		* Yes, the line's controller functions are defined here; Child Tables are a 2nd class citizen in Frappe
@@ -253,12 +280,29 @@ frappe.ui.form.on("Blanket Order Item", {
 		else {
 			blanket_line.qty_in_weight_uom = blanket_line.qty * blanket_line.weight_per_unit;
 		}
-		refresh_field("items");  // Yes, we have to refresh in the context of the Form.
 		recalc_line_amount(cdt, cdn);
 		recalculate_total_weight(cdt, cdn);
+		refresh_field("items");  // Yes, we have to refresh in the context of the Form.
 
 		// For now, I don't have a Stock Quantity field.
 		// frappe.model.set_value(cdt, cdn, 'stock_qty', blanket_line.qty * blanket_line.conversion_factor);
+	},
+
+	qty_in_weight_uom: function(doc, cdt, cdn) {
+		// When 'qty_in_weight_uom' changes, update 'qty'.  Then trigger standard code from there forward.
+		// console.log("DEBUG: entered method Blanket Order Line method 'qty_in_weight_uom'");
+		let row = frappe.get_doc(cdt, cdn);
+		// 1. Update qty
+		if (row.uom_buying === row.uom_weight) {
+			row.qty = row.qty_in_weight_uom;
+			console.log("Making qty = qty_in_weight_uom")
+		}
+		else {
+			row.qty = row.qty_in_weight_uom / row.weight_per_unit;
+		}
+		recalc_line_amount(cdt, cdn);
+		recalculate_total_weight(cdt, cdn);
+		refresh_field("items");	
 	},
 
 	reqd_by_date: function(frm, cdt, cdn) {
@@ -303,33 +347,41 @@ frappe.ui.form.on("Blanket Order Item", {
 	},
 
 	rate: (frm, cdt, cdn) => {
-		let row = frappe.get_doc(cdt, cdn);
-		// frappe.model.set_value(cdt, cdn, 'stock_qty', row.qty * row.conversion_factor);
+		let order_line = frappe.get_doc(cdt, cdn);
+
+		// Scenario 1.  Both UOM are the same:
+		if (order_line.uom_weight === order_line.uom_buying) {
+			order_line.rate_per_weight_uom = order_line.rate;
+		}
+		else {
+			// Example:  $5.00/lb = $300/drum divided by 60 lbs/drum.
+			order_line.rate_per_weight_uom = (order_line.rate / order_line.weight_per_unit);
+		}
 		recalc_line_amount(cdt, cdn);
+		refresh_field("items");  // Yes, we have to refresh in the context of the Form.
 	},
+
+	rate_per_weight_uom: (frm, cdt, cdn) => {
+		let order_line = frappe.get_doc(cdt, cdn);
+
+		// Scenario 1.  Both UOM are the same:
+		if (order_line.uom_weight === order_line.uom_buying) {
+			order_line.rate = order_line.rate_per_weight_uom;
+		}
+		else {
+			// Example:  $5.00/lb = $300/drum divided by 60 lbs/drum.
+			order_line.rate = (order_line.rate_per_weight_uom * order_line.weight_per_unit);
+		}
+		recalc_line_amount(cdt, cdn);
+		refresh_field("items");  // Yes, we have to refresh in the context of the Form.
+	},
+
 
 	conversion_factor: (frm, cdt, cdn) => {
 		let row = frappe.get_doc(cdt, cdn);
 		// frappe.model.set_value(cdt, cdn, 'stock_qty', row.qty * row.conversion_factor);
 	},
 
-	qty_in_weight_uom: function(doc, cdt, cdn) {
-		// When 'qty_in_weight_uom' changes, update 'qty'.  Then trigger standard code from there forward.
-		// console.log("DEBUG: entered method Blanket Order Line method 'qty_in_weight_uom'");
-		let row = frappe.get_doc(cdt, cdn);
-		// 1. Update qty
-		if (row.uom_buying === row.uom_weight) {
-			row.qty = row.qty_in_weight_uom;
-			console.log("Making qty = qty_in_weight_uom")
-		}
-		else {
-			row.qty = row.qty_in_weight_uom / row.weight_per_unit;
-			console.log("Making qty a calculation.")
-		}
-		recalc_line_amount(cdt, cdn);
-		recalculate_total_weight(cdt, cdn);
-		refresh_field("items");	
-	}
 });
 
 
