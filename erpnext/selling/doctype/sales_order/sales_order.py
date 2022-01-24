@@ -664,36 +664,50 @@ def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
 			if cost_center:
 				target.cost_center = cost_center
 
-	doclist = get_mapped_doc("Sales Order", source_name, {
-		"Sales Order": {
-			"doctype": "Sales Invoice",
-			"field_map": {
-				"party_account_currency": "party_account_currency",
-				"payment_terms_template": "payment_terms_template"
+	#TODO:  If the result will not add new lines to the Invoice?  Then do nothing at all.
+
+	if target_doc and isinstance(target_doc, str):
+		# The variable 'target_doc' is a string form.  Need to convert to an Object, before we can examine it.
+		doc_sales_invoice = frappe.get_doc("Sales Invoice", target_doc)
+		number_of_invoice_lines = len(doc_sales_invoice.items)
+		# frappe.whatis(number_of_invoice_lines)
+
+	doclist = get_mapped_doc(from_doctype="Sales Order",
+	                         from_docname=source_name,
+							 table_maps={
+			"Sales Order": {
+				"doctype": "Sales Invoice",
+				"field_map": {
+					"party_account_currency": "party_account_currency",
+					"payment_terms_template": "payment_terms_template"
+				},
+				"validation": {
+					"docstatus": ["=", 1]
+				}
 			},
-			"validation": {
-				"docstatus": ["=", 1]
+			"Sales Order Item": {
+				"doctype": "Sales Invoice Item",
+				"field_map": {
+					"name": "so_detail",
+					"parent": "sales_order",
+				},
+				"postprocess": update_item,
+				"condition": lambda doc: doc.qty and (doc.base_amount==0 or abs(doc.billed_amt) < abs(doc.amount))
+			},
+			"Sales Taxes and Charges": {
+				"doctype": "Sales Taxes and Charges",
+				"add_if_empty": True
+			},
+			"Sales Team": {
+				"doctype": "Sales Team",
+				"add_if_empty": True
 			}
 		},
-		"Sales Order Item": {
-			"doctype": "Sales Invoice Item",
-			"field_map": {
-				"name": "so_detail",
-				"parent": "sales_order",
-			},
-			"postprocess": update_item,
-			"condition": lambda doc: doc.qty and (doc.base_amount==0 or abs(doc.billed_amt) < abs(doc.amount))
-		},
-		"Sales Taxes and Charges": {
-			"doctype": "Sales Taxes and Charges",
-			"add_if_empty": True
-		},
-		"Sales Team": {
-			"doctype": "Sales Team",
-			"add_if_empty": True
-		}
-	}, target_doc, postprocess, ignore_permissions=ignore_permissions)
+		target_doc=target_doc,
+		postprocess=postprocess,
+		ignore_permissions=ignore_permissions)
 
+	print(f"------------------>Quantity Of Sales Invoice Lines:\n{len(doclist.as_dict()['items'])}")
 	return doclist
 
 @frappe.whitelist()
