@@ -825,7 +825,20 @@ frappe.ui.form.on('Sales Invoice', {
 			method: "erpnext.accounts.doctype.sales_invoice.sales_invoice.create_invoice_discounting",
 			frm: frm
 		});
-	}
+	},
+
+	btn_edit_weight_uom: function(frm, cdt, cdn) {
+		console.log("foo");
+		frappe.msgprint("Foo");
+		if (frm.doc.docstatus != 0) {
+			frappe.msgprint("Weight UOM can only be modified when Sales Invoice is in Draft status.");
+			return;
+		}
+		var d = locals[cdt][cdn]
+		frappe.msgprint(d.item_code + " " + d.weight_uom);
+	},
+
+
 })
 
 frappe.ui.form.on('Sales Invoice Timesheet', {
