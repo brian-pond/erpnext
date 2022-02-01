@@ -170,6 +170,7 @@
   "remarks",
   "sales_team_section_break",
   "sales_partner",
+  "commission_payment_source",
   "commission_payment_journal",
   "commission_amount_paid",
   "column_break10",
@@ -1586,15 +1587,22 @@
   {
    "allow_on_submit": 1,
    "fieldname": "commission_payment_journal",
-   "fieldtype": "Link",
-   "label": "Commission Journal Entry",
-   "options": "Journal Entry"
+   "fieldtype": "Dynamic Link",
+   "label": "Commission Payment Link",
+   "options": "commission_payment_source"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "commission_payment_source",
+   "fieldtype": "Select",
+   "label": "Commission Payment Source",
+   "options": "Journal Entry\nPayment Entry"
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 181,
  "is_submittable": 1,
- "modified": "2022-02-01 15:25:59.114723",
+ "modified": "2022-02-01 16:29:07.525924",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Sales Invoice",
