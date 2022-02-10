@@ -1,5 +1,4 @@
 {
- "actions": [],
  "allow_events_in_timeline": 1,
  "allow_import": 1,
  "allow_rename": 1,
@@ -19,6 +18,7 @@
   "default_bank_account",
   "lead_name",
   "image",
+  "mode_of_payment",
   "column_break0",
   "account_manager",
   "customer_group",
@@ -480,13 +480,18 @@
    "fieldname": "dn_required",
    "fieldtype": "Check",
    "label": "Allow Sales Invoice Creation Without Delivery Note"
+  },
+  {
+   "fieldname": "mode_of_payment",
+   "fieldtype": "Link",
+   "label": "Default Mode of Payment",
+   "options": "Mode of Payment"
   }
  ],
  "icon": "fa fa-user",
  "idx": 363,
  "image_field": "image",
- "links": [],
- "modified": "2020-03-17 11:03:42.706907",
+ "modified": "2022-02-10 14:17:37.421353",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",

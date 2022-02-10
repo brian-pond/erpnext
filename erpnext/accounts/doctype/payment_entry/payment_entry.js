@@ -371,6 +371,9 @@ frappe.ui.form.on('Payment Entry', {
 									frm.set_value("mode_of_payment", r.message.mode_of_payment);
 									frm.set_value("remit_to_address", r.message.remit_to_address.name);
 								}
+								if(frm.doc.party_type == "Customer") {
+									frm.set_value("mode_of_payment", r.message.mode_of_payment);
+								}
 							}
 						]);
 					}

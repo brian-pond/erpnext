@@ -880,6 +880,8 @@ def get_party_details(company, party_type, party, date, cost_center=None):
 		supplier = frappe.get_doc("Supplier", party)
 		mode_of_payment = supplier.mode_of_payment
 		remit_to_address = supplier.get_remit_to_address(first_only=True, none_on_error=(mode_of_payment != 'Check'))
+	elif party_type == "Customer":
+		mode_of_payment = frappe.get_value("Customer", party, "mode_of_payment") or None
 	elif party_type == "Employee":
 		employee = frappe.get_doc("Employee", party)
 		remit_to_address = employee.get_remit_to_address(first_only=True)
