@@ -461,6 +461,28 @@ class PurchaseReceipt(BuyingController):
 
 		self.load_from_db()
 
+	# SPECTRUM FRUITS
+	def on_update(self):
+		"""
+		Still within the SQL transaction, but post-write.
+		"""
+		# When the Purchase Receipt is updated, try to calculate a singular value for 'blanket_order'
+		if self.blanket_order:
+			return  # respect existing choices
+
+		if not self.items:
+			return
+
+		purchase_order_names = set( [ row.purchase_order for row in self.items if row.purchase_order ])
+		# Loop through a unique set of PO options:
+		for purchase_order_name in purchase_order_names:
+			blanket_order_id = frappe.db.get_value("Purchase Order", purchase_order_name, "blanket_order")
+			if blanket_order_id:
+				# Apply the first Blanket found; do not continue searching for more.
+				frappe.db.set_value("Purchase Receipt", self.name, "blanket_order", blanket_order_id)
+				self.reload()
+				break
+
 def update_billed_amount_based_on_po(po_detail, update_modified=True):
 	# Billed against Sales Order directly
 	billed_against_po = frappe.db.sql("""select sum(amount) from `tabPurchase Invoice Item`

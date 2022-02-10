@@ -551,10 +551,12 @@
   },
   {
    "default": "0",
+   "description": "Received stock is updated via PRECs only.",
    "fieldname": "update_stock",
    "fieldtype": "Check",
    "label": "Update Stock",
-   "print_hide": 1
+   "print_hide": 1,
+   "read_only": 1
   },
   {
    "fieldname": "scan_barcode",
@@ -1309,7 +1311,7 @@
  "icon": "fa fa-file-text",
  "idx": 204,
  "is_submittable": 1,
- "modified": "2021-11-02 12:02:35.402271",
+ "modified": "2022-02-10 12:13:14.302364",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Purchase Invoice",

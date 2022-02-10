@@ -21,6 +21,8 @@
   "company",
   "is_return",
   "return_against",
+  "blanket_order",
+  "blanket_order_load_id",
   "section_addresses",
   "supplier_address",
   "contact_person",
@@ -1067,12 +1069,25 @@
    "fieldtype": "Link",
    "label": "Project",
    "options": "Project"
+  },
+  {
+   "fieldname": "blanket_order",
+   "fieldtype": "Link",
+   "label": "Blanket Order",
+   "no_copy": 1,
+   "options": "Blanket Order"
+  },
+  {
+   "depends_on": "eval: doc.blanket_order",
+   "fieldname": "blanket_order_load_id",
+   "fieldtype": "Data",
+   "label": "Blanket Load Id"
   }
  ],
  "icon": "fa fa-truck",
  "idx": 261,
  "is_submittable": 1,
- "modified": "2021-07-15 14:41:07.882688",
+ "modified": "2022-02-10 13:07:34.996426",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Purchase Receipt",

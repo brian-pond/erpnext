@@ -596,12 +596,14 @@
   },
   {
    "default": "0",
+   "description": "Sold stock is updated via DNs only.",
    "fieldname": "update_stock",
    "fieldtype": "Check",
    "label": "Update Stock",
    "oldfieldname": "update_stock",
    "oldfieldtype": "Check",
-   "print_hide": 1
+   "print_hide": 1,
+   "read_only": 1
   },
   {
    "fieldname": "scan_barcode",
@@ -1602,7 +1604,7 @@
  "icon": "fa fa-file-text",
  "idx": 181,
  "is_submittable": 1,
- "modified": "2022-02-01 16:29:07.525924",
+ "modified": "2022-02-08 15:14:47.417807",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Sales Invoice",
