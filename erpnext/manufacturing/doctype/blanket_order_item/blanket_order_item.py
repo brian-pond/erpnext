@@ -31,3 +31,19 @@ class BlanketOrderItem(Document):
 		frappe.db.set_value('Blanket Order Item', self.name, 'ordered_qty',  po_quantities[0][0])
 		frappe.db.commit()
 		return po_quantities[0][0]
+
+
+	def set_new_weight_per_uom(self, new_value):
+		"""
+		Called by Frontend JS code to change the conversion factor of Weight (e.g. Lbs) to UOM (e.g. Drum)
+		Normally the value is determined by the Item table, but SF occassionally must alter it.
+
+		"""
+		self.weight_per_unit = new_value
+		self.total_weight = self.qty * self.weight_per_unit
+		self.qty_in_weight_uom = self.qty * self.weight_per_unit
+		self.rate_per_weight_uom = self.rate / self.weight_per_unit
+		self.db_update()
+		# frappe.db.set_value('Blanket Order Item', self.name, 'weight_per_unit', new_value)
+
+		frappe.db.commit()

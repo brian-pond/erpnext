@@ -37,7 +37,7 @@ class PackingSlip(Document):
 			Validates if delivery note has status as draft
 		"""
 		# Datahenge: No idea why this matters, so commenting it out.
-		
+
 		# if cint(frappe.db.get_value("Delivery Note", self.delivery_note, "docstatus")) != 0:
 		#	frappe.throw(_("Delivery Note {0} must not be Submitted").format(self.delivery_note))
 

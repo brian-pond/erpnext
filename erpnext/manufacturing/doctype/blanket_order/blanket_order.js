@@ -382,6 +382,20 @@ frappe.ui.form.on("Blanket Order Item", {
 		// frappe.model.set_value(cdt, cdn, 'stock_qty', row.qty * row.conversion_factor);
 	},
 
+	btn_edit_weight_per_unit: (frm, cdt, cdn) => {
+		
+		// Prevent button-clicking while other values (qty, uom, qty in weight uom) are in flux.
+		if (frm.is_dirty() == 1) {
+			frappe.msgprint("This button cannot be used while the Document has unsaved changes.  Save or undo all changes, then try again.")
+			return;
+		}
+		edit_weight_per_unit(frm, cdt, cdn);
+
+		// Brian: So far, none of these are working to trigger the Document's save button...
+		frm.doc.__unsaved = 1
+		this.doc.__unsaved = 1;
+	}
+
 });
 
 
@@ -468,4 +482,51 @@ function recalculate_total_weight(cdt, cdn) {
 	else {
 		frappe.model.set_value(cdt, cdn, 'total_weight', blanket_line.qty * blanket_line.weight_per_unit);
 	}
+}
+
+
+function edit_weight_per_unit(caller_frm, cdt, cdn) {
+	
+	let blanket_line = locals[cdt][cdn];
+	if (blanket_line.docstatus != 0) {
+		frappe.msgprint(__("Cannot edit the 'Weight Per Unit' of a Submitted document."));
+		return;
+	}
+
+	const dlg_title = __('Edit the Weight Per Unit');
+	const fields = [
+		{
+			fieldname: 'new_weight_per_unit',
+			read_only: 0,
+			fieldtype:'Float',
+			label: __('New Weight Per Unit'),
+			default: blanket_line.weight_per_unit,
+			description: "<b>" + blanket_line.uom_weight + " per " + blanket_line.uom_buying + "</b>",
+			reqd: 1
+		}
+	]
+	const mydialog = new frappe.ui.Dialog({
+		title: dlg_title,
+		fields: fields,
+		primary_action: function() {
+			const args = mydialog.get_values();
+			if(!args) return;
+	
+			frappe.call({
+				method: "set_new_weight_per_uom",
+				args: { "new_value":  args.new_weight_per_unit},
+				doc: blanket_line,
+				callback: function() {
+					frappe.msgprint(`Blanket Order Line updated with new conversion.`);
+					caller_frm.reload_doc();
+					caller_frm.doc.__unsaved = 1;
+				}
+			});
+			mydialog.hide();
+		}
+	});
+
+	mydialog.show();
+
+
 }

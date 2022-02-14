@@ -666,6 +666,7 @@
   },
   {
    "collapsible": 1,
+   "expanded_by_default": 1,
    "fieldname": "edit_references",
    "fieldtype": "Section Break",
    "label": "References"
@@ -826,7 +827,7 @@
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2022-01-27 13:11:27.506210",
+ "modified": "2022-02-13 18:17:54.328936",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Sales Invoice Item",
