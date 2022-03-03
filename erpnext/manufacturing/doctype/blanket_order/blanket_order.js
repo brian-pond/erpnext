@@ -146,7 +146,7 @@ frappe.ui.form.on('Blanket Order', {
 
 
 /* 
-	Brian: Still not quite sure why I'm wrapping/extending form.Controller?
+	Datahenge: Still not quite sure why I'm wrapping/extending form.Controller?
 	But it's necessary to call get_item_details() successfully
 */
 	
@@ -391,7 +391,7 @@ frappe.ui.form.on("Blanket Order Item", {
 		}
 		edit_weight_per_unit(frm, cdt, cdn);
 
-		// Brian: So far, none of these are working to trigger the Document's save button...
+		// Datahenge: So far, none of these are working to trigger the Document's save button...
 		frm.doc.__unsaved = 1
 		this.doc.__unsaved = 1;
 	}

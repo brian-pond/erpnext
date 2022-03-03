@@ -2,9 +2,13 @@
 # Copyright (c) 2018, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+# Datahenge: Updated for plaid + Python 3.9
+
 import plaid
 import requests
-from plaid.errors import APIError, ItemError, InvalidRequestError
+
+# from plaid.exceptions import ApiException  # Python 3.9
+# from plaid.errors import APIError, ItemError, InvalidRequestError
 
 import frappe
 from frappe import _
@@ -50,7 +54,7 @@ class PlaidConnector():
 				"secret": self.settings.plaid_secret,
 				"products": self.products,
 			})
-		
+
 		return args
 
 	def get_link_token(self, update_mode=False):
@@ -58,29 +62,25 @@ class PlaidConnector():
 
 		try:
 			response = self.client.LinkToken.create(token_request)
-		except InvalidRequestError:
-			frappe.log_error(frappe.get_traceback(), _("Plaid invalid request error"))
-			frappe.msgprint(_("Please check your Plaid client ID and secret values"))
-		except APIError as e:
-			frappe.log_error(frappe.get_traceback(), _("Plaid authentication error"))
-			frappe.throw(_(str(e)), title=_("Authentication Failed"))
+		except plaid.ApiException as ex:
+			frappe.log_error(frappe.get_traceback(), _("Plaid API exception"))
+			frappe.throw(_(str(ex)), title=_("Authentication Failed"))
 		else:
 			return response["link_token"]
 
 	def auth(self):
 		try:
 			self.client.Auth.get(self.access_token)
-		except ItemError as e:
-			if e.code == "ITEM_LOGIN_REQUIRED":
+		except plaid.ApiException  as ex:
+			if ex.code == "PLANNED_MAINTENANCE":
 				pass
-		except APIError as e:
-			if e.code == "PLANNED_MAINTENANCE":
+			if ex.code == "ITEM_LOGIN_REQUIRED":
 				pass
 		except requests.Timeout:
 			pass
-		except Exception as e:
+		except Exception as ex:
 			frappe.log_error(frappe.get_traceback(), _("Plaid authentication error"))
-			frappe.throw(_(str(e)), title=_("Authentication Failed"))
+			frappe.throw(_(str(ex)), title=_("Authentication Failed"))
 
 	def get_transactions(self, start_date, end_date, account_id=None):
 		self.auth()

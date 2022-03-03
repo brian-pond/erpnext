@@ -1204,7 +1204,7 @@
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
- "modified": "2021-08-03 15:05:11.589933",
+ "modified": "2022-02-28 15:48:18.270917",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",
@@ -1278,7 +1278,6 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "timeline_field": "customer",
- "title_field": "customer",
  "track_changes": 1,
  "track_seen": 1
 }

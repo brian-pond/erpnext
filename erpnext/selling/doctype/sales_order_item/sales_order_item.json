@@ -16,19 +16,23 @@
   "description",
   "item_group",
   "brand",
-  "image_section",
-  "image",
-  "image_view",
   "quantity_and_rate",
-  "qty",
   "qty_in_weight_uom",
-  "stock_uom",
+  "qty",
   "col_break2",
+  "weight_uom",
   "uom",
-  "conversion_factor",
-  "stock_qty",
-  "section_break_16",
+  "cb1",
+  "rate_per_weight_uom",
+  "rate",
   "price_list_rate",
+  "section_break_16",
+  "stock_qty",
+  "weight_per_unit",
+  "cb2",
+  "stock_uom",
+  "total_weight",
+  "conversion_factor",
   "base_price_list_rate",
   "discount_and_margin",
   "margin_type",
@@ -39,16 +43,13 @@
   "discount_amount",
   "base_rate_with_margin",
   "section_break_simple1",
-  "rate",
   "amount",
-  "rate_per_weight_uom",
   "item_tax_template",
   "col_break3",
   "base_rate",
   "base_amount",
   "pricing_rules",
   "is_free_item",
-  "section_break_24",
   "net_rate",
   "net_amount",
   "column_break_27",
@@ -60,11 +61,7 @@
   "drop_ship_section",
   "delivered_by_supplier",
   "supplier",
-  "item_weight_details",
-  "weight_per_unit",
-  "total_weight",
   "column_break_21",
-  "weight_uom",
   "warehouse_and_reference",
   "warehouse",
   "target_warehouse",
@@ -87,12 +84,15 @@
   "section_break_63",
   "page_break",
   "item_tax_rate",
-  "transaction_date"
+  "transaction_date",
+  "image_section",
+  "image",
+  "image_view"
  ],
  "fields": [
   {
    "bold": 1,
-   "columns": 3,
+   "columns": 2,
    "fieldname": "item_code",
    "fieldtype": "Link",
    "in_global_search": 1,
@@ -142,8 +142,10 @@
    "label": "Description"
   },
   {
+   "columns": 2,
    "fieldname": "description",
    "fieldtype": "Text Editor",
+   "in_list_view": 1,
    "label": "Description",
    "oldfieldname": "description",
    "oldfieldtype": "Small Text",
@@ -157,7 +159,6 @@
    "depends_on": "eval: !parent.skip_delivery_note",
    "fieldname": "delivery_date",
    "fieldtype": "Date",
-   "in_list_view": 1,
    "label": "Delivery Date",
    "no_copy": 1,
    "print_hide": 1
@@ -195,7 +196,6 @@
   {
    "fieldname": "stock_uom",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Stock UOM",
    "oldfieldname": "stock_uom",
    "oldfieldtype": "Data",
@@ -209,6 +209,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "columns": 1,
    "fieldname": "uom",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -234,7 +235,8 @@
   },
   {
    "fieldname": "section_break_16",
-   "fieldtype": "Section Break"
+   "fieldtype": "Section Break",
+   "label": "Stock and Weight"
   },
   {
    "fieldname": "price_list_rate",
@@ -400,10 +402,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "section_break_24",
-   "fieldtype": "Section Break"
-  },
-  {
    "fieldname": "net_rate",
    "fieldtype": "Currency",
    "label": "Net Rate",
@@ -464,15 +462,10 @@
    "print_hide": 1
   },
   {
-   "collapsible": 1,
-   "fieldname": "item_weight_details",
-   "fieldtype": "Section Break",
-   "label": "Item Weight Details"
-  },
-  {
    "fieldname": "weight_per_unit",
    "fieldtype": "Float",
-   "label": "Weight Per Unit"
+   "label": "Weight Per Unit",
+   "read_only": 1
   },
   {
    "fieldname": "total_weight",
@@ -770,16 +763,24 @@
    "label": "Qty in Weight UOM"
   },
   {
-   "developer_notes": "Created for Farm to People.",
+   "developer_notes": "Created for Spectrum Fruits.",
    "fieldname": "rate_per_weight_uom",
    "fieldtype": "Currency",
    "label": "Rate per Weight UOM",
    "precision": "4"
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cb2",
+   "fieldtype": "Column Break"
   }
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2021-11-27 16:54:34.189018",
+ "modified": "2022-03-03 02:43:58.625908",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order Item",

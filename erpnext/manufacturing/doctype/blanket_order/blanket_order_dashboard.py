@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from frappe import _
 
-# Brian: The 'items' list below = links on the Dashboard.
+# Datahenge: The 'items' list below = links on the Dashboard.
 # The 'fieldname' is which column in those tables links to this DocType's name.
 def get_data():
 	return {

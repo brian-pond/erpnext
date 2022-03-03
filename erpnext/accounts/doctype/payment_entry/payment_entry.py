@@ -1123,7 +1123,7 @@ def get_payment_entry(dt, dn, party_amount=None, bank_account=None, bank_amount=
 	# 2. Remit To Address
 	if dt in ("Purchase Invoice", "Purchase Order"):
 		supplier = frappe.get_doc("Supplier", doc.supplier)
-		# Brian: Remit to Address is only mandatory when Payment Method = Check
+		# Datahenge: Remit to Address is only mandatory when Payment Method = Check
 		try:
 			remit_to_doc =  supplier.get_remit_to_address(none_on_error=(pe.mode_of_payment != 'Check'))
 		except:

@@ -2,7 +2,7 @@
 # License: GNU General Public License v3. See license.txt
 
 
-# Farm To People
+# Spectrum Fruits
 # Custom Fields include the following:
 #   * qty_in_weight_uom
 #   * rate_per_weight_uom

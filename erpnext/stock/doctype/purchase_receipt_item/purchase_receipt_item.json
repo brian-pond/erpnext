@@ -27,20 +27,23 @@
   "received_and_accepted",
   "received_qty_weight_uom",
   "received_qty",
-  "qty",
-  "rejected_qty",
-  "col_break2",
+  "cb1",
   "weight_uom",
   "uom",
-  "conversion_factor",
+  "cb2",
+  "rate_per_weight_uom",
+  "rate",
   "retain_sample",
   "sample_quantity",
   "stock_section",
   "stock_qty",
   "weight_per_unit",
+  "conversion_factor",
+  "qty",
   "cb_stock_1",
   "stock_uom",
   "total_weight",
+  "rejected_qty",
   "rate_and_amount",
   "price_list_rate",
   "discount_percentage",
@@ -48,7 +51,6 @@
   "col_break3",
   "base_price_list_rate",
   "sec_break1",
-  "rate",
   "amount",
   "col_break4",
   "base_rate",
@@ -215,11 +217,6 @@
    "print_hide": 1,
    "print_width": "100px",
    "width": "100px"
-  },
-  {
-   "fieldname": "col_break2",
-   "fieldtype": "Column Break",
-   "print_hide": 1
   },
   {
    "fieldname": "uom",
@@ -553,7 +550,6 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Batch No",
-   "no_copy": 0,
    "oldfieldname": "batch_no",
    "oldfieldtype": "Link",
    "options": "Batch",
@@ -847,6 +843,7 @@
   },
   {
    "collapsible": 1,
+   "expanded_by_default": 1,
    "fieldname": "stock_section",
    "fieldtype": "Section Break",
    "label": "Stock"
@@ -854,11 +851,25 @@
   {
    "fieldname": "cb_stock_1",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cb2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rate_per_weight_uom",
+   "fieldtype": "Currency",
+   "label": "Rate per Weight UOM",
+   "precision": "4"
   }
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2021-12-16 15:25:10.041217",
+ "modified": "2022-03-03 02:22:40.299968",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Purchase Receipt Item",

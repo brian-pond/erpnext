@@ -1039,7 +1039,7 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 								}	
 							}
 						}
-						// SF
+						// end Spectrum Fruits
 						me.conversion_factor(me.frm.doc, cdt, cdn);
 					}
 				}
@@ -1113,9 +1113,20 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 		this.apply_pricing_rule(order_line, true);
 	},
 
+
+	weighted_documents: function() {
+		/*
+			Spectrum Fruits: The following documents have Weight-Based quantity and rates.
+		*/
+		let ret = ['Blanket Order Item', 'Purchase Order Item', 
+		           'Purchase Receipt Item', 'Purchase Invoice Item',
+		           'Sales Order Item', 'Sales Receipt Item', 'Sales Invoice Item'];
+		return ret;
+	},
+
 	// Spectrum Fruits: When Rate is modified, also edit the Rate-Per-Weight-UOM.
 	rate: function(doc, cdt, cdn) {
-		if (cdt != "Sales Invoice Item") {
+		if (!this.weighted_documents().includes(cdt)) {
 			// Don't do anything for other Documents.
 			return;
 		}
@@ -1133,7 +1144,7 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 
 	// Spectrum Fruits: When Rate-Per-Weight-UOM is modified, also edit the Rate field.
 	rate_per_weight_uom: function(doc, cdt, cdn) {
-		if (cdt != "Sales Invoice Item") {
+		if (!this.weighted_documents().includes(cdt)) {
 			// Don't do anything for other Documents.
 			return;
 		}

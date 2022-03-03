@@ -18,23 +18,30 @@
   "column_break_13",
   "manufacturer_part_no",
   "quantity_and_rate",
-  "received_qty",
-  "qty",
   "qty_in_weight_uom",
-  "rejected_qty",
-  "stock_uom",
-  "col_break2",
+  "qty",
+  "column_break_15",
+  "weight_uom",
   "uom",
-  "conversion_factor",
-  "stock_qty",
-  "sec_break1",
+  "cb1",
+  "rate_per_weight_uom",
+  "rate",
   "price_list_rate",
+  "sb1",
+  "weight_per_unit",
+  "stock_qty",
+  "cb2",
+  "total_weight",
+  "stock_uom",
+  "conversion_factor",
+  "sb2",
+  "received_qty",
+  "rejected_qty",
   "discount_percentage",
   "discount_amount",
   "col_break3",
   "base_price_list_rate",
   "sec_break2",
-  "rate",
   "amount",
   "item_tax_template",
   "col_break4",
@@ -52,11 +59,7 @@
   "item_tax_amount",
   "landed_cost_voucher_amount",
   "rm_supp_cost",
-  "item_weight_details",
-  "weight_per_unit",
-  "total_weight",
   "column_break_38",
-  "weight_uom",
   "warehouse_section",
   "warehouse",
   "rejected_warehouse",
@@ -191,10 +194,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "col_break2",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "uom",
    "fieldtype": "Link",
    "label": "UOM",
@@ -216,10 +215,6 @@
    "print_hide": 1,
    "read_only": 1,
    "reqd": 1
-  },
-  {
-   "fieldname": "sec_break1",
-   "fieldtype": "Section Break"
   },
   {
    "fieldname": "price_list_rate",
@@ -368,15 +363,10 @@
    "read_only": 1
   },
   {
-   "collapsible": 1,
-   "fieldname": "item_weight_details",
-   "fieldtype": "Section Break",
-   "label": "Item Weight Details"
-  },
-  {
    "fieldname": "weight_per_unit",
    "fieldtype": "Float",
-   "label": "Weight Per Unit"
+   "label": "Weight Per Unit",
+   "read_only": 1
   },
   {
    "fieldname": "total_weight",
@@ -787,11 +777,37 @@
    "fieldtype": "Float",
    "label": "Qty in Weight UOM",
    "precision": "2"
+  },
+  {
+   "fieldname": "cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rate_per_weight_uom",
+   "fieldtype": "Currency",
+   "label": "Rate per Weight UOM",
+   "precision": "4"
+  },
+  {
+   "fieldname": "cb2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_15",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "sb1",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "sb2",
+   "fieldtype": "Section Break"
   }
  ],
  "idx": 1,
  "istable": 1,
- "modified": "2021-11-27 20:50:26.304270",
+ "modified": "2022-03-03 02:28:47.088441",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Purchase Invoice Item",

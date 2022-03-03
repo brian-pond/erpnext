@@ -183,6 +183,7 @@
    "fieldname": "supplier_name",
    "fieldtype": "Data",
    "in_global_search": 1,
+   "in_list_view": 1,
    "label": "Supplier Name",
    "read_only": 1
   },
@@ -1087,7 +1088,7 @@
  "icon": "fa fa-truck",
  "idx": 261,
  "is_submittable": 1,
- "modified": "2022-02-10 13:07:34.996426",
+ "modified": "2022-02-28 15:44:30.011399",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Purchase Receipt",
@@ -1152,6 +1153,5 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "timeline_field": "supplier",
- "title_field": "title",
  "track_changes": 1
 }

@@ -1064,7 +1064,7 @@
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
- "modified": "2021-11-28 21:04:43.510170",
+ "modified": "2022-02-28 15:42:14.193345",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Purchase Order",
@@ -1121,6 +1121,5 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "timeline_field": "supplier",
- "title_field": "supplier",
  "track_changes": 1
 }
