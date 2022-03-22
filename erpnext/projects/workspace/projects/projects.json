@@ -1,11 +1,6 @@
 {
  "category": "Modules",
- "charts": [
-  {
-   "chart_name": "Project Summary",
-   "label": "Open Projects"
-  }
- ],
+ "charts": [],
  "creation": "2020-03-02 15:46:04.874669",
  "developer_mode_only": 0,
  "disable_user_customization": 0,
@@ -52,16 +47,6 @@
    "is_query_report": 0,
    "label": "Project Template",
    "link_to": "Project Template",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Project Type",
-   "link_to": "Project Type",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -179,9 +164,35 @@
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Setup",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Project Settings",
+   "link_to": "Projects Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Project Type",
+   "link_to": "Project Type",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2021-04-25 16:27:16.548780",
+ "modified": "2021-12-05 16:35:05.114216",
  "modified_by": "Administrator",
  "module": "Projects",
  "name": "Projects",

@@ -34,7 +34,11 @@ class Project(Document):
 	def validate(self):
 		if not self.is_new():
 			self.copy_from_template()
-		self.send_welcome_email()
+		# Datahenge: Do not fail saving an Entire Project, just because you couldn't send a welcome email  :eyeroll:
+		try:
+			self.send_welcome_email()
+		except Exception as ex:
+			frappe.msgprint(f"Warning: No welcome email could be sent.")
 		self.update_costing()
 		self.update_percent_complete()
 

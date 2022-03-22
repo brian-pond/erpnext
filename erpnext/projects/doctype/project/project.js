@@ -18,6 +18,8 @@ frappe.ui.form.on("Project", {
 		};
 	},
 	onload: function (frm) {
+		frm.dashboard.hide();  // Don't show the Dashboard for Projects
+		cur_frm.dashboard.hide();  // Don't show the Dashboard for Projects
 		const so = frm.get_docfield("sales_order");
 		so.get_route_options_for_new_doc = () => {
 			if (frm.is_new()) return;
@@ -52,6 +54,7 @@ frappe.ui.form.on("Project", {
 	},
 
 	refresh: function (frm) {
+		cur_frm.dashboard.hide()
 		if (frm.doc.__islocal) {
 			frm.web_link && frm.web_link.remove();
 		} else {

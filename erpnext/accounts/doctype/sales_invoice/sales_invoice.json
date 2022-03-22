@@ -1,6 +1,7 @@
 {
  "actions": [],
  "allow_import": 1,
+ "allow_rename": 1,
  "autoname": "naming_series:",
  "creation": "2013-05-24 19:29:05",
  "doctype": "DocType",
@@ -219,7 +220,7 @@
    "no_copy": 1,
    "oldfieldname": "naming_series",
    "oldfieldtype": "Select",
-   "options": "ACC-SINV-.YYYY.-\nACC-SINV-RET-.YYYY.-",
+   "options": "INV-.YYYY.-\nACC-SINV-RET-.YYYY.-",
    "print_hide": 1,
    "reqd": 1,
    "set_only_once": 1
@@ -340,6 +341,7 @@
    "fieldtype": "Date",
    "hide_days": 1,
    "hide_seconds": 1,
+   "in_list_view": 1,
    "label": "Date",
    "no_copy": 1,
    "oldfieldname": "posting_date",
@@ -1887,7 +1889,6 @@
    "report_hide": 1
   },
   {
-   "collapsible": 1,
    "fieldname": "accounting_dimensions_section",
    "fieldtype": "Section Break",
    "hide_days": 1,
@@ -1978,7 +1979,7 @@
    "link_fieldname": "consolidated_invoice"
   }
  ],
- "modified": "2021-05-20 22:48:33.988881",
+ "modified": "2021-12-05 18:08:25.516246",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Sales Invoice",

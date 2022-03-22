@@ -110,7 +110,7 @@
   },
   {
    "bold": 1,
-   "columns": 4,
+   "columns": 1,
    "fieldname": "item_code",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -143,9 +143,10 @@
    "read_only": 1
   },
   {
-   "default": "item.item_code",
+   "columns": 3,
    "fieldname": "description",
    "fieldtype": "Text Editor",
+   "in_list_view": 1,
    "label": "Description",
    "oldfieldname": "description",
    "oldfieldtype": "Text",
@@ -172,7 +173,7 @@
   },
   {
    "bold": 1,
-   "columns": 2,
+   "columns": 1,
    "fieldname": "qty",
    "fieldtype": "Float",
    "in_list_view": 1,
@@ -303,7 +304,7 @@
   },
   {
    "bold": 1,
-   "columns": 2,
+   "columns": 1,
    "fieldname": "rate",
    "fieldtype": "Currency",
    "in_list_view": 1,
@@ -559,7 +560,6 @@
   {
    "fieldname": "warehouse",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Warehouse",
    "oldfieldname": "warehouse",
    "oldfieldtype": "Link",
@@ -587,7 +587,6 @@
   {
    "fieldname": "batch_no",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Batch No",
    "options": "Batch",
    "print_hide": 1
@@ -827,7 +826,7 @@
  "idx": 1,
  "istable": 1,
  "links": [],
- "modified": "2021-12-05 01:00:00.000000",
+ "modified": "2021-12-05 18:46:17.443767",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Sales Invoice Item",

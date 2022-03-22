@@ -203,9 +203,10 @@ def install(country=None):
 		{'doctype': "Opportunity Type", "name": _("Support")},
 		{'doctype': "Opportunity Type", "name": _("Maintenance")},
 
-		{'doctype': "Project Type", "project_type": "Internal"},
-		{'doctype': "Project Type", "project_type": "External"},
-		{'doctype': "Project Type", "project_type": "Other"},
+		# Datahenge: I don't want these default project types.
+		# {'doctype': "Project Type", "project_type": "Internal"},
+		# {'doctype': "Project Type", "project_type": "External"},
+		# {'doctype': "Project Type", "project_type": "Other"},
 
 		{"doctype": "Offer Term", "offer_term": _("Date of Joining")},
 		{"doctype": "Offer Term", "offer_term": _("Annual Salary")},

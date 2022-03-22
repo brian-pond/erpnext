@@ -8,6 +8,4 @@ import frappe
 from frappe import _
 
 class ProjectType(Document):
-	def on_trash(self):
-		if self.name == "External":
-			frappe.throw(_("You cannot delete Project Type 'External'"))
+	pass
