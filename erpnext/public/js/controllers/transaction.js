@@ -1155,7 +1155,7 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 		}
 		else {
 			// Example:  $300/drum = $5.00/lb * 60 lbs/drum.
-			order_line.rate = order_line.rate_per_weight_uom / order_line.weight_per_unit;
+			order_line.rate = order_line.rate_per_weight_uom * order_line.weight_per_unit;
 		}
 		this.apply_pricing_rule(order_line, true);
 	},
