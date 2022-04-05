@@ -386,7 +386,7 @@
   {
    "fieldname": "total_incoming_value",
    "fieldtype": "Currency",
-   "label": "Total Incoming Value",
+   "label": "Total Target Value",
    "options": "Company:company:default_currency",
    "print_hide": 1,
    "read_only": 1
@@ -398,7 +398,7 @@
   {
    "fieldname": "total_outgoing_value",
    "fieldtype": "Currency",
-   "label": "Total Outgoing Value",
+   "label": "Total Source Value",
    "options": "Company:company:default_currency",
    "print_hide": 1,
    "read_only": 1
@@ -406,7 +406,7 @@
   {
    "fieldname": "value_difference",
    "fieldtype": "Currency",
-   "label": "Total Value Difference (Out - In)",
+   "label": "Total Value Difference (Target - Source)",
    "options": "Company:company:default_currency",
    "print_hide_if_no_value": 1,
    "read_only": 1
@@ -677,7 +677,7 @@
  "icon": "fa fa-file-text",
  "idx": 1,
  "is_submittable": 1,
- "modified": "2021-10-26 14:55:36.572941",
+ "modified": "2022-03-24 14:46:52.394204",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Stock Entry",

@@ -48,15 +48,15 @@ def get_data():
 				{
 					"type": "report",
 					"is_query_report": True,
-					"name": "Stock Ledger",
+					"name": "Stock Balance by Batch",
 					"doctype": "Stock Ledger Entry",
-					"onboard": 1,
+					"onboard": 0,
 					"dependencies": ["Item"],
 				},
 				{
 					"type": "report",
 					"is_query_report": True,
-					"name": "Stock Balance",
+					"name": "Stock Ledger",
 					"doctype": "Stock Ledger Entry",
 					"onboard": 1,
 					"dependencies": ["Item"],
@@ -182,14 +182,22 @@ def get_data():
 			"items": [
 				{
 					"type": "doctype",
-					"name": "Serial No",
+					"name": "Batch",
 					"onboard": 1,
 					"dependencies": ["Item"],
 				},
 				{
 					"type": "doctype",
-					"name": "Batch",
+					"name": "Serial No",
 					"onboard": 1,
+					"dependencies": ["Item"],
+				},
+				{
+					"type": "report",
+					"is_query_report": False,
+					"name": "Stock Balance by Batch",
+					"doctype": "Stock Ledger Entry",
+					"onboard": 0,
 					"dependencies": ["Item"],
 				},
 				{
