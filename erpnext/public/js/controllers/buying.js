@@ -1,4 +1,5 @@
 // buying.js
+
 // Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 // License: GNU General Public License v3. See license.txt
 
@@ -176,6 +177,7 @@ erpnext.buying.BuyingController = erpnext.TransactionController.extend({
 	},
 
 	qty: function(doc, cdt, cdn) {
+
 		var item = frappe.get_doc(cdt, cdn);
 		if ((doc.doctype == "Purchase Receipt") || (doc.doctype == "Purchase Invoice" && (doc.update_stock || doc.is_return))) {
 			frappe.model.round_floats_in(item, ["qty", "received_qty"]);
@@ -196,7 +198,9 @@ erpnext.buying.BuyingController = erpnext.TransactionController.extend({
 	received_qty: function(doc, cdt, cdn) {
 		// Begin: Spectrum Fruits
 		var this_line = locals[cdt][cdn];
-		console.log("Variables (uom, weight_uom, qty, weight_per_unit): ", this_line.uom, this_line.weight_uom, this_line.qty, this_line.weight_per_unit);
+
+		// console.log("Variables (uom, weight_uom, qty, weight_per_unit): ", this_line.uom, this_line.weight_uom, this_line.qty, this_line.weight_per_unit);
+
 		// Update related field = 'received_qty_weight_uom'
 		if (this_line.uom === this_line.weight_uom) {
 			this_line.received_qty_weight_uom = this_line.received_qty;
@@ -210,10 +214,13 @@ erpnext.buying.BuyingController = erpnext.TransactionController.extend({
 
 	// Begin: Spectrum Fruits
 	received_qty_weight_uom: function(doc, cdt, cdn) {
-		// When 'received_qty_weight_uom' changes, update 'received_qty'.  Then trigger standard code.
+		/*
+			When 'received_qty_weight_uom' changes, update 'received_qty'.  Then trigger standard code.
+		*/
 		var this_line = locals[cdt][cdn];
-		console.log("(uom, weight_uom, qty, weight_per_unit): ", this_line.uom, this_line.weight_uom, this_line.qty, this_line.weight_per_unit);
-		// 1. Update 'received_qty'
+		// console.log("(uom, weight_uom, qty, weight_per_unit): ", this_line.uom, this_line.weight_uom, this_line.qty, this_line.weight_per_unit);
+
+		// Update the DocField named 'received_qty'
 		if (this_line.uom === this_line.weight_uom) {
 			this_line.received_qty = this_line.received_qty_weight_uom;
 		}

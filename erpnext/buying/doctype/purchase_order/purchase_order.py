@@ -377,12 +377,17 @@ def set_missing_values(source, target):
 
 @frappe.whitelist()
 def make_purchase_receipt(source_name, target_doc=None):
+	"""
+	Datahenge: A very important feature (largely undocumented) for copying values from A to B.
+	"""
 	def update_item(obj, target, source_parent):
+		# Datahenge: The poorly-named 'obj' represents the Source document.
 		target.qty = flt(obj.qty) - flt(obj.received_qty)
 		target.stock_qty = (flt(obj.qty) - flt(obj.received_qty)) * flt(obj.conversion_factor)
 		target.amount = (flt(obj.qty) - flt(obj.received_qty)) * flt(obj.rate)
 		target.base_amount = (flt(obj.qty) - flt(obj.received_qty)) * \
 			flt(obj.rate) * flt(source_parent.conversion_rate)
+		target.rate_per_weight_uom = obj.rate_per_weight_uom
 
 	doc = get_mapped_doc("Purchase Order", source_name,	{
 		"Purchase Order": {

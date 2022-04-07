@@ -289,8 +289,9 @@ frappe.ui.form.on("Blanket Order Item", {
 	},
 
 	qty_in_weight_uom: function(doc, cdt, cdn) {
-		// When 'qty_in_weight_uom' changes, update 'qty'.  Then trigger standard code from there forward.
-		// console.log("DEBUG: entered method Blanket Order Line method 'qty_in_weight_uom'");
+		/*
+			When 'qty_in_weight_uom' changes, update 'qty'.  Then trigger standard code from there forward.
+		*/
 		let row = frappe.get_doc(cdt, cdn);
 		// 1. Update qty
 		if (row.uom_buying === row.uom_weight) {

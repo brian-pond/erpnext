@@ -1079,7 +1079,8 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 
 	// Spectrum Fruits:  In For a Penny...
 	qty: function(doc, cdt, cdn) {
-		// console.log("DEBUG: entered method 'qty'");
+		
+		console.log("Entry point qty() in TransactionController in 'erpnext/public/js/controllers/transaction.js'");
 
 		let order_line = frappe.get_doc(cdt, cdn);
 		// 1. Update 'qty_in_weight_uom'
@@ -1096,8 +1097,9 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 
 	// Spectrum Fruits:  In For a Pound...
 	qty_in_weight_uom: function(doc, cdt, cdn) {
-		// console.log("DEBUG: entered method 'qty_in_weight_uom'");
-		// When 'qty_in_weight_uom' changes, update 'qty'.  Then trigger standard code from there forward.
+		/* 
+			When 'qty_in_weight_uom' changes, update 'qty'.  Then trigger standard code from there forward.
+		*/
 		let order_line = frappe.get_doc(cdt, cdn);
 		
 		// 1. Update qty
@@ -1113,10 +1115,10 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 		this.apply_pricing_rule(order_line, true);
 	},
 
-
 	weighted_documents: function() {
 		/*
-			Spectrum Fruits: The following documents have Weight-Based quantity and rates.
+			Spectrum Fruits: Helper function.  Return a list of all DocType names
+			that have weight-based Quantity and Rates customizations.
 		*/
 		let ret = ['Blanket Order Item', 'Purchase Order Item', 
 		           'Purchase Receipt Item', 'Purchase Invoice Item',
@@ -1126,6 +1128,8 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 
 	// Spectrum Fruits: When Rate is modified, also edit the Rate-Per-Weight-UOM.
 	rate: function(doc, cdt, cdn) {
+
+		console.log("Entry point rate() in TransactionController in 'erpnext/public/js/controllers/transaction.js'");
 		if (!this.weighted_documents().includes(cdt)) {
 			// Don't do anything for other Documents.
 			return;
@@ -1137,6 +1141,7 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 		}
 		else {
 			// Example:  $5.00/lb = $300/drum divided by 60 lbs/drum.
+			console.log("Order line has a different UOM versus Weight UOM");
 			order_line.rate_per_weight_uom = order_line.rate / order_line.weight_per_unit;
 		}
 		this.apply_pricing_rule(order_line, true);
@@ -1144,6 +1149,8 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 
 	// Spectrum Fruits: When Rate-Per-Weight-UOM is modified, also edit the Rate field.
 	rate_per_weight_uom: function(doc, cdt, cdn) {
+
+		console.log("Entry point rate_per_weight_uom() in TransactionController in 'erpnext/public/js/controllers/transaction.js'");
 		if (!this.weighted_documents().includes(cdt)) {
 			// Don't do anything for other Documents.
 			return;

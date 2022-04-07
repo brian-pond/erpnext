@@ -6,6 +6,7 @@
 frappe.provide("erpnext.stock");
 
 frappe.ui.form.on("Purchase Receipt", {
+
 	setup: (frm) => {
 		frm.make_methods = {
 			'Landed Cost Voucher': () => {
@@ -74,6 +75,7 @@ frappe.ui.form.on("Purchase Receipt", {
 */
 
 erpnext.stock.PurchaseReceiptController = erpnext.buying.BuyingController.extend({
+
 	setup: function(doc) {
 		this.setup_posting_date_time_check();
 		this._super(doc);
@@ -202,6 +204,21 @@ erpnext.stock.PurchaseReceiptController = erpnext.buying.BuyingController.extend
 		});
 	},
 
+	rate: function() {
+		/* 	Datahenge: From within this function, what is the context of "this"?
+
+			'this' is an object.
+			* 	console.log(Object.keys(this).sort());		There are 180 keys.
+
+			*	this.rate									This precise function. Do not call it, or you go recursive?
+			*	this.frm
+			* 	this.reopen_purchase_receipt				An adjacent function 'PurchaseReceiptController'
+			*	this.manipulate_grand_total_for_inclusive_tax		A function from taxes_and_totals.js
+		*/		
+		// console.log(Object.keys(this).sort());
+		this._super();		// Import to include this, or calls will not escalate upwards!
+	}
+
 });
 
 // for backward compatibility: combine new and previous states
@@ -282,6 +299,10 @@ frappe.ui.form.on('Purchase Receipt Item', {
 	batch_no: function(frm, cdt, cdn) {
 		validate_sample_quantity(frm, cdt, cdn);
 	},
+	rate: function(frm, cdt, cdn) {
+		// console.log("Entry point rate() in Child Document 'frappe.ui.from.on('Purchase Receipt Item' in '..doctype/purchase_receipt/purchase_receipt.js'");
+	},
+
 });
 
 cur_frm.cscript['Make Stock Entry'] = function() {
