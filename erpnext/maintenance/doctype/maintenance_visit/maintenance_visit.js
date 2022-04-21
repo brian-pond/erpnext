@@ -27,6 +27,9 @@ frappe.ui.form.on('Maintenance Visit', {
 		if (frm.doc.__islocal) {
 			frm.set_value({mntc_date: frappe.datetime.get_today()});
 		}
+		if (frm.doc.purposes.length && frm.doc.purposes[0].item_name == undefined) {
+			frm.clear_table("purposes");
+		}
 	},
 	customer: function(frm) {
 		erpnext.utils.get_party_details(frm);
@@ -49,13 +52,17 @@ erpnext.maintenance.MaintenanceVisit = frappe.ui.form.Controller.extend({
 
 		if (this.frm.doc.docstatus===0) {
 			this.frm.add_custom_button(__('Maintenance Schedule'),
-				function() {
+				function () {
+					if (!me.frm.doc.customer) {
+						frappe.msgprint(__('Please select Customer first'));
+						return;
+					}
 					erpnext.utils.map_current_doc({
 						method: "erpnext.maintenance.doctype.maintenance_schedule.maintenance_schedule.make_maintenance_visit",
 						source_doctype: "Maintenance Schedule",
 						target: me.frm,
 						setters: {
-							customer: me.frm.doc.customer || undefined,
+							customer: me.frm.doc.customer,
 						},
 						get_query_filters: {
 							docstatus: 1,
@@ -80,13 +87,17 @@ erpnext.maintenance.MaintenanceVisit = frappe.ui.form.Controller.extend({
 					})
 				}, __("Get items from"));
 			this.frm.add_custom_button(__('Sales Order'),
-				function() {
+				function () {
+					if (!me.frm.doc.customer) {
+						frappe.msgprint(__('Please select Customer first'));
+						return;
+					}
 					erpnext.utils.map_current_doc({
 						method: "erpnext.selling.doctype.sales_order.sales_order.make_maintenance_visit",
 						source_doctype: "Sales Order",
 						target: me.frm,
 						setters: {
-							customer: me.frm.doc.customer || undefined,
+							customer: me.frm.doc.customer,
 						},
 						get_query_filters: {
 							docstatus: 1,

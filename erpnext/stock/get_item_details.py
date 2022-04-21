@@ -72,9 +72,7 @@ def get_item_details(args, doc=None, for_validate=False, overwrite_warehouse=Tru
 
 	update_party_blanket_order(args, out)
 
-	if not doc or cint(doc.get('is_return')) == 0:
-		# get price list rate only if the invoice is not a credit or debit note
-		get_price_list_rate(args, item, out)
+	get_price_list_rate(args, item, out)
 
 	if args.customer and cint(args.is_pos):
 		out.update(get_pos_profile_item_details(args.company, args, update_data=True))
@@ -337,7 +335,7 @@ def get_basic_details(args, item, overwrite_warehouse=True):
 			if not out[d[1]]:
 				out[d[1]] = frappe.get_cached_value('Company',  args.company,  d[2]) if d[2] else None
 
-	for fieldname in ("item_name", "item_group", "barcodes", "brand", "stock_uom"):
+	for fieldname in ("item_name", "item_group", "brand", "stock_uom"):
 		out[fieldname] = item.get(fieldname)
 
 	if args.get("manufacturer"):

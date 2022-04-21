@@ -303,11 +303,11 @@ class SalarySlip(TransactionBase):
 
 		if self.salary_structure:
 			self.calculate_component_amounts("deductions")
-		
+
 		self.set_loan_repayment()
 		self.set_component_amounts_based_on_payment_days()
 		self.set_net_pay()
-	
+
 	def set_net_pay(self):
 		self.total_deduction = self.get_component_totals("deductions")
 		self.net_pay = flt(self.gross_pay) - (flt(self.total_deduction) + flt(self.total_loan_repayment))
@@ -519,7 +519,7 @@ class SalarySlip(TransactionBase):
 		# Total taxable earnings including additional and other incomes
 		total_taxable_earnings = previous_taxable_earnings + current_structured_taxable_earnings + future_structured_taxable_earnings \
 			+ current_additional_earnings + other_incomes + unclaimed_taxable_benefits - total_exemption_amount
-		
+
 		# Total taxable earnings without additional earnings with full tax
 		total_taxable_earnings_without_full_tax_addl_components = total_taxable_earnings - current_additional_earnings_with_full_tax
 
@@ -527,7 +527,7 @@ class SalarySlip(TransactionBase):
 		total_structured_tax_amount = self.calculate_tax_by_tax_slab(
 			total_taxable_earnings_without_full_tax_addl_components, tax_slab)
 		current_structured_tax_amount = (total_structured_tax_amount - previous_total_paid_taxes) / remaining_sub_periods
-		
+
 		# Total taxable earnings with additional earnings with full tax
 		full_tax_on_additional_earnings = 0.0
 		if current_additional_earnings_with_full_tax:
@@ -563,7 +563,7 @@ class SalarySlip(TransactionBase):
 			select sum(sd.amount)
 			from
 				`tabSalary Detail` sd join `tabSalary Slip` ss on sd.parent=ss.name
-			where 
+			where
 				sd.parentfield='earnings'
 				and sd.is_tax_applicable=1
 				and is_flexible_benefit=0
@@ -676,9 +676,11 @@ class SalarySlip(TransactionBase):
 
 	def get_amount_based_on_payment_days(self, row, joining_date, relieving_date):
 		amount, additional_amount = row.amount, row.additional_amount
+		timesheet_component = frappe.db.get_value("Salary Structure", self.salary_structure, "salary_component")
+
 		if (self.salary_structure and
-			cint(row.depends_on_payment_days) and cint(self.total_working_days) and
-			(not self.salary_slip_based_on_timesheet or
+			cint(row.depends_on_payment_days) and cint(self.total_working_days)
+			and (row.salary_component != timesheet_component or
 				getdate(self.start_date) < joining_date or
 				(relieving_date and getdate(self.end_date) > relieving_date)
 			)):
@@ -687,14 +689,14 @@ class SalarySlip(TransactionBase):
 			amount = flt((flt(row.default_amount) * flt(self.payment_days)
 				/ cint(self.total_working_days)), row.precision("amount")) + additional_amount
 
-		elif not self.payment_days and not self.salary_slip_based_on_timesheet and cint(row.depends_on_payment_days):
+		elif not self.payment_days and row.salary_component != timesheet_component and cint(row.depends_on_payment_days):
 			amount, additional_amount = 0, 0
 		elif not row.amount:
 			amount = flt(row.default_amount) + flt(row.additional_amount)
 
 		# apply rounding
 		if frappe.get_cached_value("Salary Component", row.salary_component, "round_to_the_nearest_integer"):
-			amount, additional_amount = rounded(amount), rounded(additional_amount)
+			amount, additional_amount = rounded(amount or 0), rounded(additional_amount or 0)
 
 		return amount, additional_amount
 
@@ -782,7 +784,7 @@ class SalarySlip(TransactionBase):
 
 			if flt(d.max_taxable_income) and flt(d.max_taxable_income) < annual_taxable_earning:
 				continue
-			
+
 			tax_amount += tax_amount * flt(d.percent) / 100
 
 		return tax_amount
@@ -869,8 +871,8 @@ class SalarySlip(TransactionBase):
 				`tabRepayment Schedule` as rps, `tabLoan` as l
 			where
 				l.name = rps.parent and rps.payment_date between %s and %s and
-				l.repay_from_salary = 1 and l.docstatus = 1 and l.applicant = %s""",
-			(self.start_date, self.end_date, self.employee), as_dict=True) or []
+				l.repay_from_salary = 1 and l.docstatus = 1 and l.applicant = %s and l.company = %s""",
+			(self.start_date, self.end_date, self.employee, self.company), as_dict=True) or []
 
 	def update_salary_slip_in_additional_salary(self):
 		salary_slip = self.name if self.docstatus==1 else None

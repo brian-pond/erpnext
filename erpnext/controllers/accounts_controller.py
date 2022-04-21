@@ -1290,6 +1290,11 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 
 	for d in data:
 		new_child_flag = False
+
+		if not d.get("item_code"):
+			# ignore empty rows
+			continue
+
 		if not d.get("docname"):
 			new_child_flag = True
 			check_doc_permissions(parent, 'create')
@@ -1312,7 +1317,7 @@ def update_child_qty_rate(parent_doctype, trans_items, parent_doctype_name, chil
 			qty_unchanged = prev_qty == new_qty
 			uom_unchanged = prev_uom == new_uom
 			conversion_factor_unchanged = prev_con_fac == new_con_fac
-			date_unchanged = prev_date == new_date if prev_date and new_date else False # in case of delivery note etc
+			date_unchanged = prev_date == getdate(new_date) if prev_date and new_date else False # in case of delivery note etc
 			if rate_unchanged and qty_unchanged and conversion_factor_unchanged and uom_unchanged and date_unchanged:
 				continue
 

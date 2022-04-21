@@ -23,7 +23,7 @@ frappe.ui.form.on("Purchase Receipt", {
 				frappe.set_route("Form", lcv.doctype, lcv.name);
 			},
 		}
-		
+
 		frm.custom_make_buttons = {
 			'Stock Entry': 'Return',
 			'Purchase Invoice': 'Purchase Invoice'
@@ -35,7 +35,7 @@ frappe.ui.form.on("Purchase Receipt", {
 				filters: {'company': frm.doc.company }
 			}
 		});
-		
+
 	},
 	onload: function(frm) {
 		erpnext.queries.setup_queries(frm, "Warehouse", function() {
@@ -114,6 +114,8 @@ erpnext.stock.PurchaseReceiptController = erpnext.buying.BuyingController.extend
 								message: __("Please Select a Supplier")
 							});
 						}
+
+						me.frm.doc.taxes = [];
 						erpnext.utils.map_current_doc({
 							method: "erpnext.buying.doctype.purchase_order.purchase_order.make_purchase_receipt",
 							source_doctype: "Purchase Order",
