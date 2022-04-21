@@ -272,8 +272,6 @@ erpnext.accounts.PurchaseInvoice = erpnext.buying.BuyingController.extend({
 				// Spectrum Fruits: After Supplier is updated, change the Title also.
 				me.frm.set_value("title", me.frm.doc.supplier_name);
 			});
-
-		
 	},
 
 	apply_tds: function(frm) {

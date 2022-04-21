@@ -809,7 +809,7 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 		if (this.frm.doc.due_date && !this.frm.updating_party_details && !this.frm.doc.is_pos) {
 
 			// SPECTRUM FRUITS:  OVERRIDE
-			return;  // quite spamming the screen with "Please clear the..."
+			return;  // quit spamming the screen with "Please clear the..."
 
 			if (this.frm.doc.payment_terms_template ||
 				(this.frm.doc.payment_schedule && this.frm.doc.payment_schedule.length)) {

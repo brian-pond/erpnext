@@ -229,6 +229,8 @@ class PurchaseOrder(BuyingController):
 		frappe.get_doc('Authorization Control').validate_approving_authority(self.doctype,
 			self.company, self.base_grand_total)
 
+		# self.update_blanket_order()
+
 		update_linked_doc(self.doctype, self.name, self.inter_company_order_reference)
 
 	def on_cancel(self):
@@ -252,8 +254,10 @@ class PurchaseOrder(BuyingController):
 		# Must be called after updating ordered qty in Material Request
 		self.update_requested_qty()
 		self.update_ordered_qty()
-		self.update_receiving_percentage()  # Spectrum Fruits: Should be set to zero for a cancelled PO.
 
+		# self.update_blanket_order()
+
+		self.update_receiving_percentage()  # Spectrum Fruits: Should be set to zero for a cancelled PO.
 		unlink_inter_company_doc(self.doctype, self.name, self.inter_company_order_reference)
 
 	def on_update(self):
@@ -366,9 +370,11 @@ def close_or_unclose_purchase_orders(names, status):
 			else:
 				if po.status == "Closed":
 					po.update_status("Draft")
+			# po.update_blanket_order()
+
 			po.update_blanket_order_items()
 
-	frappe.local.message_log = []  # pylint: disable=assigning-non-slot
+	frappe.local.message_log = []
 
 def set_missing_values(source, target):
 	target.ignore_pricing_rule = 1

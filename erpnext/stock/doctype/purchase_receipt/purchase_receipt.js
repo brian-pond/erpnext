@@ -6,7 +6,6 @@
 frappe.provide("erpnext.stock");
 
 frappe.ui.form.on("Purchase Receipt", {
-
 	setup: (frm) => {
 		frm.make_methods = {
 			'Landed Cost Voucher': () => {
@@ -75,7 +74,6 @@ frappe.ui.form.on("Purchase Receipt", {
 */
 
 erpnext.stock.PurchaseReceiptController = erpnext.buying.BuyingController.extend({
-
 	setup: function(doc) {
 		this.setup_posting_date_time_check();
 		this._super(doc);

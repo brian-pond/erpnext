@@ -3,7 +3,6 @@
  "doctype": "DocType",
  "document_type": "Setup",
  "editable_grid": 1,
- "engine": "InnoDB",
  "field_order": [
   "charge_type",
   "row_id",
@@ -24,13 +23,15 @@
   "base_tax_amount",
   "base_total",
   "base_tax_amount_after_discount_amount",
-  "item_wise_tax_detail"
+  "item_wise_tax_detail",
+  "parenttype"
  ],
  "fields": [
   {
    "columns": 2,
    "fieldname": "charge_type",
    "fieldtype": "Select",
+   "in_list_view": 0,
    "label": "Type",
    "oldfieldname": "charge_type",
    "oldfieldtype": "Select",
@@ -122,6 +123,7 @@
    "columns": 2,
    "fieldname": "total",
    "fieldtype": "Currency",
+   "in_list_view": 0,
    "label": "Total",
    "options": "currency",
    "read_only": 1
@@ -171,6 +173,17 @@
    "oldfieldname": "item_wise_tax_detail",
    "oldfieldtype": "Small Text",
    "read_only": 1
+  },
+  {
+   "fieldname": "parenttype",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "in_filter": 1,
+   "label": "Parenttype",
+   "oldfieldname": "parenttype",
+   "oldfieldtype": "Data",
+   "print_hide": 1,
+   "search_index": 1
   },
   {
    "fieldname": "accounting_dimensions_section",

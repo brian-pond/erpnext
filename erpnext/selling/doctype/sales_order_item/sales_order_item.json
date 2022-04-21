@@ -161,6 +161,7 @@
    "depends_on": "eval: !parent.skip_delivery_note",
    "fieldname": "delivery_date",
    "fieldtype": "Date",
+   "in_list_view": 0,
    "label": "Delivery Date",
    "no_copy": 1,
    "print_hide": 1
@@ -786,7 +787,6 @@
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order Item",
- "nsm_parent_field": "parent_sales_order_item",
  "owner": "Administrator",
  "permissions": [],
  "sort_field": "modified",

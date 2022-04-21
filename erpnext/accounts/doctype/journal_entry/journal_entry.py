@@ -582,6 +582,11 @@ class JournalEntry(AccountsController):
 				jd1.reference_name = cstr(d.name)
 			elif self.write_off_based_on == 'Accounts Payable':
 				jd1.party_type = "Supplier"
+				jd1.debit_in_account_currency = flt(d.outstanding_amount, self.precision("debit", "accounts"))
+				jd1.reference_type = "Purchase Invoice"
+				jd1.reference_name = cstr(d.name)
+
+		jd2 = self.append('accounts', {})
 		if self.write_off_based_on == 'Accounts Receivable':
 			jd2.debit_in_account_currency = total
 		elif self.write_off_based_on == 'Accounts Payable':
@@ -1019,7 +1024,7 @@ def get_account_balance_and_party_type(account, date, company, debit=None, credi
 @frappe.whitelist()
 def get_exchange_rate(posting_date, account=None, account_currency=None, company=None,
 		reference_type=None, reference_name=None, debit=None, credit=None, exchange_rate=None):
-
+	# Datahenge: Extremely confusing importing a function with the same name
 	from erpnext.setup.utils import get_exchange_rate as _get_exchange_rate
 	account_details = frappe.db.get_value("Account", account,
 		["account_type", "root_type", "account_currency", "company"], as_dict=1)

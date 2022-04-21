@@ -132,7 +132,6 @@ class PackingSlip(Document):
 
 		frappe.throw(_("Quantity for Item {0} must be less than {1}").format(item.get("item_code"), item.get("recommended_qty")))
 
-
 	def update_item_details(self):
 		"""
 			Fill empty columns in Packing Slip Item
@@ -147,7 +146,6 @@ class PackingSlip(Document):
 			if res and len(res)>0:
 				d.net_weight = res["weight_per_unit"]
 				d.weight_uom = res["weight_uom"]
-
 
 	def get_recommended_case_no(self):
 		"""
