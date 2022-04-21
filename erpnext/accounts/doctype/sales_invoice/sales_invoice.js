@@ -176,6 +176,7 @@ erpnext.accounts.SalesInvoiceController = erpnext.selling.SellingController.exte
 	},
 
 	sales_order_btn: function() {
+		/* Spectrum Fruits: Need to debug this function. */
 		var me = this;
 		this.$sales_order_btn = this.frm.add_custom_button(__('Sales Order'),
 			function() {

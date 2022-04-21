@@ -668,8 +668,11 @@ def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
 
 	if target_doc and isinstance(target_doc, str):
 		# The variable 'target_doc' is a string form.  Need to convert to an Object, before we can examine it.
-		doc_sales_invoice = frappe.get_doc("Sales Invoice", target_doc)
-		number_of_invoice_lines = len(doc_sales_invoice.items)
+		try:
+			doc_sales_invoice = frappe.get_doc("Sales Invoice", target_doc)
+			number_of_invoice_lines = len(doc_sales_invoice.items)
+		except Exception as ex:
+			print(ex)
 
 	doclist = get_mapped_doc(from_doctype="Sales Order",
 	                         from_docname=source_name,
@@ -706,7 +709,7 @@ def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
 		postprocess=postprocess,
 		ignore_permissions=ignore_permissions)
 
-	print(f"------------------>Quantity Of Sales Invoice Lines:\n{len(doclist.as_dict()['items'])}")
+	# print(f"------------------>Quantity Of Sales Invoice Lines:\n{len(doclist.as_dict()['items'])}")
 	return doclist
 
 @frappe.whitelist()
