@@ -622,6 +622,10 @@ def make_delivery_note(source_name, target_doc=None, skip_item_mapping=False):
 
 @frappe.whitelist()
 def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
+	"""
+	Datahenge: This function is called from "Sales Invoice --> Get Items from --> Sales Order"
+	The query is initially filtered on Sales Orders that are Docstatus == 1, and per_billed < 100
+	"""
 	def postprocess(source, target):
 		set_missing_values(source, target)
 		#Get the advance paid Journal Entries in Sales Invoice Advance
