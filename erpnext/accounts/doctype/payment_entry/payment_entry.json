@@ -594,7 +594,7 @@
   }
  ],
  "is_submittable": 1,
- "modified": "2022-02-13 22:48:26.573096",
+ "modified": "2022-05-05 15:43:37.383958",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Payment Entry",
@@ -636,6 +636,5 @@
  "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
- "title_field": "title",
  "track_changes": 1
 }
