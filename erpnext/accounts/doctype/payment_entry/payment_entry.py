@@ -50,6 +50,13 @@ class PaymentEntry(AccountsController):
 			self.party_account = self.paid_to
 			self.party_account_currency = self.paid_to_account_currency
 
+
+	def before_validate(self):
+		# SF: Default the reference date to the posting date (https://datahenge.atlassian.net/browse/V12UP-80)
+		if not self.reference_date:
+			self.reference_date = self.posting_date
+
+
 	def validate(self):
 		self.setup_party_account_field()
 		self.set_missing_values()

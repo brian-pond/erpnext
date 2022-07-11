@@ -2,6 +2,7 @@
 // License: GNU General Public License v3. See license.txt
 
 frappe.ui.form.on("Bank Reconciliation", {
+
 	setup: function(frm) {
 		frm.add_fetch("account", "account_currency", "account_currency");
 	},
@@ -29,7 +30,7 @@ frappe.ui.form.on("Bank Reconciliation", {
 			};
 		});
 
-		frm.set_value("from_date", frappe.datetime.month_start());
+		frm.set_value("from_date", "2000-01-01"); // frappe.datetime.month_start());
 		frm.set_value("to_date", frappe.datetime.month_end());
 	},
 

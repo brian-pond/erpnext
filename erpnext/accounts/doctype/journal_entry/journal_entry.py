@@ -27,6 +27,10 @@ class JournalEntry(AccountsController):
 		"""
 		if not self.create_bank_check:
 			self.check_address_remit_to = None
+
+		# SF: Default the reference date to the posting date (https://datahenge.atlassian.net/browse/V12UP-80)
+		if not self.cheque_date:
+			self.cheque_date = self.posting_date
 	# Spectrum Fruits: End
 
 	def validate(self):

@@ -94,6 +94,8 @@ class BankReconciliation(Document):
 
 		self.set('payment_entries', [])
 		self.total_amount = 0.0
+		self.total_debits = 0.0
+		self.total_credits = 0.0
 
 		for d in entries:
 			row = self.append('payment_entries', {})
@@ -103,6 +105,8 @@ class BankReconciliation(Document):
 			formatted_amount = fmt_money(abs(amount), 2, d.account_currency)
 			d.amount = formatted_amount + " " + (_("Dr") if amount > 0 else _("Cr"))
 
+			self.total_debits += flt(d.get('debit', 0))
+			self.total_credits += flt(d.get('credit', 0))
 			d.pop("credit")
 			d.pop("debit")
 			d.pop("account_currency")
@@ -112,6 +116,10 @@ class BankReconciliation(Document):
 	def update_clearance_date(self):
 		clearance_date_updated = False
 		for d in self.get('payment_entries'):
+			# Spectrum Fruits: When the 'is_cleared' box is marked, set the clearance date to the From Date.
+			if d.is_cleared and not d.clearance_date:
+				d.clearance_date = self.to_date
+
 			if d.clearance_date:
 				if not d.payment_document:
 					frappe.throw(_("Row #{0}: Payment document is required to complete the transaction"))
