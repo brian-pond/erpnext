@@ -13,6 +13,8 @@
   "bank_account",
   "include_reconciled_entries",
   "include_pos_transactions",
+  "total_cleared_debits",
+  "total_cleared_credits",
   "get_payment_entries",
   "section_break_10",
   "payment_entries",
@@ -134,13 +136,25 @@
   {
    "fieldname": "section_break_13",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "total_cleared_debits",
+   "fieldtype": "Currency",
+   "label": "Debits Cleared",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_cleared_credits",
+   "fieldtype": "Currency",
+   "label": "Credits Cleared",
+   "read_only": 1
   }
  ],
  "hide_toolbar": 1,
  "icon": "fa fa-check",
  "idx": 1,
  "issingle": 1,
- "modified": "2022-07-11 17:55:56.755439",
+ "modified": "2022-07-12 15:22:13.539076",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Bank Reconciliation",

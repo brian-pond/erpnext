@@ -63,5 +63,17 @@ frappe.ui.form.on("Bank Reconciliation", {
 				})
 			}
 		});
+	},
+
+	to_date: function(frm) {
+		return frappe.call({
+			method: "update_amount_reconciled_on_date",
+			doc: frm.doc,
+			callback: function(r, rt) {
+				frm.refresh_field("total_cleared_debits");
+				frm.refresh_field("total_cleared_credits");
+				frm.refresh_fields();
+			}
+		});
 	}
 });

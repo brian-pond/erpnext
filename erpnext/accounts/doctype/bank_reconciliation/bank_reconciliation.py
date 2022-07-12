@@ -12,6 +12,7 @@ form_grid_templates = {
 }
 
 class BankReconciliation(Document):
+
 	def get_payment_entries(self):
 		if not (self.from_date and self.to_date):
 			frappe.throw(_("From Date and To Date are Mandatory"))
@@ -113,6 +114,7 @@ class BankReconciliation(Document):
 			row.update(d)
 			self.total_amount += flt(amount)
 
+
 	def update_clearance_date(self):
 		clearance_date_updated = False
 		for d in self.get('payment_entries'):
@@ -142,3 +144,58 @@ class BankReconciliation(Document):
 			msgprint(_("Clearance Date updated"))
 		else:
 			msgprint(_("Clearance Date not mentioned"))
+
+		self.update_amount_reconciled_on_date()  # Spectrum Fruits
+
+	@frappe.whitelist()
+	def update_amount_reconciled_on_date(self):
+		"""
+		Example:  All transactions with a clearance date of July 12th, 
+				for GL account = 'Wells Fargo Checking - SF'
+		"""
+
+		query = """
+		SELECT
+			'JournalEntry'											AS document_type
+			,sum(JournalEntryAccount.debit_in_account_currency)		AS cleared_debit
+			,sum(JournalEntryAccount.credit_in_account_currency)	AS cleared_credit
+		FROM
+			`tabJournal Entry Account`		AS JournalEntryAccount
+		INNER JOIN
+			`tabJournal Entry`		AS JournalEntry
+		ON
+			JournalEntry.name = JournalEntryAccount.parent 
+		AND JournalEntry.docstatus = 1
+		AND JournalEntry.clearance_date =  %(clearance_date)s
+		WHERE
+			JournalEntryAccount.account = %(ledger_account)s
+		AND ifnull(JournalEntry.is_opening, 'No') = 'No'
+		
+		UNION ALL
+		
+		SELECT
+			'Payment Entry'		AS document_type
+			,SUM(CASE		WHEN paid_from = %(ledger_account)s THEN paid_amount ELSE 0 END) 			AS credit 
+			,SUM(CASE 		WHEN paid_from <> %(ledger_account)s THEN received_amount ELSE 0 END) 		AS debit
+		FROM
+			`tabPayment Entry`		AS PaymentEntry
+
+		WHERE
+			( PaymentEntry.paid_to = %(ledger_account)s OR PaymentEntry.paid_from = %(ledger_account)s )
+		AND clearance_date = %(clearance_date)s
+		AND docstatus = 1
+		"""
+
+		sql_results = frappe.db.sql(query, values={"ledger_account": self.account, 
+		                                           "clearance_date": self.to_date}, as_dict=True)
+
+		total_debits = 0
+		total_credits = 0
+
+		for each_row in sql_results:
+			total_debits += each_row['cleared_debit'] or 0.00
+			total_credits += each_row['cleared_credit'] or 0.00
+
+		self.total_cleared_debits = total_debits
+		self.total_cleared_credits = total_credits
+		self.save()
