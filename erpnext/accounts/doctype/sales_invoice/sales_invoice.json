@@ -72,7 +72,6 @@
   "time_sheet_list",
   "timesheets",
   "total_billing_amount",
-  "total_billing_hours",
   "section_break_30",
   "total_qty",
   "base_total",
@@ -1575,14 +1574,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "0",
-   "fieldname": "total_billing_hours",
-   "fieldtype": "Float",
-   "label": "Total Billing Hours",
-   "print_hide": 1,
-   "read_only": 1
-  },
-  {
    "fieldname": "delivery_note_date",
    "fieldtype": "Date",
    "label": "Delivery Note Date",
@@ -1599,6 +1590,7 @@
    "allow_on_submit": 1,
    "fieldname": "commission_payment_journal",
    "fieldtype": "Dynamic Link",
+   "ignore_user_permissions": 1,
    "label": "Commission Payment Link",
    "options": "commission_payment_source"
   },
@@ -1613,7 +1605,7 @@
  "icon": "fa fa-file-text",
  "idx": 181,
  "is_submittable": 1,
- "modified": "2022-02-15 14:39:51.011342",
+ "modified": "2022-08-04 17:13:41.593488",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Sales Invoice",
