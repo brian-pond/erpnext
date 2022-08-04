@@ -150,7 +150,7 @@ class BankReconciliation(Document):
 	@frappe.whitelist()
 	def update_amount_reconciled_on_date(self):
 		"""
-		Example:  All transactions with a clearance date of July 12th,
+		Example:  All transactions with a clearance date of July 12th, 
 				for GL account = 'Wells Fargo Checking - SF'
 		"""
 
@@ -172,11 +172,11 @@ class BankReconciliation(Document):
 		AND ifnull(JournalEntry.is_opening, 'No') = 'No'
 		
 		UNION ALL
-		
+
 		SELECT
 			'Payment Entry'		AS document_type
-			,SUM(CASE		WHEN paid_from = %(ledger_account)s THEN paid_amount ELSE 0 END) 			AS credit 
-			,SUM(CASE 		WHEN paid_from <> %(ledger_account)s THEN received_amount ELSE 0 END) 		AS debit
+			,SUM(CASE		WHEN paid_from <> %(ledger_account)s THEN paid_amount ELSE 0 END) 			AS debit 
+			,SUM(CASE 		WHEN paid_from = %(ledger_account)s THEN received_amount ELSE 0 END) 		AS credit						
 		FROM
 			`tabPayment Entry`		AS PaymentEntry
 
