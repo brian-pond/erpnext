@@ -150,7 +150,7 @@ class BankReconciliation(Document):
 	@frappe.whitelist()
 	def update_amount_reconciled_on_date(self):
 		"""
-		Example:  All transactions with a clearance date of July 12th, 
+		Example:  All transactions with a clearance date of July 12th,
 				for GL account = 'Wells Fargo Checking - SF'
 		"""
 
