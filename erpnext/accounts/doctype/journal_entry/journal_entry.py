@@ -31,7 +31,7 @@ class JournalEntry(AccountsController):
 		# SF: Default the reference date to the posting date (https://datahenge.atlassian.net/browse/V12UP-80)
 		if not self.cheque_date:
 			self.cheque_date = self.posting_date
-	# Spectrum Fruits: End
+		# Spectrum Fruits: End
 
 	def validate(self):
 		if not self.is_opening:

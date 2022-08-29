@@ -72,6 +72,11 @@ class PurchaseInvoice(BuyingController):
 										     'payment_amount': self.outstanding_amount
 			})
 
+		# SF: Default the Supplier Invoice Date to the posting date (https://datahenge.atlassian.net/browse/V12UP-80)
+		if not self.bill_date:
+			self.bill_date = self.posting_date
+		# Spectrum bill_date: End
+
 	def before_save(self):
 		if not self.on_hold:
 			self.release_date = ''
