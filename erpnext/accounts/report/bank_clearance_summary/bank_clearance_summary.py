@@ -4,10 +4,11 @@
 from __future__ import unicode_literals
 import frappe
 from frappe import _
-from frappe.utils import nowdate, getdate
+# from frappe.utils import nowdate, getdate
 
 def execute(filters=None):
-	if not filters: filters = {}
+	if not filters:
+		filters = {}
 
 	columns = get_columns()
 	data = get_entries(filters)
@@ -15,7 +16,8 @@ def execute(filters=None):
 	return columns, data
 
 def get_columns():
-	columns = [{
+	columns = [
+		{
 			"label": _("Payment Document Type"),
 			"fieldname": "payment_document_type",
 			"fieldtype": "Link",
@@ -61,32 +63,87 @@ def get_columns():
 
 	return columns
 
-def get_conditions(filters):
-	conditions = ""
-
-	if filters.get("from_date"): conditions += " and posting_date>=%(from_date)s"
-	if filters.get("to_date"): conditions += " and posting_date<=%(to_date)s"
-
-	return conditions
 
 def get_entries(filters):
-	conditions = get_conditions(filters)
-	journal_entries =  frappe.db.sql("""SELECT
-			"Journal Entry", jv.name, jv.posting_date, jv.cheque_no,
-			jv.clearance_date, jvd.against_account, jvd.debit - jvd.credit
-		FROM 
-			`tabJournal Entry Account` jvd, `tabJournal Entry` jv
-		WHERE 
-			jvd.parent = jv.name and jv.docstatus=1 and jvd.account = %(account)s {0}
-			order by posting_date DESC, jv.name DESC""".format(conditions), filters, as_list=1)
+	"""
+	Fetch the data from SQL.
+	"""
+	# Use read uncommitted, for performance reasons.
+	frappe.db.sql("SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;")
 
-	payment_entries =  frappe.db.sql("""SELECT
-			"Payment Entry", name, posting_date, reference_no, clearance_date, party, 
-			if(paid_from=%(account)s, paid_amount * -1, received_amount)
-		FROM 
-			`tabPayment Entry`
-		WHERE 
-			docstatus=1 and (paid_from = %(account)s or paid_to = %(account)s) {0}
-			order by posting_date DESC, name DESC""".format(conditions), filters, as_list=1)
+	query = """
+		SELECT
+			"Journal Entry"					AS source
+			,JournalEntry.name
+			,JournalEntry.posting_date
+			,JournalEntry.cheque_no
+			,JournalEntry.clearance_date
+			,JournalEntryAccount.against_account
+			,JournalEntryAccount.debit - JournalEntryAccount.credit
+		FROM
+			`tabJournal Entry` 				AS JournalEntry
 
-	return sorted(journal_entries + payment_entries, key=lambda k: k[2] or getdate(nowdate()))
+		INNER JOIN
+			`tabJournal Entry Account`		AS JournalEntryAccount
+		ON
+			JournalEntryAccount.parent = JournalEntry.name
+
+		WHERE 
+			JournalEntry.docstatus = 1
+		AND JournalEntry.posting_date between %(from_date)s AND %(to_date)s
+		AND JournalEntryAccount.account = %(account)s
+
+		UNION ALL
+
+		SELECT
+			"Payment Entry"	AS source
+			,name
+			,posting_date
+			,reference_no
+			,clearance_date
+			,party
+			,IF(paid_from = 'Wells Fargo Checking - SF', paid_amount * -1, received_amount)		AS Net
+		FROM 
+			`tabPayment Entry`		AS PaymentEntry
+
+		WHERE 
+			docstatus = 1
+		AND ( paid_from = %(account)s OR paid_to = %(account)s )
+		AND PaymentEntry.posting_date between %(from_date)s AND %(to_date)s
+
+		UNION ALL
+
+		SELECT
+			"Payment Entry Deductions"		AS source
+			,PaymentEntry.name
+			,posting_date
+			,reference_no
+			,clearance_date
+			,party
+			,Deductions.amount		AS Net
+		FROM
+			`tabPayment Entry Deduction`			AS Deductions
+
+		INNER JOIN 
+			`tabPayment Entry`		AS PaymentEntry
+		ON
+			PaymentEntry.name = Deductions.parent
+
+		WHERE 
+			PaymentEntry.docstatus = 1
+		AND Deductions.account = %(account)s
+		AND PaymentEntry.posting_date between %(from_date)s AND %(to_date)s
+
+		ORDER BY
+			posting_date DESC,
+			name DESC
+		;
+
+	"""
+
+	results = frappe.db.sql(query, filters, as_list=1)
+
+	# Re-enable the default Transactional Isolation Level
+	frappe.db.sql("SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;")
+
+	return results
