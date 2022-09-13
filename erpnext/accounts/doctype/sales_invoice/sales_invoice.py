@@ -73,6 +73,13 @@ class SalesInvoice(SellingController):
 			'overflow_type': 'billing'
 		}]
 
+	@frappe.whitelist()
+	def get_company_address(self):
+		from frappe.contacts.doctype.address.address import get_company_address as gca
+		result = gca(self.company)
+		frappe.msgprint(result)
+		return result
+
 	def set_indicator(self):
 		"""Set indicator for portal"""
 		if self.outstanding_amount < 0:

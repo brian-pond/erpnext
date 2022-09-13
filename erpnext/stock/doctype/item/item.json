@@ -955,7 +955,7 @@
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-12-14 04:13:16.857534",
+ "modified": "2022-06-04 15:18:35.174552",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Item",
@@ -1022,8 +1022,8 @@
  "search_fields": "item_name,description,item_group,customer_code",
  "show_name_in_global_search": 1,
  "show_preview_popup": 1,
- "sort_field": "modified",
- "sort_order": "DESC",
+ "sort_field": "name",
+ "sort_order": "ASC",
  "title_field": "item_name",
  "track_changes": 1
 }
