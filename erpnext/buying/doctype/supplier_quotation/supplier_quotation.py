@@ -1,14 +1,14 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
-from __future__ import unicode_literals
+
 import frappe
 from frappe import _
-from frappe.utils import flt, nowdate, add_days, getdate
 from frappe.model.mapper import get_mapped_doc
+from frappe.utils import flt, getdate, nowdate
 
-from erpnext.controllers.buying_controller import BuyingController
 from erpnext.buying.utils import validate_for_items
+from erpnext.controllers.buying_controller import BuyingController
 
 form_grid_templates = {
 	"items": "templates/form_grid/item_grid.html"
@@ -109,7 +109,6 @@ def get_list_context(context=None):
 @frappe.whitelist()
 def make_purchase_order(source_name, target_doc=None):
 	def set_missing_values(source, target):
-		target.ignore_pricing_rule = 1
 		target.run_method("set_missing_values")
 		target.run_method("get_schedule_dates")
 		target.run_method("calculate_taxes_and_totals")

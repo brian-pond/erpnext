@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2018, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-from __future__ import unicode_literals
+
 import frappe
-from frappe.utils import cint, flt
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import cint, flt
+
 
 class Routing(Document):
 	def validate(self):
@@ -20,7 +20,8 @@ class Routing(Document):
 		for operation in self.operations:
 			if not operation.hour_rate:
 				operation.hour_rate = frappe.db.get_value("Workstation", operation.workstation, 'hour_rate')
-			operation.operating_cost = flt(flt(operation.hour_rate) * flt(operation.time_in_mins) / 60, 2)
+			operation.operating_cost = flt(flt(operation.hour_rate) * flt(operation.time_in_mins) / 60,
+					operation.precision("operating_cost"))
 
 	def set_routing_id(self):
 		sequence_id = 0

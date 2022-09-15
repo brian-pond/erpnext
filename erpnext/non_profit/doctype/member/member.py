@@ -1,15 +1,16 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2017, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-from __future__ import unicode_literals
+
 import frappe
 from frappe import _
-from frappe.model.document import Document
 from frappe.contacts.address_and_contact import load_address_and_contact
-from frappe.utils import cint, get_link_to_form
 from frappe.integrations.utils import get_payment_gateway_controller
+from frappe.model.document import Document
+from frappe.utils import cint, get_link_to_form
+
 from erpnext.non_profit.doctype.membership_type.membership_type import get_membership_type
+
 
 class Member(Document):
 	def onload(self):
@@ -99,10 +100,13 @@ def create_customer(user_details, member=None):
 	customer = frappe.new_doc("Customer")
 	customer.customer_name = user_details.fullname
 	customer.customer_type = "Individual"
+	customer.customer_group = frappe.db.get_single_value("Selling Settings", "customer_group")
+	customer.territory = frappe.db.get_single_value("Selling Settings", "territory")
 	customer.flags.ignore_mandatory = True
 	customer.insert(ignore_permissions=True)
 
 	try:
+		frappe.db.savepoint("contact_creation")
 		contact = frappe.new_doc("Contact")
 		contact.first_name = user_details.fullname
 		if user_details.mobile:
@@ -128,6 +132,7 @@ def create_customer(user_details, member=None):
 		return customer.name
 
 	except Exception as e:
+		frappe.db.rollback(save_point="contact_creation")
 		frappe.log_error(frappe.get_traceback(), _("Contact Creation Failed"))
 		pass
 

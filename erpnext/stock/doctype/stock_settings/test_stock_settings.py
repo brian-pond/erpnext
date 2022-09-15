@@ -1,13 +1,15 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2017, Frappe Technologies Pvt. Ltd. and Contributors
 # See license.txt
-from __future__ import unicode_literals
 
-import frappe
 import unittest
 
-class TestStockSettings(unittest.TestCase):
+import frappe
+from frappe.tests.utils import FrappeTestCase
+
+
+class TestStockSettings(FrappeTestCase):
 	def setUp(self):
+		super().setUp()
 		frappe.db.set_value("Stock Settings", None, "clean_description_html", 0)
 
 	def test_settings(self):

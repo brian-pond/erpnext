@@ -1,14 +1,30 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
-import erpnext
 import frappe
-from erpnext.hr.doctype.employee.employee import get_holiday_list_for_employee, InactiveEmployeeStatusError
 from frappe import _
 from frappe.desk.form import assign_to
 from frappe.model.document import Document
-from frappe.utils import (add_days, cstr, flt, format_datetime, formatdate,
-	get_datetime, getdate, nowdate, today, unique, get_link_to_form)
+from frappe.utils import (
+	add_days,
+	cstr,
+	flt,
+	format_datetime,
+	formatdate,
+	get_datetime,
+	get_link_to_form,
+	getdate,
+	nowdate,
+	today,
+	unique,
+)
+
+import erpnext
+from erpnext.hr.doctype.employee.employee import (
+	InactiveEmployeeStatusError,
+	get_holiday_list_for_employee,
+)
+
 
 class DuplicateDeclarationError(frappe.ValidationError): pass
 
@@ -129,10 +145,21 @@ def set_employee_name(doc):
 	if doc.employee and not doc.employee_name:
 		doc.employee_name = frappe.db.get_value("Employee", doc.employee, "employee_name")
 
-def update_employee(employee, details, date=None, cancel=False):
+def update_employee_work_history(employee, details, date=None, cancel=False):
+	if not employee.internal_work_history and not cancel:
+		employee.append("internal_work_history", {
+			"branch": employee.branch,
+			"designation": employee.designation,
+			"department": employee.department,
+			"from_date": employee.date_of_joining
+		})
+
 	internal_work_history = {}
 	for item in details:
-		fieldtype = frappe.get_meta("Employee").get_field(item.fieldname).fieldtype
+		field = frappe.get_meta("Employee").get_field(item.fieldname)
+		if not field:
+			continue
+		fieldtype = field.fieldtype
 		new_data = item.new if not cancel else item.current
 		if fieldtype == "Date" and new_data:
 			new_data = getdate(new_data)
@@ -141,10 +168,34 @@ def update_employee(employee, details, date=None, cancel=False):
 		setattr(employee, item.fieldname, new_data)
 		if item.fieldname in ["department", "designation", "branch"]:
 			internal_work_history[item.fieldname] = item.new
+
 	if internal_work_history and not cancel:
 		internal_work_history["from_date"] = date
 		employee.append("internal_work_history", internal_work_history)
+
+	if cancel:
+		delete_employee_work_history(details, employee, date)
+
 	return employee
+
+def delete_employee_work_history(details, employee, date):
+	filters = {}
+	for d in details:
+		for history in employee.internal_work_history:
+			if d.property == "Department" and history.department == d.new:
+				department = d.new
+				filters["department"] = department
+			if d.property == "Designation" and history.designation == d.new:
+				designation = d.new
+				filters["designation"] = designation
+			if d.property == "Branch" and history.branch == d.new:
+				branch = d.new
+				filters["branch"] = branch
+			if date and date == history.from_date:
+				filters["from_date"] = date
+	if filters:
+		frappe.db.delete("Employee Internal Work History", filters)
+
 
 @frappe.whitelist()
 def get_employee_fields_label():
@@ -302,7 +353,7 @@ def generate_leave_encashment():
 
 		create_leave_encashment(leave_allocation=leave_allocation)
 
-def allocate_earned_leaves():
+def allocate_earned_leaves(ignore_duplicates=False):
 	'''Allocate earned leaves to Employees'''
 	e_leave_types = get_earned_leaves()
 	today = getdate()
@@ -326,13 +377,13 @@ def allocate_earned_leaves():
 
 			from_date=allocation.from_date
 
-			if e_leave_type.based_on_date_of_joining_date:
+			if e_leave_type.based_on_date_of_joining:
 				from_date  = frappe.db.get_value("Employee", allocation.employee, "date_of_joining")
 
-			if check_effective_date(from_date, today, e_leave_type.earned_leave_frequency, e_leave_type.based_on_date_of_joining_date):
-				update_previous_leave_allocation(allocation, annual_allocation, e_leave_type)
+			if check_effective_date(from_date, today, e_leave_type.earned_leave_frequency, e_leave_type.based_on_date_of_joining):
+				update_previous_leave_allocation(allocation, annual_allocation, e_leave_type, ignore_duplicates)
 
-def update_previous_leave_allocation(allocation, annual_allocation, e_leave_type):
+def update_previous_leave_allocation(allocation, annual_allocation, e_leave_type, ignore_duplicates=False):
 		earned_leaves = get_monthly_earned_leave(annual_allocation, e_leave_type.earned_leave_frequency, e_leave_type.rounding)
 
 		allocation = frappe.get_doc('Leave Allocation', allocation.name)
@@ -342,9 +393,12 @@ def update_previous_leave_allocation(allocation, annual_allocation, e_leave_type
 			new_allocation = e_leave_type.max_leaves_allowed
 
 		if new_allocation != allocation.total_leaves_allocated:
-			allocation.db_set("total_leaves_allocated", new_allocation, update_modified=False)
 			today_date = today()
-			create_additional_leave_ledger_entry(allocation, earned_leaves, today_date)
+
+			if ignore_duplicates or not is_earned_leave_already_allocated(allocation, annual_allocation):
+				allocation.db_set("total_leaves_allocated", new_allocation, update_modified=False)
+				create_additional_leave_ledger_entry(allocation, earned_leaves, today_date)
+
 
 def get_monthly_earned_leave(annual_leaves, frequency, rounding):
 	earned_leaves = 0.0
@@ -360,6 +414,28 @@ def get_monthly_earned_leave(annual_leaves, frequency, rounding):
 				earned_leaves = round(earned_leaves)
 
 	return earned_leaves
+
+
+def is_earned_leave_already_allocated(allocation, annual_allocation):
+	from erpnext.hr.doctype.leave_policy_assignment.leave_policy_assignment import (
+		get_leave_type_details,
+	)
+
+	leave_type_details = get_leave_type_details()
+	date_of_joining = frappe.db.get_value("Employee", allocation.employee, "date_of_joining")
+
+	assignment = frappe.get_doc("Leave Policy Assignment", allocation.leave_policy_assignment)
+	leaves_for_passed_months = assignment.get_leaves_for_passed_months(allocation.leave_type,
+		annual_allocation, leave_type_details, date_of_joining)
+
+	# exclude carry-forwarded leaves while checking for leave allocation for passed months
+	num_allocations = allocation.total_leaves_allocated
+	if allocation.unused_leaves:
+		num_allocations -= allocation.unused_leaves
+
+	if num_allocations >= leaves_for_passed_months:
+		return True
+	return False
 
 
 def get_leave_allocations(date, leave_type):
@@ -383,8 +459,9 @@ def create_additional_leave_ledger_entry(allocation, leaves, date):
 	allocation.unused_leaves = 0
 	allocation.create_leave_ledger_entry()
 
-def check_effective_date(from_date, to_date, frequency, based_on_date_of_joining_date):
+def check_effective_date(from_date, to_date, frequency, based_on_date_of_joining):
 	import calendar
+
 	from dateutil import relativedelta
 
 	from_date = get_datetime(from_date)
@@ -393,7 +470,7 @@ def check_effective_date(from_date, to_date, frequency, based_on_date_of_joining
 	#last day of month
 	last_day =  calendar.monthrange(to_date.year, to_date.month)[1]
 
-	if (from_date.day == to_date.day and based_on_date_of_joining_date) or (not based_on_date_of_joining_date and to_date.day == last_day):
+	if (from_date.day == to_date.day and based_on_date_of_joining) or (not based_on_date_of_joining and to_date.day == last_day):
 		if frequency == "Monthly":
 			return True
 		elif frequency == "Quarterly" and rd.months % 3:
@@ -448,20 +525,43 @@ def get_sal_slip_total_benefit_given(employee, payroll_period, component=False):
 		total_given_benefit_amount = sum_of_given_benefit[0].total_amount
 	return total_given_benefit_amount
 
-def get_holidays_for_employee(employee, start_date, end_date):
-	holiday_list = get_holiday_list_for_employee(employee)
+def get_holiday_dates_for_employee(employee, start_date, end_date):
+	"""return a list of holiday dates for the given employee between start_date and end_date"""
+	# return only date
+	holidays = get_holidays_for_employee(employee, start_date, end_date)
 
-	holidays = frappe.db.sql_list('''select holiday_date from `tabHoliday`
-		where
-			parent=%(holiday_list)s
-			and holiday_date >= %(start_date)s
-			and holiday_date <= %(end_date)s''', {
-				"holiday_list": holiday_list,
-				"start_date": start_date,
-				"end_date": end_date
-			})
+	return [cstr(h.holiday_date) for h in holidays]
 
-	holidays = [cstr(i) for i in holidays]
+
+def get_holidays_for_employee(employee, start_date, end_date, raise_exception=True, only_non_weekly=False):
+	"""Get Holidays for a given employee
+
+		`employee` (str)
+		`start_date` (str or datetime)
+		`end_date` (str or datetime)
+		`raise_exception` (bool)
+		`only_non_weekly` (bool)
+
+		return: list of dicts with `holiday_date` and `description`
+	"""
+	holiday_list = get_holiday_list_for_employee(employee, raise_exception=raise_exception)
+
+	if not holiday_list:
+		return []
+
+	filters = {
+		'parent': holiday_list,
+		'holiday_date': ('between', [start_date, end_date])
+	}
+
+	if only_non_weekly:
+		filters['weekly_off'] = False
+
+	holidays = frappe.get_all(
+		'Holiday',
+		fields=['description', 'holiday_date'],
+		filters=filters
+	)
 
 	return holidays
 

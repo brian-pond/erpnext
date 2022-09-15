@@ -1,22 +1,20 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
-from __future__ import unicode_literals
+
 import frappe
-
-from frappe.utils import flt, cint, nowdate
-
-from frappe import throw, _
-import frappe.defaults
-from frappe.utils import getdate
-from erpnext.controllers.buying_controller import BuyingController
-from erpnext.accounts.utils import get_account_currency
+from frappe import _, throw
 from frappe.desk.notifications import clear_doctype_notifications
 from frappe.model.mapper import get_mapped_doc
-from erpnext.buying.utils import check_on_hold_or_closed_status
+from frappe.utils import cint, flt, getdate, nowdate
+from six import iteritems
+
+import erpnext
+from erpnext.accounts.utils import get_account_currency
 from erpnext.assets.doctype.asset.asset import get_asset_account, is_cwip_accounting_enabled
 from erpnext.assets.doctype.asset_category.asset_category import get_asset_category_account
-from six import iteritems
+from erpnext.buying.utils import check_on_hold_or_closed_status
+from erpnext.controllers.buying_controller import BuyingController
 from erpnext.stock.doctype.delivery_note.delivery_note import make_inter_company_transaction
 
 form_grid_templates = {
@@ -116,11 +114,16 @@ class PurchaseReceipt(BuyingController):
 		self.validate_uom_is_integer("uom", ["qty", "received_qty"])
 		self.validate_uom_is_integer("stock_uom", "stock_qty")
 		self.validate_cwip_accounts()
+		self.validate_provisional_expense_account()
 
 		self.check_on_hold_or_closed_status()
 
 		if getdate(self.posting_date) > getdate(nowdate()):
 			throw(_("Posting Date cannot be future date"))
+
+		self.reset_default_field_value("set_warehouse", "items", "warehouse")
+		self.reset_default_field_value("rejected_warehouse", "items", "rejected_warehouse")
+		self.reset_default_field_value("set_from_warehouse", "items", "from_warehouse")
 
 
 	def validate_cwip_accounts(self):
@@ -132,6 +135,15 @@ class PurchaseReceipt(BuyingController):
 				cwip_account = get_asset_account("capital_work_in_progress_account", asset_category = item.asset_category, \
 					company = self.company)
 				break
+
+	def validate_provisional_expense_account(self):
+		provisional_accounting_for_non_stock_items = \
+			cint(frappe.db.get_value('Company', self.company, 'enable_provisional_accounting_for_non_stock_items'))
+
+		if provisional_accounting_for_non_stock_items:
+			default_provisional_account = self.get_company_default("default_provisional_account")
+			if not self.provisional_expense_account:
+				self.provisional_expense_account = default_provisional_account
 
 	def validate_with_previous_doc(self):
 		super(PurchaseReceipt, self).validate_with_previous_doc({
@@ -254,23 +266,22 @@ class PurchaseReceipt(BuyingController):
 		return process_gl_map(gl_entries)
 
 	def make_item_gl_entries(self, gl_entries, warehouse_account=None):
-		stock_rbnb = self.get_company_default("stock_received_but_not_billed")
-		landed_cost_entries = get_item_account_wise_additional_cost(self.name)
-		expenses_included_in_valuation = self.get_company_default("expenses_included_in_valuation")
-		auto_accounting_for_non_stock_items = cint(frappe.db.get_value('Company', self.company, 'enable_perpetual_inventory_for_non_stock_items'))
+		if erpnext.is_perpetual_inventory_enabled(self.company):
+			stock_rbnb = self.get_company_default("stock_received_but_not_billed")
+			landed_cost_entries = get_item_account_wise_additional_cost(self.name)
+			expenses_included_in_valuation = self.get_company_default("expenses_included_in_valuation")
 
 		warehouse_with_no_account = []
 		stock_items = self.get_stock_items()
+		provisional_accounting_for_non_stock_items = \
+				cint(frappe.db.get_value('Company', self.company, 'enable_provisional_accounting_for_non_stock_items'))
 
 		for d in self.get("items"):
 			if d.item_code in stock_items and flt(d.valuation_rate) and flt(d.qty):
 				if warehouse_account.get(d.warehouse):
 					stock_value_diff = frappe.db.get_value("Stock Ledger Entry",
 						{"voucher_type": "Purchase Receipt", "voucher_no": self.name,
-						"voucher_detail_no": d.name, "warehouse": d.warehouse}, "stock_value_difference")
-
-					if not stock_value_diff:
-						continue
+						"voucher_detail_no": d.name, "warehouse": d.warehouse, "is_cancelled": 0}, "stock_value_difference")
 
 					warehouse_account_name = warehouse_account[d.warehouse]["account"]
 					warehouse_account_currency = warehouse_account[d.warehouse]["account_currency"]
@@ -286,8 +297,16 @@ class PurchaseReceipt(BuyingController):
 						and warehouse_account_name == supplier_warehouse_account:
 							continue
 
-					self.add_gl_entry(gl_entries, warehouse_account_name, d.cost_center, stock_value_diff, 0.0, remarks,
-						stock_rbnb, account_currency=warehouse_account_currency, item=d)
+					self.add_gl_entry(
+						gl_entries=gl_entries,
+						account=warehouse_account_name,
+						cost_center=d.cost_center,
+						debit=stock_value_diff,
+						credit=0.0,
+						remarks=remarks,
+						against_account=stock_rbnb,
+						account_currency=warehouse_account_currency,
+						item=d)
 
 					# GL Entry for from warehouse or Stock Received but not billed
 					# Intentionally passed negative debit amount to avoid incorrect GL Entry validation
@@ -300,9 +319,17 @@ class PurchaseReceipt(BuyingController):
 						account = warehouse_account[d.from_warehouse]['account'] \
 								if d.from_warehouse else stock_rbnb
 
-						self.add_gl_entry(gl_entries, account, d.cost_center,
-							-1 * flt(d.base_net_amount, d.precision("base_net_amount")), 0.0, remarks, warehouse_account_name,
-							debit_in_account_currency=-1 * credit_amount, account_currency=credit_currency, item=d)
+						self.add_gl_entry(
+							gl_entries=gl_entries,
+							account=account,
+							cost_center=d.cost_center,
+							debit=-1 * flt(d.base_net_amount, d.precision("base_net_amount")),
+							credit=0.0,
+							remarks=remarks,
+							against_account=warehouse_account_name,
+							debit_in_account_currency=-1 * credit_amount,
+							account_currency=credit_currency,
+							item=d)
 
 					# Amount added through landed-cos-voucher
 					if d.landed_cost_voucher_amount and landed_cost_entries:
@@ -311,14 +338,31 @@ class PurchaseReceipt(BuyingController):
 							credit_amount = (flt(amount["base_amount"]) if (amount["base_amount"] or
 								account_currency!=self.company_currency) else flt(amount["amount"]))
 
-							self.add_gl_entry(gl_entries, account, d.cost_center, 0.0, credit_amount, remarks,
-								warehouse_account_name, credit_in_account_currency=flt(amount["amount"]),
-								account_currency=account_currency, project=d.project, item=d)
+							self.add_gl_entry(
+								gl_entries=gl_entries,
+								account=account,
+								cost_center=d.cost_center,
+								debit=0.0,
+								credit=credit_amount,
+								remarks=remarks,
+								against_account=warehouse_account_name,
+								credit_in_account_currency=flt(amount["amount"]),
+								account_currency=account_currency,
+								project=d.project,
+								item=d)
 
 					# sub-contracting warehouse
 					if flt(d.rm_supp_cost) and warehouse_account.get(self.supplier_warehouse):
-						self.add_gl_entry(gl_entries, supplier_warehouse_account, d.cost_center, 0.0, flt(d.rm_supp_cost),
-							remarks, warehouse_account_name, account_currency=supplier_warehouse_account_currency, item=d)
+						self.add_gl_entry(
+							gl_entries=gl_entries,
+							account=supplier_warehouse_account,
+							cost_center=d.cost_center,
+							debit=0.0,
+							credit=flt(d.rm_supp_cost),
+							remarks=remarks,
+							against_account=warehouse_account_name,
+							account_currency=supplier_warehouse_account_currency,
+							item=d)
 
 					# divisional loss adjustment
 					valuation_amount_as_per_doc = flt(d.base_net_amount, d.precision("base_net_amount")) + \
@@ -331,35 +375,77 @@ class PurchaseReceipt(BuyingController):
 						if self.is_return or flt(d.item_tax_amount):
 							loss_account = expenses_included_in_valuation
 						else:
-							loss_account = self.get_company_default("default_expense_account")
+							loss_account = self.get_company_default("default_expense_account", ignore_validation=True) or stock_rbnb
 
 						cost_center = d.cost_center or frappe.get_cached_value("Company", self.company, "cost_center")
 
-						self.add_gl_entry(gl_entries, loss_account, cost_center, divisional_loss, 0.0, remarks,
-							warehouse_account_name, account_currency=credit_currency, project=d.project, item=d)
+						self.add_gl_entry(
+							gl_entries=gl_entries,
+							account=loss_account,
+							cost_center=cost_center,
+							debit=divisional_loss,
+							credit=0.0,
+							remarks=remarks,
+							against_account=warehouse_account_name,
+							account_currency=credit_currency,
+							project=d.project,
+							item=d)
 
 				elif d.warehouse not in warehouse_with_no_account or \
 					d.rejected_warehouse not in warehouse_with_no_account:
 						warehouse_with_no_account.append(d.warehouse)
-			elif d.item_code not in stock_items and not d.is_fixed_asset and flt(d.qty) and auto_accounting_for_non_stock_items:
-				service_received_but_not_billed_account = self.get_company_default("service_received_but_not_billed")
-				credit_currency = get_account_currency(service_received_but_not_billed_account)
-				debit_currency = get_account_currency(d.expense_account)
-				remarks = self.get("remarks") or _("Accounting Entry for Service")
-
-				self.add_gl_entry(gl_entries, service_received_but_not_billed_account, d.cost_center, 0.0, d.amount,
-					remarks, d.expense_account, account_currency=credit_currency, project=d.project,
-					voucher_detail_no=d.name, item=d)
-
-				self.add_gl_entry(gl_entries, d.expense_account, d.cost_center, d.amount, 0.0, remarks, service_received_but_not_billed_account,
-					account_currency = debit_currency, project=d.project, voucher_detail_no=d.name, item=d)
+			elif d.item_code not in stock_items and not d.is_fixed_asset and flt(d.qty) and provisional_accounting_for_non_stock_items:
+				self.add_provisional_gl_entry(d, gl_entries, self.posting_date)
 
 		if warehouse_with_no_account:
 			frappe.msgprint(_("No accounting entries for the following warehouses") + ": \n" +
 				"\n".join(warehouse_with_no_account))
 
+	def add_provisional_gl_entry(self, item, gl_entries, posting_date, reverse=0):
+		provisional_expense_account = self.get('provisional_expense_account')
+		credit_currency = get_account_currency(provisional_expense_account)
+		debit_currency = get_account_currency(item.expense_account)
+		expense_account = item.expense_account
+		remarks = self.get("remarks") or _("Accounting Entry for Service")
+		multiplication_factor = 1
+
+		if reverse:
+			multiplication_factor = -1
+			expense_account = frappe.db.get_value('Purchase Receipt Item', {'name': item.get('pr_detail')}, ['expense_account'])
+
+		self.add_gl_entry(
+			gl_entries=gl_entries,
+			account=provisional_expense_account,
+			cost_center=item.cost_center,
+			debit=0.0,
+			credit=multiplication_factor * item.amount,
+			remarks=remarks,
+			against_account=expense_account,
+			account_currency=credit_currency,
+			project=item.project,
+			voucher_detail_no=item.name,
+			item=item,
+			posting_date=posting_date)
+
+		self.add_gl_entry(
+			gl_entries=gl_entries,
+			account=expense_account,
+			cost_center=item.cost_center,
+			debit=multiplication_factor * item.amount,
+			credit=0.0,
+			remarks=remarks,
+			against_account=provisional_expense_account,
+			account_currency = debit_currency,
+			project=item.project,
+			voucher_detail_no=item.name,
+			item=item,
+			posting_date=posting_date)
+
 	def make_tax_gl_entries(self, gl_entries):
-		expenses_included_in_valuation = self.get_company_default("expenses_included_in_valuation")
+
+		if erpnext.is_perpetual_inventory_enabled(self.company):
+			expenses_included_in_valuation = self.get_company_default("expenses_included_in_valuation")
+
 		negative_expense_to_be_booked = sum([flt(d.item_tax_amount) for d in self.get('items')])
 		# Cost center-wise amount breakup for other charges included for valuation
 		valuation_tax = {}
@@ -402,14 +488,22 @@ class PurchaseReceipt(BuyingController):
 						applicable_amount = negative_expense_to_be_booked * (valuation_tax[tax.name] / total_valuation_amount)
 						amount_including_divisional_loss -= applicable_amount
 
-					self.add_gl_entry(gl_entries, account, tax.cost_center, 0.0, applicable_amount, self.remarks or _("Accounting Entry for Stock"),
-						against_account, item=tax)
+					self.add_gl_entry(
+						gl_entries=gl_entries,
+						account=account,
+						cost_center=tax.cost_center,
+						debit=0.0,
+						credit=applicable_amount,
+						remarks=self.remarks or _("Accounting Entry for Stock"),
+						against_account=against_account,
+						item=tax)
 
 					i += 1
 
 	def add_gl_entry(self, gl_entries, account, cost_center, debit, credit, remarks, against_account,
 		debit_in_account_currency=None, credit_in_account_currency=None, account_currency=None,
-		project=None, voucher_detail_no=None, item=None):
+		project=None, voucher_detail_no=None, item=None, posting_date=None):
+
 		gl_entry = {
 			"account": account,
 			"cost_center": cost_center,
@@ -427,6 +521,9 @@ class PurchaseReceipt(BuyingController):
 
 		if credit_in_account_currency:
 			gl_entry.update({"credit_in_account_currency": credit_in_account_currency})
+
+		if posting_date:
+			gl_entry.update({"posting_date": posting_date})
 
 		gl_entries.append(self.get_gl_dict(gl_entry, item=item))
 
@@ -456,15 +553,33 @@ class PurchaseReceipt(BuyingController):
 		# debit cwip account
 		debit_in_account_currency = (base_asset_amount
 			if cwip_account_currency == self.company_currency else asset_amount)
-		self.add_gl_entry(gl_entries, cwip_account, item.cost_center, base_asset_amount, 0.0, remarks,
-			arbnb_account, debit_in_account_currency=debit_in_account_currency, item=item)
+
+		self.add_gl_entry(
+			gl_entries=gl_entries,
+			account=cwip_account,
+			cost_center=item.cost_center,
+			debit=base_asset_amount,
+			credit=0.0,
+			remarks=remarks,
+			against_account=arbnb_account,
+			debit_in_account_currency=debit_in_account_currency,
+			item=item)
 
 		asset_rbnb_currency = get_account_currency(arbnb_account)
 		# credit arbnb account
 		credit_in_account_currency = (base_asset_amount
 			if asset_rbnb_currency == self.company_currency else asset_amount)
-		self.add_gl_entry(gl_entries, arbnb_account, item.cost_center, 0.0, base_asset_amount, remarks,
-			cwip_account, credit_in_account_currency=credit_in_account_currency, item=item)
+
+		self.add_gl_entry(
+			gl_entries=gl_entries,
+			account=arbnb_account,
+			cost_center=item.cost_center,
+			debit=0.0,
+			credit=base_asset_amount,
+			remarks=remarks,
+			against_account=cwip_account,
+			credit_in_account_currency=credit_in_account_currency,
+			item=item)
 
 	def add_lcv_gl_entries(self, item, gl_entries):
 		expenses_included_in_asset_valuation = self.get_company_default("expenses_included_in_asset_valuation")
@@ -477,11 +592,27 @@ class PurchaseReceipt(BuyingController):
 
 		remarks = self.get("remarks") or _("Accounting Entry for Stock")
 
-		self.add_gl_entry(gl_entries, expenses_included_in_asset_valuation, item.cost_center, 0.0, flt(item.landed_cost_voucher_amount),
-			remarks, asset_account, project=item.project, item=item)
+		self.add_gl_entry(
+			gl_entries=gl_entries,
+			account=expenses_included_in_asset_valuation,
+			cost_center=item.cost_center,
+			debit=0.0,
+			credit=flt(item.landed_cost_voucher_amount),
+			remarks=remarks,
+			against_account=asset_account,
+			project=item.project,
+			item=item)
 
-		self.add_gl_entry(gl_entries, asset_account, item.cost_center, 0.0, flt(item.landed_cost_voucher_amount),
-			remarks, expenses_included_in_asset_valuation, project=item.project, item=item)
+		self.add_gl_entry(
+			gl_entries=gl_entries,
+			account=asset_account,
+			cost_center=item.cost_center,
+			debit=flt(item.landed_cost_voucher_amount),
+			credit=0.0,
+			remarks=remarks,
+			against_account=expenses_included_in_asset_valuation,
+			project=item.project,
+			item=item)
 
 	def update_assets(self, item, valuation_rate):
 		assets = frappe.db.get_all('Asset',
@@ -593,11 +724,11 @@ def make_purchase_invoice(source_name, target_doc=None):
 			frappe.throw(_("All items have already been Invoiced/Returned"))
 
 		doc = frappe.get_doc(target)
-		doc.ignore_pricing_rule = 1
 		doc.payment_terms_template = get_payment_terms_template(source.supplier, "Supplier", source.company)
 		doc.run_method("onload")
 		doc.run_method("set_missing_values")
 		doc.run_method("calculate_taxes_and_totals")
+		doc.set_payment_schedule()
 
 	def update_item(source_doc, target_doc, source_parent):
 		target_doc.qty, returned_qty = get_pending_qty(source_doc)
@@ -705,7 +836,8 @@ def make_stock_entry(source_name,target_doc=None):
 			"doctype": "Stock Entry Detail",
 			"field_map": {
 				"warehouse": "s_warehouse",
-				"parent": "reference_purchase_receipt"
+				"parent": "reference_purchase_receipt",
+				"batch_no": "batch_no"
 			},
 		},
 	}, target_doc, set_missing_values)
@@ -755,3 +887,6 @@ def get_item_account_wise_additional_cost(purchase_document):
 						account.base_amount * item.get(based_on_field) / total_item_cost
 
 	return item_account_wise_cost
+
+def on_doctype_update():
+	frappe.db.add_index("Purchase Receipt", ["supplier", "is_return", "return_against"])

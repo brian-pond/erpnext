@@ -2,17 +2,23 @@
 # License: GNU General Public License v3. See license.txt
 
 
-from __future__ import unicode_literals
-import unittest
-import frappe
-from frappe.utils import flt
-from erpnext.stock.doctype.purchase_receipt.test_purchase_receipt \
-	import get_gl_entries, test_records as pr_test_records, make_purchase_receipt
-from erpnext.accounts.doctype.purchase_invoice.test_purchase_invoice import make_purchase_invoice
-from erpnext.accounts.doctype.account.test_account import get_inventory_account
-from erpnext.accounts.doctype.account.test_account import create_account
 
-class TestLandedCostVoucher(unittest.TestCase):
+import frappe
+from frappe.tests.utils import FrappeTestCase
+from frappe.utils import add_to_date, flt, now
+
+from erpnext.accounts.doctype.account.test_account import create_account, get_inventory_account
+from erpnext.accounts.doctype.purchase_invoice.test_purchase_invoice import make_purchase_invoice
+from erpnext.accounts.utils import update_gl_entries_after
+from erpnext.assets.doctype.asset.test_asset import create_asset_category, create_fixed_asset_item
+from erpnext.stock.doctype.delivery_note.test_delivery_note import create_delivery_note
+from erpnext.stock.doctype.purchase_receipt.test_purchase_receipt import (
+	get_gl_entries,
+	make_purchase_receipt,
+)
+
+
+class TestLandedCostVoucher(FrappeTestCase):
 	def test_landed_cost_voucher(self):
 		frappe.db.set_value("Buying Settings", None, "allow_multiple_items", 1)
 
@@ -24,7 +30,8 @@ class TestLandedCostVoucher(unittest.TestCase):
 				"voucher_type": pr.doctype,
 				"voucher_no": pr.name,
 				"item_code": "_Test Item",
-				"warehouse": "Stores - TCP1"
+				"warehouse": "Stores - TCP1",
+				"is_cancelled": 0,
 			},
 			fieldname=["qty_after_transaction", "stock_value"], as_dict=1)
 
@@ -37,13 +44,38 @@ class TestLandedCostVoucher(unittest.TestCase):
 				"voucher_type": pr.doctype,
 				"voucher_no": pr.name,
 				"item_code": "_Test Item",
-				"warehouse": "Stores - TCP1"
+				"warehouse": "Stores - TCP1",
+				"is_cancelled": 0,
 			},
 			fieldname=["qty_after_transaction", "stock_value"], as_dict=1)
 
 		self.assertEqual(last_sle.qty_after_transaction, last_sle_after_landed_cost.qty_after_transaction)
-
 		self.assertEqual(last_sle_after_landed_cost.stock_value - last_sle.stock_value, 25.0)
+
+		# assert after submit
+		self.assertPurchaseReceiptLCVGLEntries(pr)
+
+		# Mess up cancelled SLE modified timestamp to check
+		# if they aren't effective in any business logic.
+		frappe.db.set_value("Stock Ledger Entry",
+			{
+				"is_cancelled": 1,
+				"voucher_type": pr.doctype,
+				"voucher_no": pr.name
+			},
+			"is_cancelled", 1,
+			modified=add_to_date(now(), hours=1, as_datetime=True, as_string=True)
+		)
+
+		items, warehouses = pr.get_items_and_warehouses()
+		update_gl_entries_after(pr.posting_date, pr.posting_time,
+			warehouses, items, company=pr.company)
+
+		# reassert after reposting
+		self.assertPurchaseReceiptLCVGLEntries(pr)
+
+
+	def assertPurchaseReceiptLCVGLEntries(self, pr):
 
 		gl_entries = get_gl_entries("Purchase Receipt", pr.name)
 
@@ -70,8 +102,8 @@ class TestLandedCostVoucher(unittest.TestCase):
 
 		for gle in gl_entries:
 			if not gle.get('is_cancelled'):
-				self.assertEqual(expected_values[gle.account][0], gle.debit)
-				self.assertEqual(expected_values[gle.account][1], gle.credit)
+				self.assertEqual(expected_values[gle.account][0], gle.debit, msg=f"incorrect debit for {gle.account}")
+				self.assertEqual(expected_values[gle.account][1], gle.credit, msg=f"incorrect credit for {gle.account}")
 
 
 	def test_landed_cost_voucher_against_purchase_invoice(self):
@@ -146,6 +178,53 @@ class TestLandedCostVoucher(unittest.TestCase):
 		self.assertEqual(serial_no.purchase_rate - serial_no_rate, 5.0)
 		self.assertEqual(serial_no.warehouse, "Stores - TCP1")
 
+	def test_serialized_lcv_delivered(self):
+		"""In some cases you'd want to deliver before you can know all the
+		landed costs, this should be allowed for serial nos too.
+
+		Case:
+			- receipt a serial no @ X rate
+			- delivery the serial no @ X rate
+			- add LCV to receipt X + Y
+			- LCV should be successful
+			- delivery should reflect X+Y valuation.
+		"""
+		serial_no = "LCV_TEST_SR_NO"
+		item_code = "_Test Serialized Item"
+		warehouse = "Stores - TCP1"
+
+		pr = make_purchase_receipt(company="_Test Company with perpetual inventory",
+				warehouse=warehouse, qty=1, rate=200,
+				item_code=item_code, serial_no=serial_no)
+
+		serial_no_rate = frappe.db.get_value("Serial No", serial_no, "purchase_rate")
+
+		# deliver it before creating LCV
+		dn = create_delivery_note(item_code=item_code,
+				company='_Test Company with perpetual inventory', warehouse='Stores - TCP1',
+				serial_no=serial_no, qty=1, rate=500,
+				cost_center = 'Main - TCP1', expense_account = "Cost of Goods Sold - TCP1")
+
+		charges = 10
+		create_landed_cost_voucher("Purchase Receipt", pr.name, pr.company, charges=charges)
+
+		new_purchase_rate = serial_no_rate + charges
+
+		serial_no = frappe.db.get_value("Serial No", serial_no,
+			["warehouse", "purchase_rate"], as_dict=1)
+
+		self.assertEqual(serial_no.purchase_rate, new_purchase_rate)
+
+		stock_value_difference = frappe.db.get_value("Stock Ledger Entry",
+				filters={
+					"voucher_no": dn.name,
+					"voucher_type": dn.doctype,
+					"is_cancelled": 0  # LCV cancels with same name.
+				},
+				fieldname="stock_value_difference")
+
+		# reposting should update the purchase rate in future delivery
+		self.assertEqual(stock_value_difference, -new_purchase_rate)
 
 	def test_landed_cost_voucher_for_odd_numbers (self):
 		pr = make_purchase_receipt(company="_Test Company with perpetual inventory", warehouse = "Stores - TCP1", supplier_warehouse = "Work in Progress - TCP1", do_not_save=True)
@@ -207,7 +286,10 @@ class TestLandedCostVoucher(unittest.TestCase):
 		self.assertEqual(pr.items[1].landed_cost_voucher_amount, 100)
 
 	def test_multi_currency_lcv(self):
-		from erpnext.setup.doctype.currency_exchange.test_currency_exchange import test_records, save_new_records
+		from erpnext.setup.doctype.currency_exchange.test_currency_exchange import (
+			save_new_records,
+			test_records,
+		)
 
 		save_new_records(test_records)
 
@@ -250,6 +332,39 @@ class TestLandedCostVoucher(unittest.TestCase):
 			self.assertEqual(entry.credit, amounts[0])
 			self.assertEqual(entry.credit_in_account_currency, amounts[1])
 
+	def test_asset_lcv(self):
+		"Check if LCV for an Asset updates the Assets Gross Purchase Amount correctly."
+		frappe.db.set_value("Company", "_Test Company", "capital_work_in_progress_account", "CWIP Account - _TC")
+
+		if not frappe.db.exists("Asset Category", "Computers"):
+			create_asset_category()
+
+		if not frappe.db.exists("Item", "Macbook Pro"):
+			create_fixed_asset_item()
+
+		pr = make_purchase_receipt(item_code="Macbook Pro", qty=1, rate=50000)
+
+		# check if draft asset was created
+		assets = frappe.db.get_all('Asset', filters={'purchase_receipt': pr.name})
+		self.assertEqual(len(assets), 1)
+
+		lcv = make_landed_cost_voucher(
+			company = pr.company,
+			receipt_document_type = "Purchase Receipt",
+			receipt_document=pr.name,
+			charges=80,
+			expense_account="Expenses Included In Valuation - _TC")
+
+		lcv.save()
+		lcv.submit()
+
+		# lcv updates amount in draft asset
+		self.assertEqual(frappe.db.get_value("Asset", assets[0].name, "gross_purchase_amount"), 50080)
+
+		# tear down
+		lcv.cancel()
+		pr.cancel()
+
 def make_landed_cost_voucher(** args):
 	args = frappe._dict(args)
 	ref_doc = frappe.get_doc(args.receipt_document_type, args.receipt_document)
@@ -268,7 +383,7 @@ def make_landed_cost_voucher(** args):
 
 	lcv.set("taxes", [{
 		"description": "Shipping Charges",
-		"expense_account": "Expenses Included In Valuation - TCP1",
+		"expense_account": args.expense_account or "Expenses Included In Valuation - TCP1",
 		"amount": args.charges
 	}])
 

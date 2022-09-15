@@ -3,7 +3,7 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2013-05-24 19:29:05",
+ "creation": "2022-01-25 10:29:57.771398",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -49,6 +49,8 @@
   "shipping_address",
   "company_address",
   "company_address_display",
+  "dispatch_address_name",
+  "dispatch_address",
   "currency_and_price_list",
   "currency",
   "conversion_rate",
@@ -73,6 +75,7 @@
   "time_sheet_list",
   "timesheets",
   "total_billing_amount",
+  "total_billing_hours",
   "section_break_30",
   "total_qty",
   "base_total",
@@ -105,6 +108,7 @@
   "section_break_49",
   "apply_discount_on",
   "base_discount_amount",
+  "additional_discount_account",
   "column_break_51",
   "additional_discount_percentage",
   "discount_amount",
@@ -121,11 +125,19 @@
   "total_advance",
   "outstanding_amount",
   "disable_rounded_total",
+  "column_break4",
+  "write_off_amount",
+  "base_write_off_amount",
+  "write_off_outstanding_amount_automatically",
+  "column_break_74",
+  "write_off_account",
+  "write_off_cost_center",
   "advances_section",
   "allocate_advances_automatically",
   "get_advances",
   "advances",
   "payment_schedule_section",
+  "ignore_default_payment_terms_template",
   "payment_terms_template",
   "payment_schedule",
   "payments_section",
@@ -140,13 +152,6 @@
   "column_break_90",
   "change_amount",
   "account_for_change_amount",
-  "column_break4",
-  "write_off_amount",
-  "base_write_off_amount",
-  "write_off_outstanding_amount_automatically",
-  "column_break_74",
-  "write_off_account",
-  "write_off_cost_center",
   "terms_section_break",
   "tc_name",
   "terms",
@@ -157,14 +162,14 @@
   "column_break_84",
   "language",
   "more_information",
+  "status",
   "inter_company_invoice_reference",
-  "is_internal_customer",
   "represents_company",
   "customer_group",
   "campaign",
-  "is_discounted",
   "col_break23",
-  "status",
+  "is_internal_customer",
+  "is_discounted",
   "source",
   "more_info",
   "debit_to",
@@ -178,6 +183,7 @@
   "sales_team_section_break",
   "sales_partner",
   "column_break10",
+  "amount_eligible_for_commission",
   "commission_rate",
   "total_commission",
   "section_break2",
@@ -244,7 +250,7 @@
    "depends_on": "customer",
    "fetch_from": "customer.customer_name",
    "fieldname": "customer_name",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "hide_days": 1,
    "hide_seconds": 1,
    "in_global_search": 1,
@@ -647,7 +653,6 @@
    "hide_seconds": 1,
    "label": "Ignore Pricing Rule",
    "no_copy": 1,
-   "permlevel": 1,
    "print_hide": 1
   },
   {
@@ -692,7 +697,8 @@
    "fieldtype": "Data",
    "hide_days": 1,
    "hide_seconds": 1,
-   "label": "Scan Barcode"
+   "label": "Scan Barcode",
+   "options": "Barcode"
   },
   {
    "allow_bulk_edit": 1,
@@ -723,6 +729,7 @@
    "read_only": 1
   },
   {
+   "depends_on": "packed_items",
    "fieldname": "packing_list",
    "fieldtype": "Section Break",
    "hide_days": 1,
@@ -732,6 +739,7 @@
    "print_hide": 1
   },
   {
+   "depends_on": "packed_items",
    "fieldname": "packed_items",
    "fieldtype": "Table",
    "hide_days": 1,
@@ -1056,6 +1064,7 @@
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Apply Additional Discount On",
+   "length": 15,
    "options": "\nGrand Total\nNet Total",
    "print_hide": 1
   },
@@ -1142,7 +1151,7 @@
   {
    "description": "In Words will be visible once you save the Sales Invoice.",
    "fieldname": "base_in_words",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "In Words (Company Currency)",
@@ -1202,7 +1211,7 @@
   },
   {
    "fieldname": "in_words",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "In Words",
@@ -1441,7 +1450,8 @@
    "label": "Write Off Amount",
    "no_copy": 1,
    "options": "currency",
-   "print_hide": 1
+   "print_hide": 1,
+   "read_only_depends_on": "eval:doc.write_off_outstanding_amount_automatically"
   },
   {
    "fieldname": "base_write_off_amount",
@@ -1554,6 +1564,7 @@
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Print Language",
+   "length": 6,
    "print_hide": 1,
    "read_only": 1
   },
@@ -1641,8 +1652,9 @@
    "hide_seconds": 1,
    "in_standard_filter": 1,
    "label": "Status",
+   "length": 30,
    "no_copy": 1,
-   "options": "\nDraft\nReturn\nCredit Note Issued\nSubmitted\nPaid\nUnpaid\nUnpaid and Discounted\nOverdue and Discounted\nOverdue\nCancelled\nInternal Transfer",
+   "options": "\nDraft\nReturn\nCredit Note Issued\nSubmitted\nPaid\nPartly Paid\nUnpaid\nUnpaid and Discounted\nPartly Paid and Discounted\nOverdue and Discounted\nOverdue\nCancelled\nInternal Transfer",
    "print_hide": 1,
    "read_only": 1
   },
@@ -1700,6 +1712,7 @@
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Is Opening Entry",
+   "length": 4,
    "oldfieldname": "is_opening",
    "oldfieldtype": "Select",
    "options": "No\nYes",
@@ -1711,6 +1724,7 @@
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "C-Form Applicable",
+   "length": 4,
    "no_copy": 1,
    "options": "No\nYes",
    "print_hide": 1
@@ -1931,6 +1945,7 @@
    "description": "Unrealized Profit / Loss account for intra-company transfers",
    "fieldname": "unrealized_profit_loss_account",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Unrealized Profit / Loss Account",
    "options": "Account"
   },
@@ -1940,6 +1955,7 @@
    "fetch_from": "customer.represents_company",
    "fieldname": "represents_company",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Represents Company",
    "options": "Company",
    "read_only": 1
@@ -1952,14 +1968,16 @@
    "depends_on": "eval: doc.is_internal_customer && doc.update_stock",
    "fieldname": "set_target_warehouse",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Set Target Warehouse",
    "options": "Warehouse"
   },
   {
    "default": "0",
+   "description": "Issue a debit note with 0 qty against an existing Sales Invoice",
    "fieldname": "is_debit_note",
    "fieldtype": "Check",
-   "label": "Is Debit Note"
+   "label": "Is Rate Adjustment Entry (Debit Note)"
   },
   {
    "default": "0",
@@ -1967,6 +1985,48 @@
    "fieldname": "disable_rounded_total",
    "fieldtype": "Check",
    "label": "Disable Rounded Total"
+  },
+  {
+   "fieldname": "additional_discount_account",
+   "fieldtype": "Link",
+   "label": "Additional Discount Account",
+   "options": "Account"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "dispatch_address_name",
+   "fieldtype": "Link",
+   "label": "Dispatch Address Name",
+   "options": "Address",
+   "print_hide": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "dispatch_address",
+   "fieldtype": "Small Text",
+   "label": "Dispatch Address",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "ignore_default_payment_terms_template",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Ignore Default Payment Terms Template",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_billing_hours",
+   "fieldtype": "Float",
+   "label": "Total Billing Hours",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_eligible_for_commission",
+   "fieldtype": "Currency",
+   "label": "Amount Eligible for Commission",
+   "read_only": 1
   }
  ],
  "icon": "fa fa-file-text",
@@ -1979,11 +2039,16 @@
    "link_fieldname": "consolidated_invoice"
   }
  ],
+<<<<<<< HEAD
  "modified": "2021-12-05 18:08:25.516246",
+=======
+ "modified": "2022-03-08 16:08:53.517903",
+>>>>>>> temp1
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Sales Invoice",
  "name_case": "Title Case",
+ "naming_rule": "By \"Naming Series\" field",
  "owner": "Administrator",
  "permissions": [
   {
@@ -2029,6 +2094,7 @@
  "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "timeline_field": "customer",
  "title_field": "title",
  "track_changes": 1,

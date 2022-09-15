@@ -1,11 +1,12 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
-from __future__ import unicode_literals
+
 import frappe
-from frappe.utils import flt, comma_or, nowdate, getdate
 from frappe import _
 from frappe.model.document import Document
+from frappe.utils import comma_or, flt, getdate, now, nowdate
+
 
 class OverAllowanceError(frappe.ValidationError): pass
 
@@ -86,7 +87,8 @@ status_map = {
 	],
 	"Bank Transaction": [
 		["Unreconciled", "eval:self.docstatus == 1 and self.unallocated_amount>0"],
-		["Reconciled", "eval:self.docstatus == 1 and self.unallocated_amount<=0"]
+		["Reconciled", "eval:self.docstatus == 1 and self.unallocated_amount<=0"],
+		["Cancelled", "eval:self.docstatus == 2"]
 	],
 	"POS Opening Entry": [
 		["Draft", None],
@@ -213,11 +215,14 @@ class StatusUpdater(Document):
 		overflow_percent = ((item[args['target_field']] - item[args['target_ref_field']]) /
 			item[args['target_ref_field']]) * 100
 
-		if overflow_percent - allowance > 0.01 and role not in frappe.get_roles():
+		if overflow_percent - allowance > 0.01:
 			item['max_allowed'] = flt(item[args['target_ref_field']] * (100+allowance)/100)
 			item['reduce_by'] = item[args['target_field']] - item['max_allowed']
 
-			self.limits_crossed_error(args, item, qty_or_amount)
+			if role not in frappe.get_roles():
+				self.limits_crossed_error(args, item, qty_or_amount)
+			else:
+				self.warn_about_bypassing_with_role(item, qty_or_amount, role)
 
 	def limits_crossed_error(self, args, item, qty_or_amount):
 		'''Raise exception for limits crossed'''
@@ -234,6 +239,19 @@ class StatusUpdater(Document):
 				frappe.bold(_(self.doctype)),
 				frappe.bold(item.get('item_code'))
 			) + '<br><br>' + action_msg, OverAllowanceError, title = _('Limit Crossed'))
+
+	def warn_about_bypassing_with_role(self, item, qty_or_amount, role):
+		action = _("Over Receipt/Delivery") if qty_or_amount == "qty" else _("Overbilling")
+
+		msg = (_("{} of {} {} ignored for item {} because you have {} role.")
+				.format(
+					action,
+					_(item["target_ref_field"].title()),
+					frappe.bold(item["reduce_by"]),
+					frappe.bold(item.get('item_code')),
+					role)
+				)
+		frappe.msgprint(msg, indicator="orange", alert=True)
 
 	def update_qty(self, update_modified=True):
 		"""Updates qty or amount at row level
@@ -336,10 +354,14 @@ class StatusUpdater(Document):
 				target.notify_update()
 
 	def _update_modified(self, args, update_modified):
-		args['update_modified'] = ''
-		if update_modified:
-			args['update_modified'] = ', modified = now(), modified_by = {0}'\
-				.format(frappe.db.escape(frappe.session.user))
+		if not update_modified:
+			args['update_modified'] = ''
+			return
+
+		args['update_modified'] = ', modified = {0}, modified_by = {1}'.format(
+			frappe.db.escape(now()),
+			frappe.db.escape(frappe.session.user)
+		)
 
 	def update_billing_status_for_zero_amount_refdoc(self, ref_dt):
 		ref_fieldname = frappe.scrub(ref_dt)
@@ -378,6 +400,16 @@ class StatusUpdater(Document):
 			ref_doc = frappe.get_doc(ref_dt, ref_dn)
 
 			ref_doc.db_set("per_billed", per_billed)
+
+			# set billling status
+			if hasattr(ref_doc, 'billing_status'):
+				if ref_doc.per_billed < 0.001:
+					ref_doc.db_set("billing_status", "Not Billed")
+				elif ref_doc.per_billed > 99.999999:
+					ref_doc.db_set("billing_status", "Fully Billed")
+				else:
+					ref_doc.db_set("billing_status", "Partly Billed")
+
 			ref_doc.set_status(update=True)
 
 def get_allowance_for(item_code, item_allowance=None, global_qty_allowance=None, global_amount_allowance=None, qty_or_amount="qty"):

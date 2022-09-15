@@ -1,37 +1,55 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
-from __future__ import unicode_literals
 
-import unittest
-import frappe
-import erpnext
 import calendar
 import random
+import unittest
+
+import frappe
+from frappe.model.document import Document
+from frappe.tests.utils import change_settings
+from frappe.utils import (
+	add_days,
+	add_months,
+	cstr,
+	date_diff,
+	flt,
+	get_first_day,
+	get_last_day,
+	getdate,
+	nowdate,
+)
+from frappe.utils.make_random import get_random
+
+import erpnext
 from erpnext.accounts.utils import get_fiscal_year
-from frappe.utils import getdate, nowdate, add_days, add_months, flt, get_first_day, get_last_day, cstr
-from erpnext.payroll.doctype.salary_structure.salary_structure import make_salary_slip
-from erpnext.payroll.doctype.payroll_entry.payroll_entry import get_month_details
+from erpnext.hr.doctype.attendance.attendance import mark_attendance
 from erpnext.hr.doctype.employee.test_employee import make_employee
 from erpnext.hr.doctype.leave_allocation.test_leave_allocation import create_leave_allocation
 from erpnext.hr.doctype.leave_type.test_leave_type import create_leave_type
-from erpnext.payroll.doctype.employee_tax_exemption_declaration.test_employee_tax_exemption_declaration \
-	import create_payroll_period, create_exemption_category
+from erpnext.payroll.doctype.employee_tax_exemption_declaration.test_employee_tax_exemption_declaration import (
+	create_exemption_category,
+	create_payroll_period,
+)
+from erpnext.payroll.doctype.payroll_entry.payroll_entry import get_month_details
+from erpnext.payroll.doctype.salary_structure.salary_structure import make_salary_slip
+
 
 class TestSalarySlip(unittest.TestCase):
 	def setUp(self):
 		setup_test()
 
 	def tearDown(self):
+		frappe.db.rollback()
 		frappe.db.set_value("Payroll Settings", None, "include_holidays_in_total_working_days", 0)
 		frappe.set_user("Administrator")
 
+	@change_settings("Payroll Settings", {
+		"payroll_based_on": "Attendance",
+		"daily_wages_fraction_for_half_day": 0.75
+	})
 	def test_payment_days_based_on_attendance(self):
-		from erpnext.hr.doctype.attendance.attendance import mark_attendance
 		no_of_days = self.get_no_of_days()
-
-		# Payroll based on attendance
-		frappe.db.set_value("Payroll Settings", None, "payroll_based_on", "Attendance")
-		frappe.db.set_value("Payroll Settings", None, "daily_wages_fraction_for_half_day", 0.75)
 
 		emp_id = make_employee("test_payment_days_based_on_attendance@salary.com")
 		frappe.db.set_value("Employee", emp_id, {"relieving_date": None, "status": "Active"})
@@ -70,13 +88,77 @@ class TestSalarySlip(unittest.TestCase):
 
 		self.assertEqual(ss.gross_pay, gross_pay)
 
-		frappe.db.set_value("Payroll Settings", None, "payroll_based_on", "Leave")
+	@change_settings("Payroll Settings", {
+		"payroll_based_on": "Attendance",
+		"consider_unmarked_attendance_as": "Absent",
+		"include_holidays_in_total_working_days": True
+	})
+	def test_payment_days_for_mid_joinee_including_holidays(self):
+		from erpnext.hr.doctype.holiday_list.holiday_list import is_holiday
 
+		no_of_days = self.get_no_of_days()
+		month_start_date, month_end_date = get_first_day(nowdate()), get_last_day(nowdate())
+
+		new_emp_id = make_employee("test_payment_days_based_on_joining_date@salary.com")
+		joining_date, relieving_date = add_days(month_start_date, 3), add_days(month_end_date, -5)
+		frappe.db.set_value("Employee", new_emp_id, {
+			"date_of_joining": joining_date,
+			"relieving_date": relieving_date,
+			"status": "Left"
+		})
+
+		holidays = 0
+
+		for days in range(date_diff(relieving_date, joining_date) + 1):
+			date = add_days(joining_date, days)
+			if not is_holiday("Salary Slip Test Holiday List", date):
+				mark_attendance(new_emp_id, date, 'Present', ignore_validate=True)
+			else:
+				holidays += 1
+
+		new_ss = make_employee_salary_slip("test_payment_days_based_on_joining_date@salary.com", "Monthly", "Test Payment Based On Attendence")
+
+		self.assertEqual(new_ss.total_working_days, no_of_days[0])
+		self.assertEqual(new_ss.payment_days, no_of_days[0] - holidays - 8)
+
+	@change_settings("Payroll Settings", {
+		"payroll_based_on": "Attendance",
+		"consider_unmarked_attendance_as": "Absent",
+		"include_holidays_in_total_working_days": False
+	})
+	def test_payment_days_for_mid_joinee_excluding_holidays(self):
+		from erpnext.hr.doctype.holiday_list.holiday_list import is_holiday
+
+		no_of_days = self.get_no_of_days()
+		month_start_date, month_end_date = get_first_day(nowdate()), get_last_day(nowdate())
+
+		new_emp_id = make_employee("test_payment_days_based_on_joining_date@salary.com")
+		joining_date, relieving_date = add_days(month_start_date, 3), add_days(month_end_date, -5)
+		frappe.db.set_value("Employee", new_emp_id, {
+			"date_of_joining": joining_date,
+			"relieving_date": relieving_date,
+			"status": "Left"
+		})
+
+		holidays = 0
+
+		for days in range(date_diff(relieving_date, joining_date) + 1):
+			date = add_days(joining_date, days)
+			if not is_holiday("Salary Slip Test Holiday List", date):
+				mark_attendance(new_emp_id, date, 'Present', ignore_validate=True)
+			else:
+				holidays += 1
+
+		new_ss = make_employee_salary_slip("test_payment_days_based_on_joining_date@salary.com", "Monthly", "Test Payment Based On Attendence")
+
+		self.assertEqual(new_ss.total_working_days, no_of_days[0] - no_of_days[1])
+		self.assertEqual(new_ss.payment_days, no_of_days[0] - holidays - 8)
+
+	@change_settings("Payroll Settings", {
+		"payroll_based_on": "Leave"
+	})
 	def test_payment_days_based_on_leave_application(self):
 		no_of_days = self.get_no_of_days()
-
-		# Payroll based on attendance
-		frappe.db.set_value("Payroll Settings", None, "payroll_based_on", "Leave")
 
 		emp_id = make_employee("test_payment_days_based_on_leave_application@salary.com")
 		frappe.db.set_value("Employee", emp_id, {"relieving_date": None, "status": "Active"})
@@ -118,11 +200,117 @@ class TestSalarySlip(unittest.TestCase):
 
 		self.assertEqual(ss.payment_days, days_in_month - no_of_holidays - 4)
 
-		frappe.db.set_value("Payroll Settings", None, "payroll_based_on", "Leave")
+	@change_settings("Payroll Settings", {
+		"payroll_based_on": "Attendance"
+	})
+	def test_payment_days_in_salary_slip_based_on_timesheet(self):
+		from erpnext.hr.doctype.attendance.attendance import mark_attendance
+		from erpnext.projects.doctype.timesheet.test_timesheet import (
+			make_salary_structure_for_timesheet,
+			make_timesheet,
+		)
+		from erpnext.projects.doctype.timesheet.timesheet import (
+			make_salary_slip as make_salary_slip_for_timesheet,
+		)
 
+		emp = make_employee("test_employee_timesheet@salary.com", company="_Test Company", holiday_list="Salary Slip Test Holiday List")
+		frappe.db.set_value("Employee", emp, {"relieving_date": None, "status": "Active"})
+
+		# mark attendance
+		month_start_date = get_first_day(nowdate())
+		month_end_date = get_last_day(nowdate())
+
+		first_sunday = frappe.db.sql("""
+			select holiday_date from `tabHoliday`
+			where parent = 'Salary Slip Test Holiday List'
+				and holiday_date between %s and %s
+			order by holiday_date
+		""", (month_start_date, month_end_date))[0][0]
+
+		mark_attendance(emp, add_days(first_sunday, 1), 'Absent', ignore_validate=True) # counted as absent
+
+		# salary structure based on timesheet
+		make_salary_structure_for_timesheet(emp)
+		timesheet = make_timesheet(emp, simulate=True, is_billable=1)
+		salary_slip = make_salary_slip_for_timesheet(timesheet.name)
+		salary_slip.start_date = month_start_date
+		salary_slip.end_date = month_end_date
+		salary_slip.save()
+		salary_slip.submit()
+		salary_slip.reload()
+
+		no_of_days = self.get_no_of_days()
+		days_in_month = no_of_days[0]
+		no_of_holidays = no_of_days[1]
+
+		self.assertEqual(salary_slip.payment_days, days_in_month - no_of_holidays - 1)
+
+		# gross pay calculation based on attendance (payment days)
+		gross_pay = 78100 - ((78000 / (days_in_month - no_of_holidays)) * flt(salary_slip.leave_without_pay + salary_slip.absent_days))
+
+		self.assertEqual(salary_slip.gross_pay, flt(gross_pay, 2))
+
+	@change_settings("Payroll Settings", {
+		"payroll_based_on": "Attendance"
+	})
+	def test_component_amount_dependent_on_another_payment_days_based_component(self):
+		from erpnext.hr.doctype.attendance.attendance import mark_attendance
+		from erpnext.payroll.doctype.salary_structure.test_salary_structure import (
+			create_salary_structure_assignment,
+		)
+
+		no_of_days = self.get_no_of_days()
+		salary_structure = make_salary_structure_for_payment_days_based_component_dependency()
+		employee = make_employee("test_payment_days_based_component@salary.com", company="_Test Company")
+
+		# base = 50000
+		create_salary_structure_assignment(employee, salary_structure.name, company="_Test Company", currency="INR")
+
+		# mark employee absent for a day since this case works fine if payment days are equal to working days
+		month_start_date = get_first_day(nowdate())
+		month_end_date = get_last_day(nowdate())
+
+		first_sunday = frappe.db.sql("""
+			select holiday_date from `tabHoliday`
+			where parent = 'Salary Slip Test Holiday List'
+				and holiday_date between %s and %s
+			order by holiday_date
+		""", (month_start_date, month_end_date))[0][0]
+
+		mark_attendance(employee, add_days(first_sunday, 1), 'Absent', ignore_validate=True) # counted as absent
+
+		# make salary slip and assert payment days
+		ss = make_salary_slip_for_payment_days_dependency_test("test_payment_days_based_component@salary.com", salary_structure.name)
+		self.assertEqual(ss.absent_days, 1)
+
+		days_in_month = no_of_days[0]
+		no_of_holidays = no_of_days[1]
+
+		ss.reload()
+		payment_days_based_comp_amount = 0
+		for component in ss.earnings:
+			if component.salary_component == "HRA - Payment Days":
+				payment_days_based_comp_amount = flt(component.amount, component.precision("amount"))
+				break
+
+		# check if the dependent component is calculated using the amount updated after payment days
+		actual_amount = 0
+		precision = 0
+		for component in ss.deductions:
+			if component.salary_component == "P - Employee Provident Fund":
+				precision = component.precision("amount")
+				actual_amount = flt(component.amount, precision)
+				break
+
+		expected_amount = flt((flt(ss.gross_pay) - payment_days_based_comp_amount) * 0.12, precision)
+
+		self.assertEqual(actual_amount, expected_amount)
+
+	@change_settings("Payroll Settings", {
+		"include_holidays_in_total_working_days": 1
+	})
 	def test_salary_slip_with_holidays_included(self):
 		no_of_days = self.get_no_of_days()
-		frappe.db.set_value("Payroll Settings", None, "include_holidays_in_total_working_days", 1)
 		make_employee("test_salary_slip_with_holidays_included@salary.com")
 		frappe.db.set_value("Employee", frappe.get_value("Employee",
 			{"employee_name":"test_salary_slip_with_holidays_included@salary.com"}, "name"), "relieving_date", None)
@@ -136,9 +324,11 @@ class TestSalarySlip(unittest.TestCase):
 		self.assertEqual(ss.earnings[1].amount, 3000)
 		self.assertEqual(ss.gross_pay, 78000)
 
+	@change_settings("Payroll Settings", {
+		"include_holidays_in_total_working_days": 0
+	})
 	def test_salary_slip_with_holidays_excluded(self):
 		no_of_days = self.get_no_of_days()
-		frappe.db.set_value("Payroll Settings", None, "include_holidays_in_total_working_days", 0)
 		make_employee("test_salary_slip_with_holidays_excluded@salary.com")
 		frappe.db.set_value("Employee", frappe.get_value("Employee",
 			{"employee_name":"test_salary_slip_with_holidays_excluded@salary.com"}, "name"), "relieving_date", None)
@@ -153,12 +343,15 @@ class TestSalarySlip(unittest.TestCase):
 		self.assertEqual(ss.earnings[1].amount, 3000)
 		self.assertEqual(ss.gross_pay, 78000)
 
+	@change_settings("Payroll Settings", {
+		"include_holidays_in_total_working_days": 1
+	})
 	def test_payment_days(self):
-		from erpnext.payroll.doctype.salary_structure.test_salary_structure import create_salary_structure_assignment
+		from erpnext.payroll.doctype.salary_structure.test_salary_structure import (
+			create_salary_structure_assignment,
+		)
 
 		no_of_days = self.get_no_of_days()
-		# Holidays not included in working days
-		frappe.db.set_value("Payroll Settings", None, "include_holidays_in_total_working_days", 1)
 
 		# set joinng date in the same month
 		employee = make_employee("test_payment_days@salary.com")
@@ -216,12 +409,13 @@ class TestSalarySlip(unittest.TestCase):
 		frappe.set_user("test_employee_salary_slip_read_permission@salary.com")
 		self.assertTrue(salary_slip_test_employee.has_permission("read"))
 
+	@change_settings("Payroll Settings", {
+		"email_salary_slip_to_employee": 1
+	})
 	def test_email_salary_slip(self):
 		frappe.db.sql("delete from `tabEmail Queue`")
 
-		frappe.db.set_value("Payroll Settings", None, "email_salary_slip_to_employee", 1)
-
-		make_employee("test_email_salary_slip@salary.com")
+		make_employee("test_email_salary_slip@salary.com", company="_Test Company")
 		ss = make_employee_salary_slip("test_email_salary_slip@salary.com", "Monthly", "Test Salary Slip Email")
 		ss.company = "_Test Company"
 		ss.save()
@@ -231,8 +425,15 @@ class TestSalarySlip(unittest.TestCase):
 		self.assertTrue(email_queue)
 
 	def test_loan_repayment_salary_slip(self):
-		from erpnext.loan_management.doctype.loan.test_loan import create_loan_type, create_loan, make_loan_disbursement_entry, create_loan_accounts
-		from erpnext.loan_management.doctype.process_loan_interest_accrual.process_loan_interest_accrual import process_loan_interest_accrual_for_term_loans
+		from erpnext.loan_management.doctype.loan.test_loan import (
+			create_loan,
+			create_loan_accounts,
+			create_loan_type,
+			make_loan_disbursement_entry,
+		)
+		from erpnext.loan_management.doctype.process_loan_interest_accrual.process_loan_interest_accrual import (
+			process_loan_interest_accrual_for_term_loans,
+		)
 		from erpnext.payroll.doctype.salary_structure.test_salary_structure import make_salary_structure
 
 		applicant = make_employee("test_loan_repayment_salary_slip@salary.com", company="_Test Company")
@@ -242,6 +443,7 @@ class TestSalarySlip(unittest.TestCase):
 		create_loan_type("Car Loan", 500000, 8.4,
 			is_term_loan=1,
 			mode_of_payment='Cash',
+			disbursement_account='Disbursement Account - _TC',
 			payment_account='Payment Account - _TC',
 			loan_account='Loan Account - _TC',
 			interest_income_account='Interest Income Account - _TC',
@@ -252,7 +454,7 @@ class TestSalarySlip(unittest.TestCase):
 		make_salary_structure("Test Loan Repayment Salary Structure", "Monthly", employee=applicant, currency='INR',
 			payroll_period=payroll_period)
 
-		frappe.db.sql("delete from tabLoan")
+		frappe.db.sql("delete from tabLoan where applicant = 'test_loan_repayment_salary_slip@salary.com'")
 		loan = create_loan(applicant, "Car Loan", 11000, "Repay Over Number of Periods", 20, posting_date=add_months(nowdate(), -1))
 		loan.repay_from_salary = 1
 		loan.submit()
@@ -386,8 +588,7 @@ class TestSalarySlip(unittest.TestCase):
 		for doc in delete_docs:
 			frappe.db.sql("delete from `tab%s` where employee='%s'" % (doc, employee))
 
-		from erpnext.payroll.doctype.salary_structure.test_salary_structure import \
-			make_salary_structure, create_salary_structure_assignment
+		from erpnext.payroll.doctype.salary_structure.test_salary_structure import make_salary_structure
 
 		salary_structure = make_salary_structure("Stucture to test tax", "Monthly",
 			other_details={"max_benefits": 100000}, test_tax=True,
@@ -460,6 +661,61 @@ class TestSalarySlip(unittest.TestCase):
 		# undelete fixture data
 		frappe.db.rollback()
 
+	def test_tax_for_recurring_additional_salary(self):
+		frappe.db.sql("""delete from `tabPayroll Period`""")
+		frappe.db.sql("""delete from `tabSalary Component`""")
+
+		payroll_period = create_payroll_period()
+
+		create_tax_slab(payroll_period, allow_tax_exemption=True)
+
+		employee = make_employee("test_tax@salary.slip")
+		delete_docs = [
+			"Salary Slip",
+			"Additional Salary",
+			"Employee Tax Exemption Declaration",
+			"Employee Tax Exemption Proof Submission",
+			"Employee Benefit Claim",
+			"Salary Structure Assignment"
+		]
+		for doc in delete_docs:
+			frappe.db.sql("delete from `tab%s` where employee='%s'" % (doc, employee))
+
+		from erpnext.payroll.doctype.salary_structure.test_salary_structure import make_salary_structure
+
+		salary_structure = make_salary_structure("Stucture to test tax", "Monthly",
+			other_details={"max_benefits": 100000}, test_tax=True,
+			employee=employee, payroll_period=payroll_period)
+
+
+		create_salary_slips_for_payroll_period(employee, salary_structure.name,
+			payroll_period, deduct_random=False, num=3)
+
+		tax_paid = get_tax_paid_in_period(employee)
+
+		annual_tax = 23196.0
+		self.assertEqual(tax_paid, annual_tax)
+
+		frappe.db.sql("""delete from `tabSalary Slip` where employee=%s""", (employee))
+
+		#------------------------------------
+		# Recurring additional salary
+		start_date = add_months(payroll_period.start_date, 3)
+		end_date = add_months(payroll_period.start_date, 5)
+		create_recurring_additional_salary(employee, "Performance Bonus", 20000, start_date, end_date)
+
+		frappe.db.sql("""delete from `tabSalary Slip` where employee=%s""", (employee))
+
+		create_salary_slips_for_payroll_period(employee, salary_structure.name,
+			payroll_period, deduct_random=False, num=4)
+
+		tax_paid = get_tax_paid_in_period(employee)
+
+		annual_tax = 32315.0
+		self.assertEqual(tax_paid, annual_tax)
+
+		frappe.db.rollback()
+
 	def make_activity_for_employee(self):
 		activity_type = frappe.get_doc("Activity Type", "_Test Activity Type")
 		activity_type.billing_rate = 50
@@ -505,20 +761,25 @@ def make_employee_salary_slip(user, payroll_frequency, salary_structure=None):
 
 def make_salary_component(salary_components, test_tax, company_list=None):
 	for salary_component in salary_components:
-		if not frappe.db.exists('Salary Component', salary_component["salary_component"]):
-			if test_tax:
-				if salary_component["type"] == "Earning":
-					salary_component["is_tax_applicable"] = 1
-				elif salary_component["salary_component"] == "TDS":
-					salary_component["variable_based_on_taxable_salary"] = 1
-					salary_component["amount_based_on_formula"] = 0
-					salary_component["amount"] = 0
-					salary_component["formula"] = ""
-					salary_component["condition"] = ""
-			salary_component["doctype"] = "Salary Component"
-			salary_component["salary_component_abbr"] = salary_component["abbr"]
-			frappe.get_doc(salary_component).insert()
-		get_salary_component_account(salary_component["salary_component"], company_list)
+		if frappe.db.exists('Salary Component', salary_component["salary_component"]):
+			continue
+
+		if test_tax:
+			if salary_component["type"] == "Earning":
+				salary_component["is_tax_applicable"] = 1
+			elif salary_component["salary_component"] == "TDS":
+				salary_component["variable_based_on_taxable_salary"] = 1
+				salary_component["amount_based_on_formula"] = 0
+				salary_component["amount"] = 0
+				salary_component["formula"] = ""
+				salary_component["condition"] = ""
+
+		salary_component["salary_component_abbr"] = salary_component["abbr"]
+		doc = frappe.new_doc("Salary Component")
+		doc.update(salary_component)
+		doc.insert()
+
+		get_salary_component_account(doc, company_list)
 
 def get_salary_component_account(sal_comp, company_list=None):
 	company = erpnext.get_default_company()
@@ -526,7 +787,9 @@ def get_salary_component_account(sal_comp, company_list=None):
 	if company_list and company not in company_list:
 		company_list.append(company)
 
-	sal_comp = frappe.get_doc("Salary Component", sal_comp)
+	if not isinstance(sal_comp, Document):
+		sal_comp = frappe.get_doc("Salary Component", sal_comp)
+
 	if not sal_comp.get("accounts"):
 		for d in company_list:
 			company_abbr = frappe.get_cached_value('Company', d, 'abbr')
@@ -544,7 +807,7 @@ def get_salary_component_account(sal_comp, company_list=None):
 			})
 			sal_comp.save()
 
-def create_account(account_name, company, parent_account):
+def create_account(account_name, company, parent_account, account_type=None):
 	company_abbr = frappe.get_cached_value('Company',  company,  'abbr')
 	account = frappe.db.get_value("Account", account_name + " - " + company_abbr)
 	if not account:
@@ -799,7 +1062,7 @@ def create_additional_salary(employee, payroll_period, amount):
 	}).submit()
 	return salary_date
 
-def make_leave_application(employee, from_date, to_date, leave_type, company=None):
+def make_leave_application(employee, from_date, to_date, leave_type, company=None, submit=True):
 	leave_application = frappe.get_doc(dict(
 		doctype = 'Leave Application',
 		employee = employee,
@@ -807,11 +1070,14 @@ def make_leave_application(employee, from_date, to_date, leave_type, company=Non
 		from_date = from_date,
 		to_date = to_date,
 		company = company or erpnext.get_default_company() or "_Test Company",
-		docstatus = 1,
 		status = "Approved",
 		leave_approver = 'test@example.com'
-	))
-	leave_application.submit()
+	)).insert()
+
+	if submit:
+		leave_application.submit()
+
+	return leave_application
 
 def setup_test():
 	make_earning_salary_component(setup=True, company_list=["_Test Company"])
@@ -827,15 +1093,123 @@ def setup_test():
 	frappe.db.set_value('HR Settings', None, 'leave_status_notification_template', None)
 	frappe.db.set_value('HR Settings', None, 'leave_approval_notification_template', None)
 
-def make_holiday_list():
+def make_holiday_list(list_name=None, from_date=None, to_date=None):
 	fiscal_year = get_fiscal_year(nowdate(), company=erpnext.get_default_company())
-	if not frappe.db.get_value("Holiday List", "Salary Slip Test Holiday List"):
-		holiday_list = frappe.get_doc({
-			"doctype": "Holiday List",
-			"holiday_list_name": "Salary Slip Test Holiday List",
-			"from_date": fiscal_year[1],
-			"to_date": fiscal_year[2],
-			"weekly_off": "Sunday"
-		}).insert()
-		holiday_list.get_weekly_off_dates()
-		holiday_list.save()
+	name = list_name or "Salary Slip Test Holiday List"
+
+	frappe.delete_doc_if_exists("Holiday List", name, force=True)
+
+	holiday_list = frappe.get_doc({
+		"doctype": "Holiday List",
+		"holiday_list_name": name,
+		"from_date": from_date or fiscal_year[1],
+		"to_date": to_date or fiscal_year[2],
+		"weekly_off": "Sunday"
+	}).insert()
+	holiday_list.get_weekly_off_dates()
+	holiday_list.save()
+	holiday_list = holiday_list.name
+
+	return holiday_list
+
+def make_salary_structure_for_payment_days_based_component_dependency():
+	earnings = [
+		{
+			"salary_component": "Basic Salary - Payment Days",
+			"abbr": "P_BS",
+			"type": "Earning",
+			"formula": "base",
+			"amount_based_on_formula": 1
+		},
+		{
+			"salary_component": "HRA - Payment Days",
+			"abbr": "P_HRA",
+			"type": "Earning",
+			"depends_on_payment_days": 1,
+			"amount_based_on_formula": 1,
+			"formula": "base * 0.20"
+		}
+	]
+
+	make_salary_component(earnings, False, company_list=["_Test Company"])
+
+	deductions = [
+		{
+			"salary_component": "P - Professional Tax",
+			"abbr": "P_PT",
+			"type": "Deduction",
+			"depends_on_payment_days": 1,
+			"amount": 200.00
+		},
+		{
+			"salary_component": "P - Employee Provident Fund",
+			"abbr": "P_EPF",
+			"type": "Deduction",
+			"exempted_from_income_tax": 1,
+			"amount_based_on_formula": 1,
+			"depends_on_payment_days": 0,
+			"formula": "(gross_pay - P_HRA) * 0.12"
+		}
+	]
+
+	make_salary_component(deductions, False, company_list=["_Test Company"])
+
+	salary_structure = "Salary Structure with PF"
+	if frappe.db.exists("Salary Structure", salary_structure):
+		frappe.db.delete("Salary Structure", salary_structure)
+
+	details = {
+		"doctype": "Salary Structure",
+		"name": salary_structure,
+		"company": "_Test Company",
+		"payroll_frequency": "Monthly",
+		"payment_account": get_random("Account", filters={"account_currency": "INR"}),
+		"currency": "INR"
+	}
+
+	salary_structure_doc = frappe.get_doc(details)
+
+	for entry in earnings:
+		salary_structure_doc.append("earnings", entry)
+
+	for entry in deductions:
+		salary_structure_doc.append("deductions", entry)
+
+	salary_structure_doc.insert()
+	salary_structure_doc.submit()
+
+	return salary_structure_doc
+
+def make_salary_slip_for_payment_days_dependency_test(employee, salary_structure):
+	employee = frappe.db.get_value("Employee", {
+			"user_id": employee
+		},
+		["name", "company", "employee_name"],
+		as_dict=True)
+
+	salary_slip_name = frappe.db.get_value("Salary Slip", {"employee": frappe.db.get_value("Employee", {"user_id": employee})})
+
+	if not salary_slip_name:
+		salary_slip = make_salary_slip(salary_structure, employee=employee.name)
+		salary_slip.employee_name = employee.employee_name
+		salary_slip.payroll_frequency = "Monthly"
+		salary_slip.posting_date = nowdate()
+		salary_slip.insert()
+	else:
+		salary_slip = frappe.get_doc("Salary Slip", salary_slip_name)
+
+	return salary_slip
+
+def create_recurring_additional_salary(employee, salary_component, amount, from_date, to_date, company=None):
+	frappe.get_doc({
+		"doctype": "Additional Salary",
+		"employee": employee,
+		"company": company or erpnext.get_default_company(),
+		"salary_component": salary_component,
+		"is_recurring": 1,
+		"from_date": from_date,
+		"to_date": to_date,
+		"amount": amount,
+		"type": "Earning",
+		"currency": erpnext.get_default_currency()
+	}).submit()

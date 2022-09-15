@@ -1,27 +1,33 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
-from __future__ import unicode_literals
-import unittest
-import frappe
+
 import json
-import frappe.defaults
+
+import frappe
+from frappe.tests.utils import FrappeTestCase
+from frappe.utils import add_days, flt, getdate, nowdate
+
 from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
-from frappe.utils import flt, add_days, nowdate, getdate
-from erpnext.stock.doctype.item.test_item import make_item
-from erpnext.buying.doctype.purchase_order.purchase_order \
-	import (make_purchase_receipt, make_purchase_invoice as make_pi_from_po, make_rm_stock_entry as make_subcontract_transfer_entry)
-from erpnext.stock.doctype.purchase_receipt.purchase_receipt import make_purchase_invoice as make_pi_from_pr
-from erpnext.stock.doctype.material_request.test_material_request import make_material_request
-from erpnext.stock.doctype.material_request.material_request import make_purchase_order
-from erpnext.stock.doctype.stock_entry.test_stock_entry import make_stock_entry
+from erpnext.buying.doctype.purchase_order.purchase_order import (
+	make_purchase_invoice as make_pi_from_po,
+)
+from erpnext.buying.doctype.purchase_order.purchase_order import make_purchase_receipt
+from erpnext.buying.doctype.purchase_order.purchase_order import (
+	make_rm_stock_entry as make_subcontract_transfer_entry,
+)
 from erpnext.controllers.accounts_controller import update_child_qty_rate
-from erpnext.controllers.status_updater import OverAllowanceError
 from erpnext.manufacturing.doctype.blanket_order.test_blanket_order import make_blanket_order
+from erpnext.stock.doctype.item.test_item import make_item
+from erpnext.stock.doctype.material_request.material_request import make_purchase_order
+from erpnext.stock.doctype.material_request.test_material_request import make_material_request
+from erpnext.stock.doctype.purchase_receipt.purchase_receipt import (
+	make_purchase_invoice as make_pi_from_pr,
+)
+from erpnext.stock.doctype.stock_entry.test_stock_entry import make_stock_entry
 
-from erpnext.stock.doctype.batch.test_batch import make_new_batch
 
-class TestPurchaseOrder(unittest.TestCase):
+class TestPurchaseOrder(FrappeTestCase):
 	def test_make_purchase_receipt(self):
 		po = create_purchase_order(do_not_submit=True)
 		self.assertRaises(frappe.ValidationError, make_purchase_receipt, po.name)
@@ -415,10 +421,12 @@ class TestPurchaseOrder(unittest.TestCase):
 		self.assertEqual(po.get("items")[0].received_qty, 9)
 
 		# Make return purchase receipt, purchase invoice and check quantity
-		from erpnext.stock.doctype.purchase_receipt.test_purchase_receipt \
-				import make_purchase_receipt as make_purchase_receipt_return
-		from erpnext.accounts.doctype.purchase_invoice.test_purchase_invoice \
-				import make_purchase_invoice as make_purchase_invoice_return
+		from erpnext.accounts.doctype.purchase_invoice.test_purchase_invoice import (
+			make_purchase_invoice as make_purchase_invoice_return,
+		)
+		from erpnext.stock.doctype.purchase_receipt.test_purchase_receipt import (
+			make_purchase_receipt as make_purchase_receipt_return,
+		)
 
 		pr1 = make_purchase_receipt_return(is_return=1, return_against=pr.name, qty=-3, do_not_submit=True)
 		pr1.items[0].purchase_order = po.name
@@ -484,6 +492,11 @@ class TestPurchaseOrder(unittest.TestCase):
 
 
 	def test_make_purchase_invoice_with_terms(self):
+		from erpnext.selling.doctype.sales_order.test_sales_order import (
+			automatically_fetch_payment_terms,
+		)
+
+		automatically_fetch_payment_terms()
 		po = create_purchase_order(do_not_save=True)
 
 		self.assertRaises(frappe.ValidationError, make_pi_from_po, po.name)
@@ -509,6 +522,7 @@ class TestPurchaseOrder(unittest.TestCase):
 		self.assertEqual(getdate(pi.payment_schedule[0].due_date), getdate(po.transaction_date))
 		self.assertEqual(pi.payment_schedule[1].payment_amount, 2500.0)
 		self.assertEqual(getdate(pi.payment_schedule[1].due_date), add_days(getdate(po.transaction_date), 30))
+		automatically_fetch_payment_terms(enable=0)
 
 	def test_subcontracting(self):
 		po = create_purchase_order(item_code="_Test FG Item", is_subcontracted="Yes")
@@ -632,14 +646,18 @@ class TestPurchaseOrder(unittest.TestCase):
 			else:
 				raise Exception
 
-	def test_terms_does_not_copy(self):
-		po = create_purchase_order()
+	def test_terms_are_not_copied_if_automatically_fetch_payment_terms_is_unchecked(self):
+		po = create_purchase_order(do_not_save=1)
+		po.payment_terms_template = '_Test Payment Term Template'
+		po.save()
+		po.submit()
 
-		self.assertTrue(po.get('payment_schedule'))
-
+		frappe.db.set_value('Company', '_Test Company', 'payment_terms', '_Test Payment Term Template 1')
 		pi = make_pi_from_po(po.name)
+		pi.save()
 
-		self.assertFalse(pi.get('payment_schedule'))
+		self.assertEqual(pi.get('payment_terms_template'), '_Test Payment Term Template 1')
+		frappe.db.set_value('Company', '_Test Company', 'payment_terms', '')
 
 	def test_terms_copied(self):
 		po = create_purchase_order(do_not_save=1)
@@ -664,17 +682,18 @@ class TestPurchaseOrder(unittest.TestCase):
 
 		bin1 = frappe.db.get_value("Bin",
 			filters={"warehouse": "_Test Warehouse - _TC", "item_code": "_Test Item"},
-			fieldname=["reserved_qty_for_sub_contract", "projected_qty"], as_dict=1)
+			fieldname=["reserved_qty_for_sub_contract", "projected_qty", "modified"], as_dict=1)
 
 		# Submit PO
 		po = create_purchase_order(item_code="_Test FG Item", is_subcontracted="Yes")
 
 		bin2 = frappe.db.get_value("Bin",
 			filters={"warehouse": "_Test Warehouse - _TC", "item_code": "_Test Item"},
-			fieldname=["reserved_qty_for_sub_contract", "projected_qty"], as_dict=1)
+			fieldname=["reserved_qty_for_sub_contract", "projected_qty", "modified"], as_dict=1)
 
 		self.assertEqual(bin2.reserved_qty_for_sub_contract, bin1.reserved_qty_for_sub_contract + 10)
 		self.assertEqual(bin2.projected_qty, bin1.projected_qty - 10)
+		self.assertNotEqual(bin1.modified, bin2.modified)
 
 		# Create stock transfer
 		rm_item = [{"item_code":"_Test FG Item","rm_item_code":"_Test Item","item_name":"_Test Item",
@@ -968,8 +987,32 @@ class TestPurchaseOrder(unittest.TestCase):
 		# To test if the PO does NOT have a Blanket Order
 		self.assertEqual(po_doc.items[0].blanket_order, None)
 
+	def test_payment_terms_are_fetched_when_creating_purchase_invoice(self):
+		from erpnext.accounts.doctype.payment_entry.test_payment_entry import (
+			create_payment_terms_template,
+		)
+		from erpnext.accounts.doctype.purchase_invoice.test_purchase_invoice import make_purchase_invoice
+		from erpnext.selling.doctype.sales_order.test_sales_order import (
+			automatically_fetch_payment_terms,
+			compare_payment_schedules,
+		)
 
+		automatically_fetch_payment_terms()
 
+		po = create_purchase_order(qty=10, rate=100, do_not_save=1)
+		create_payment_terms_template()
+		po.payment_terms_template = 'Test Receivable Template'
+		po.submit()
+
+		pi = make_purchase_invoice(qty=10, rate=100, do_not_save=1)
+		pi.items[0].purchase_order = po.name
+		pi.items[0].po_detail = po.items[0].name
+		pi.insert()
+
+		# self.assertEqual(po.payment_terms_template, pi.payment_terms_template)
+		compare_payment_schedules(self, po, pi)
+
+		automatically_fetch_payment_terms(enable=0)
 
 def make_pr_against_po(po, received_qty=0):
 	pr = make_purchase_receipt(po)

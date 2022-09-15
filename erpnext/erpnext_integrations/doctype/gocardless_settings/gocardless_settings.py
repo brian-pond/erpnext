@@ -1,18 +1,18 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2018, Frappe Technologies and contributors
 # For license information, please see license.txt
 
-from __future__ import unicode_literals
+
 import frappe
-from frappe.model.document import Document
 import gocardless_pro
 from frappe import _
+from frappe.integrations.utils import create_payment_gateway, create_request_log
+from frappe.model.document import Document
+from frappe.utils import call_hook_method, cint, flt, get_url
 from six.moves.urllib.parse import urlencode
-from frappe.utils import get_url, call_hook_method, flt, cint
-from frappe.integrations.utils import create_request_log, create_payment_gateway
+
 
 class GoCardlessSettings(Document):
-	supported_currencies = ["EUR", "DKK", "GBP", "SEK"]
+	supported_currencies = ["EUR", "DKK", "GBP", "SEK", "AUD", "NZD", "CAD", "USD"]
 
 	def validate(self):
 		self.initialize_client()
@@ -79,7 +79,7 @@ class GoCardlessSettings(Document):
 
 	def validate_transaction_currency(self, currency):
 		if currency not in self.supported_currencies:
-			frappe.throw(_("Please select another payment method. Stripe does not support transactions in currency '{0}'").format(currency))
+			frappe.throw(_("Please select another payment method. Go Cardless does not support transactions in currency '{0}'").format(currency))
 
 	def get_payment_url(self, **kwargs):
 		return get_url("./integrations/gocardless_checkout?{0}".format(urlencode(kwargs)))

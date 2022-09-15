@@ -1,15 +1,19 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
-from __future__ import unicode_literals
-import frappe, erpnext
-from frappe import _
-import json
-from frappe.utils import flt, cstr, nowdate, nowtime, get_link_to_form
 
+import json
+
+import frappe
+from frappe import _
+from frappe.utils import cstr, flt, get_link_to_form, nowdate, nowtime
 from six import string_types
 
+import erpnext
+
+
 class InvalidWarehouseCompany(frappe.ValidationError): pass
+class PendingRepostingError(frappe.ValidationError): pass
 
 def get_stock_value_from_bin(warehouse=None, item_code=None):
 	values = {}
@@ -83,8 +87,8 @@ def get_stock_balance(item_code, warehouse, posting_date=None, posting_time=None
 
 	from erpnext.stock.stock_ledger import get_previous_sle
 
-	if not posting_date: posting_date = nowdate()
-	if not posting_time: posting_time = nowtime()
+	if posting_date is None: posting_date = nowdate()
+	if posting_time is None: posting_time = nowtime()
 
 	args = {
 		"item_code": item_code,
@@ -97,33 +101,42 @@ def get_stock_balance(item_code, warehouse, posting_date=None, posting_time=None
 
 	if with_valuation_rate:
 		if with_serial_no:
-			serial_nos = last_entry.get("serial_no")
-
-			if (serial_nos and
-				len(get_serial_nos_data(serial_nos)) < last_entry.qty_after_transaction):
-				serial_nos = get_serial_nos_data_after_transactions(args)
+			serial_nos = get_serial_nos_data_after_transactions(args)
 
 			return ((last_entry.qty_after_transaction, last_entry.valuation_rate, serial_nos)
-				if last_entry else (0.0, 0.0, 0.0))
+				if last_entry else (0.0, 0.0, None))
 		else:
 			return (last_entry.qty_after_transaction, last_entry.valuation_rate) if last_entry else (0.0, 0.0)
 	else:
 		return last_entry.qty_after_transaction if last_entry else 0.0
 
 def get_serial_nos_data_after_transactions(args):
-	serial_nos = []
-	data = frappe.db.sql(""" SELECT serial_no, actual_qty
-		FROM `tabStock Ledger Entry`
-		WHERE
-			item_code = %(item_code)s and warehouse = %(warehouse)s
-			and timestamp(posting_date, posting_time) < timestamp(%(posting_date)s, %(posting_time)s)
-			order by posting_date, posting_time asc """, args, as_dict=1)
+	from pypika import CustomFunction
 
-	for d in data:
-		if d.actual_qty > 0:
-			serial_nos.extend(get_serial_nos_data(d.serial_no))
+	serial_nos = set()
+	args = frappe._dict(args)
+	sle = frappe.qb.DocType('Stock Ledger Entry')
+	Timestamp = CustomFunction('timestamp', ['date', 'time'])
+
+	stock_ledger_entries = frappe.qb.from_(
+		sle
+	).select(
+		'serial_no','actual_qty'
+	).where(
+		(sle.item_code == args.item_code)
+		& (sle.warehouse == args.warehouse)
+		& (Timestamp(sle.posting_date, sle.posting_time) < Timestamp(args.posting_date, args.posting_time))
+		& (sle.is_cancelled == 0)
+	).orderby(
+		sle.posting_date, sle.posting_time, sle.creation
+	).run(as_dict=1)
+
+	for stock_ledger_entry in stock_ledger_entries:
+		changed_serial_no = get_serial_nos_data(stock_ledger_entry.serial_no)
+		if stock_ledger_entry.actual_qty > 0:
+			serial_nos.update(changed_serial_no)
 		else:
-			serial_nos = list(set(serial_nos) - set(get_serial_nos_data(d.serial_no)))
+			serial_nos.difference_update(changed_serial_no)
 
 	return '\n'.join(serial_nos)
 
@@ -164,24 +177,42 @@ def get_latest_stock_balance():
 def get_bin(item_code, warehouse):
 	bin = frappe.db.get_value("Bin", {"item_code": item_code, "warehouse": warehouse})
 	if not bin:
-		bin_obj = frappe.get_doc({
-			"doctype": "Bin",
-			"item_code": item_code,
-			"warehouse": warehouse,
-		})
-		bin_obj.flags.ignore_permissions = 1
-		bin_obj.insert()
+		bin_obj = _create_bin(item_code, warehouse)
 	else:
 		bin_obj = frappe.get_doc('Bin', bin, for_update=True)
 	bin_obj.flags.ignore_permissions = True
 	return bin_obj
 
+def get_or_make_bin(item_code: str , warehouse: str) -> str:
+	bin_record = frappe.db.get_value('Bin', {'item_code': item_code, 'warehouse': warehouse})
+
+	if not bin_record:
+		bin_obj = _create_bin(item_code, warehouse)
+		bin_record = bin_obj.name
+	return bin_record
+
+def _create_bin(item_code, warehouse):
+	"""Create a bin and take care of concurrent inserts."""
+
+	bin_creation_savepoint = "create_bin"
+	try:
+		frappe.db.savepoint(bin_creation_savepoint)
+		bin_obj = frappe.get_doc(doctype="Bin", item_code=item_code, warehouse=warehouse)
+		bin_obj.flags.ignore_permissions = 1
+		bin_obj.insert()
+	except frappe.UniqueValidationError:
+		frappe.db.rollback(save_point=bin_creation_savepoint)  # preserve transaction in postgres
+		bin_obj = frappe.get_last_doc("Bin", {"item_code": item_code, "warehouse": warehouse})
+
+	return bin_obj
+
 def update_bin(args, allow_negative_stock=False, via_landed_cost_voucher=False):
+	"""WARNING: This function is deprecated. Inline this function instead of using it."""
+	from erpnext.stock.doctype.bin.bin import update_stock
 	is_stock_item = frappe.get_cached_value('Item', args.get("item_code"), 'is_stock_item')
 	if is_stock_item:
-		bin = get_bin(args.get("item_code"), args.get("warehouse"))
-		bin.update_stock(args, allow_negative_stock, via_landed_cost_voucher)
-		return bin
+		bin_name = get_or_make_bin(args.get("item_code"), args.get("warehouse"))
+		update_stock(bin_name, args, allow_negative_stock, via_landed_cost_voucher)
 	else:
 		frappe.msgprint(_("Item {0} ignored since it is not a stock item").format(args.get("item_code")))
 
@@ -224,7 +255,7 @@ def get_avg_purchase_rate(serial_nos):
 
 def get_valuation_method(item_code):
 	"""get valuation method from item or default"""
-	val_method = frappe.db.get_value('Item', item_code, 'valuation_method')
+	val_method = frappe.db.get_value('Item', item_code, 'valuation_method', cache=True)
 	if not val_method:
 		val_method = frappe.db.get_value("Stock Settings", None, "valuation_method") or "FIFO"
 	return val_method
@@ -275,17 +306,17 @@ def get_valid_serial_nos(sr_nos, qty=0, item_code=''):
 	return valid_serial_nos
 
 def validate_warehouse_company(warehouse, company):
-	warehouse_company = frappe.db.get_value("Warehouse", warehouse, "company")
+	warehouse_company = frappe.db.get_value("Warehouse", warehouse, "company", cache=True)
 	if warehouse_company and warehouse_company != company:
 		frappe.throw(_("Warehouse {0} does not belong to company {1}").format(warehouse, company),
 			InvalidWarehouseCompany)
 
 def is_group_warehouse(warehouse):
-	if frappe.db.get_value("Warehouse", warehouse, "is_group"):
+	if frappe.db.get_value("Warehouse", warehouse, "is_group", cache=True):
 		frappe.throw(_("Group node warehouse is not allowed to select for transactions"))
 
 def validate_disabled_warehouse(warehouse):
-	if frappe.db.get_value("Warehouse", warehouse, "disabled"):
+	if frappe.db.get_value("Warehouse", warehouse, "disabled", cache=True):
 		frappe.throw(_("Disabled Warehouse {0} cannot be used for this transaction.").format(get_link_to_form('Warehouse', warehouse)))
 
 def update_included_uom_in_report(columns, result, include_uom, conversion_factors):
@@ -390,3 +421,28 @@ def is_reposting_item_valuation_in_progress():
 		{'docstatus': 1, 'status': ['in', ['Queued','In Progress']]})
 	if reposting_in_progress:
 		frappe.msgprint(_("Item valuation reposting in progress. Report might show incorrect item valuation."), alert=1)
+
+def check_pending_reposting(posting_date: str, throw_error: bool = True) -> bool:
+	"""Check if there are pending reposting job till the specified posting date."""
+
+	filters = {
+		"docstatus": 1,
+		"status": ["in", ["Queued","In Progress", "Failed"]],
+		"posting_date": ["<=", posting_date],
+	}
+
+	reposting_pending =  frappe.db.exists("Repost Item Valuation", filters)
+	if reposting_pending and throw_error:
+		msg = _("Stock/Accounts can not be frozen as processing of backdated entries is going on. Please try again later.")
+		frappe.msgprint(msg,
+				raise_exception=PendingRepostingError,
+				title="Stock Reposting Ongoing",
+				indicator="red",
+				primary_action={
+					"label": _("Show pending entries"),
+					"client_action": "erpnext.route_to_pending_reposts",
+					"args": filters,
+				}
+			)
+
+	return bool(reposting_pending)

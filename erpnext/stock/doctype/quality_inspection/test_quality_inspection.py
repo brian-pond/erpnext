@@ -1,9 +1,8 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors and Contributors
 # See license.txt
 
-import unittest
-
 import frappe
+from frappe.tests.utils import FrappeTestCase
 from frappe.utils import nowdate
 
 from erpnext.controllers.stock_controller import (
@@ -19,8 +18,9 @@ from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
 # test_records = frappe.get_test_records('Quality Inspection')
 
 
-class TestQualityInspection(unittest.TestCase):
+class TestQualityInspection(FrappeTestCase):
 	def setUp(self):
+		super().setUp()
 		create_item("_Test Item with QA")
 		frappe.db.set_value(
 			"Item", "_Test Item with QA", "inspection_required_before_delivery", 1

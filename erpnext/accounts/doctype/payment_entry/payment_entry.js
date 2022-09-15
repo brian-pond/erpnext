@@ -7,6 +7,8 @@ cur_frm.cscript.tax_table = "Advance Taxes and Charges";
 
 frappe.ui.form.on('Payment Entry', {
 	onload: function(frm) {
+		frm.ignore_doctypes_on_cancel_all = ['Sales Invoice', 'Purchase Invoice'];
+
 		if(frm.doc.__islocal) {
 			if (!frm.doc.paid_from) frm.set_value("paid_from_account_currency", null);
 			if (!frm.doc.paid_to) frm.set_value("paid_to_account_currency", null);
@@ -194,8 +196,14 @@ frappe.ui.form.on('Payment Entry', {
 			frm.doc.paid_from_account_currency != frm.doc.paid_to_account_currency));
 
 		frm.toggle_display("base_paid_amount", frm.doc.paid_from_account_currency != company_currency);
-		frm.toggle_display("base_total_taxes_and_charges", frm.doc.total_taxes_and_charges &&
-			(frm.doc.paid_from_account_currency != company_currency));
+
+		if (frm.doc.payment_type == "Pay") {
+			frm.toggle_display("base_total_taxes_and_charges", frm.doc.total_taxes_and_charges &&
+				(frm.doc.paid_to_account_currency != company_currency));
+		} else {
+			frm.toggle_display("base_total_taxes_and_charges", frm.doc.total_taxes_and_charges &&
+				(frm.doc.paid_from_account_currency != company_currency));
+		}
 
 		frm.toggle_display("base_received_amount", (
 			frm.doc.paid_to_account_currency != company_currency
@@ -230,7 +238,8 @@ frappe.ui.form.on('Payment Entry', {
 		var company_currency = frm.doc.company? frappe.get_doc(":Company", frm.doc.company).default_currency: "";
 
 		frm.set_currency_labels(["base_paid_amount", "base_received_amount", "base_total_allocated_amount",
-			"difference_amount", "base_paid_amount_after_tax", "base_received_amount_after_tax"], company_currency);
+			"difference_amount", "base_paid_amount_after_tax", "base_received_amount_after_tax",
+			"base_total_taxes_and_charges"], company_currency);
 
 		frm.set_currency_labels(["paid_amount"], frm.doc.paid_from_account_currency);
 		frm.set_currency_labels(["received_amount"], frm.doc.paid_to_account_currency);
@@ -339,6 +348,8 @@ frappe.ui.form.on('Payment Entry', {
 			}
 			frm.set_party_account_based_on_party = true;
 
+			let company_currency = frappe.get_doc(":Company", frm.doc.company).default_currency;
+
 			return frappe.call({
 				method: "erpnext.accounts.doctype.payment_entry.payment_entry.get_party_details",
 				args: {
@@ -372,7 +383,11 @@ frappe.ui.form.on('Payment Entry', {
 								if (r.message.bank_account) {
 									frm.set_value("bank_account", r.message.bank_account);
 								}
-							}
+							},
+							() => frm.events.set_current_exchange_rate(frm, "source_exchange_rate",
+									frm.doc.paid_from_account_currency, company_currency),
+							() => frm.events.set_current_exchange_rate(frm, "target_exchange_rate",
+									frm.doc.paid_to_account_currency, company_currency)
 						]);
 					}
 				}
@@ -476,14 +491,14 @@ frappe.ui.form.on('Payment Entry', {
 	},
 
 	paid_from_account_currency: function(frm) {
-		if(!frm.doc.paid_from_account_currency) return;
-		var company_currency = frappe.get_doc(":Company", frm.doc.company).default_currency;
+		if(!frm.doc.paid_from_account_currency || !frm.doc.company) return;
+		let company_currency = frappe.get_doc(":Company", frm.doc.company).default_currency;
 
 		if (frm.doc.paid_from_account_currency == company_currency) {
 			frm.set_value("source_exchange_rate", 1);
 		} else if (frm.doc.paid_from){
 			if (in_list(["Internal Transfer", "Pay"], frm.doc.payment_type)) {
-				var company_currency = frappe.get_doc(":Company", frm.doc.company).default_currency;
+				let company_currency = frappe.get_doc(":Company", frm.doc.company).default_currency;
 				frappe.call({
 					method: "erpnext.setup.utils.get_exchange_rate",
 					args: {
@@ -503,8 +518,8 @@ frappe.ui.form.on('Payment Entry', {
 	},
 
 	paid_to_account_currency: function(frm) {
-		if(!frm.doc.paid_to_account_currency) return;
-		var company_currency = frappe.get_doc(":Company", frm.doc.company).default_currency;
+		if(!frm.doc.paid_to_account_currency || !frm.doc.company) return;
+		let company_currency = frappe.get_doc(":Company", frm.doc.company).default_currency;
 
 		frm.events.set_current_exchange_rate(frm, "target_exchange_rate",
 			frm.doc.paid_to_account_currency, company_currency);
@@ -531,8 +546,8 @@ frappe.ui.form.on('Payment Entry', {
 	source_exchange_rate: function(frm) {
 		if (frm.doc.paid_amount) {
 			frm.set_value("base_paid_amount", flt(frm.doc.paid_amount) * flt(frm.doc.source_exchange_rate));
-			if(!frm.set_paid_amount_based_on_received_amount &&
-					(frm.doc.paid_from_account_currency == frm.doc.paid_to_account_currency)) {
+			// target exchange rate should always be same as source if both account currencies are same
+			if(frm.doc.paid_from_account_currency == frm.doc.paid_to_account_currency) {
 				frm.set_value("target_exchange_rate", frm.doc.source_exchange_rate);
 				frm.set_value("base_received_amount", frm.doc.base_paid_amount);
 			}
@@ -870,7 +885,7 @@ frappe.ui.form.on('Payment Entry', {
 				&& frm.doc.base_total_allocated_amount < frm.doc.base_received_amount + total_deductions
 				&& frm.doc.total_allocated_amount < frm.doc.paid_amount + (total_deductions / frm.doc.source_exchange_rate)) {
 					unallocated_amount = (frm.doc.base_received_amount + total_deductions + frm.doc.base_total_taxes_and_charges
-						+ frm.doc.base_total_allocated_amount) / frm.doc.source_exchange_rate;
+						- frm.doc.base_total_allocated_amount) / frm.doc.source_exchange_rate;
 			} else if (frm.doc.payment_type == "Pay"
 				&& frm.doc.base_total_allocated_amount < frm.doc.base_paid_amount - total_deductions
 				&& frm.doc.total_allocated_amount < frm.doc.received_amount + (total_deductions / frm.doc.target_exchange_rate)) {

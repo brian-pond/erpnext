@@ -214,6 +214,7 @@ frappe.ui.form.on('Material Request', {
 					material_request_type: frm.doc.material_request_type,
 					plc_conversion_rate: 1,
 					rate: item.rate,
+					uom: item.uom,
 					conversion_factor: item.conversion_factor
 				},
 				overwrite_warehouse: overwrite_warehouse
@@ -392,6 +393,7 @@ frappe.ui.form.on("Material Request Item", {
 	item_code: function(frm, doctype, name) {
 		const item = locals[doctype][name];
 		item.rate = 0;
+		item.uom = '';
 		set_schedule_date(frm);
 		frm.events.get_item_data(frm, item, true);
 	},
@@ -434,7 +436,7 @@ erpnext.buying.MaterialRequestController = erpnext.buying.BuyingController.exten
 			if (doc.material_request_type == "Customer Provided") {
 				return{
 					query: "erpnext.controllers.queries.item_query",
-					filters:{ 
+					filters:{
 						'customer': me.frm.doc.customer,
 						'is_stock_item':1
 					}

@@ -1,17 +1,21 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2019, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-from __future__ import unicode_literals
-import frappe, erpnext
+
+import frappe
 from frappe import _
-from frappe.model.document import Document
-from frappe.utils import nowdate, getdate, add_days, flt
-from erpnext.controllers.accounts_controller import AccountsController
+from frappe.utils import add_days, flt, get_datetime, nowdate
+
+import erpnext
 from erpnext.accounts.general_ledger import make_gl_entries
-from erpnext.loan_management.doctype.process_loan_interest_accrual.process_loan_interest_accrual import process_loan_interest_accrual_for_demand_loans
-from erpnext.loan_management.doctype.loan_security_unpledge.loan_security_unpledge import get_pledged_security_qty
-from frappe.utils import get_datetime
+from erpnext.controllers.accounts_controller import AccountsController
+from erpnext.loan_management.doctype.loan_security_unpledge.loan_security_unpledge import (
+	get_pledged_security_qty,
+)
+from erpnext.loan_management.doctype.process_loan_interest_accrual.process_loan_interest_accrual import (
+	process_loan_interest_accrual_for_demand_loans,
+)
+
 
 class LoanDisbursement(AccountsController):
 
@@ -37,9 +41,6 @@ class LoanDisbursement(AccountsController):
 
 		if not self.posting_date:
 			self.posting_date = self.disbursement_date or nowdate()
-
-		if not self.bank_account and self.applicant_type == "Customer":
-			self.bank_account = frappe.db.get_value("Customer", self.applicant, "default_bank_account")
 
 	def validate_disbursal_amount(self):
 		possible_disbursal_amount = get_disbursal_amount(self.against_loan)
@@ -113,12 +114,11 @@ class LoanDisbursement(AccountsController):
 
 	def make_gl_entries(self, cancel=0, adv_adj=0):
 		gle_map = []
-		loan_details = frappe.get_doc("Loan", self.against_loan)
 
 		gle_map.append(
 			self.get_gl_dict({
-				"account": loan_details.loan_account,
-				"against": loan_details.payment_account,
+				"account": self.loan_account,
+				"against": self.disbursement_account,
 				"debit": self.disbursed_amount,
 				"debit_in_account_currency": self.disbursed_amount,
 				"against_voucher_type": "Loan",
@@ -133,8 +133,8 @@ class LoanDisbursement(AccountsController):
 
 		gle_map.append(
 			self.get_gl_dict({
-				"account": loan_details.payment_account,
-				"against": loan_details.loan_account,
+				"account": self.disbursement_account,
+				"against": self.loan_account,
 				"credit": self.disbursed_amount,
 				"credit_in_account_currency": self.disbursed_amount,
 				"against_voucher_type": "Loan",
@@ -172,27 +172,26 @@ def get_total_pledged_security_value(loan):
 
 @frappe.whitelist()
 def get_disbursal_amount(loan, on_current_security_price=0):
+	from erpnext.loan_management.doctype.loan_repayment.loan_repayment import (
+		get_pending_principal_amount,
+	)
+
 	loan_details = frappe.get_value("Loan", loan, ["loan_amount", "disbursed_amount", "total_payment",
 		"total_principal_paid", "total_interest_payable", "status", "is_term_loan", "is_secured_loan",
-		"maximum_loan_amount"], as_dict=1)
+		"maximum_loan_amount", "written_off_amount"], as_dict=1)
 
 	if loan_details.is_secured_loan and frappe.get_all('Loan Security Shortfall', filters={'loan': loan,
 		'status': 'Pending'}):
 		return 0
 
-	if loan_details.status == 'Disbursed':
-		pending_principal_amount = flt(loan_details.total_payment) - flt(loan_details.total_interest_payable) \
-			- flt(loan_details.total_principal_paid)
-	else:
-		pending_principal_amount = flt(loan_details.disbursed_amount) - flt(loan_details.total_interest_payable) \
-			- flt(loan_details.total_principal_paid)
+	pending_principal_amount = get_pending_principal_amount(loan_details)
 
 	security_value = 0.0
 	if loan_details.is_secured_loan and on_current_security_price:
 		security_value = get_total_pledged_security_value(loan)
 
 	if loan_details.is_secured_loan and not on_current_security_price:
-		security_value = flt(loan_details.maximum_loan_amount)
+		security_value = get_maximum_amount_as_per_pledged_security(loan)
 
 	if not security_value and not loan_details.is_secured_loan:
 		security_value = flt(loan_details.loan_amount)
@@ -204,4 +203,5 @@ def get_disbursal_amount(loan, on_current_security_price=0):
 
 	return disbursal_amount
 
-
+def get_maximum_amount_as_per_pledged_security(loan):
+	return flt(frappe.db.get_value('Loan Security Pledge', {'loan': loan}, 'sum(maximum_loan_value)'))

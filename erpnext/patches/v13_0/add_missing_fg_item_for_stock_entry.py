@@ -2,9 +2,11 @@
 # License: GNU General Public License v3. See license.txt
 
 import frappe
-from frappe.utils import cstr, flt, cint
-from erpnext.stock.stock_ledger import make_sl_entries
+from frappe.utils import cint, cstr, flt
+
 from erpnext.controllers.stock_controller import create_repost_item_valuation_entry
+from erpnext.stock.stock_ledger import make_sl_entries
+
 
 def execute():
 	if not frappe.db.has_column('Work Order', 'has_batch_no'):
@@ -30,19 +32,20 @@ def execute():
 		return
 
 	repost_stock_entries = []
+
 	stock_entries = frappe.db.sql_list('''
 		SELECT
 			se.name
 		FROM
 			`tabStock Entry` se
 		WHERE
-			se.purpose = 'Manufacture' and se.docstatus < 2 and se.work_order in {work_orders}
+			se.purpose = 'Manufacture' and se.docstatus < 2 and se.work_order in %s
 			and not exists(
 				select name from `tabStock Entry Detail` sed where sed.parent = se.name and sed.is_finished_item = 1
 			)
-		Order BY
+		ORDER BY
 			se.posting_date, se.posting_time
-	'''.format(work_orders=tuple(work_orders)))
+	''',  (work_orders,))
 
 	if stock_entries:
 		print('Length of stock entries', len(stock_entries))

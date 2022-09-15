@@ -1,9 +1,12 @@
-import frappe
 import copy
-from frappe import _
-from frappe.utils import flt, cint, get_link_to_form
 from collections import defaultdict
+
+import frappe
+from frappe import _
+from frappe.utils import cint, flt, get_link_to_form
+
 from erpnext.stock.doctype.serial_no.serial_no import get_serial_nos
+
 
 class Subcontracting():
 	def set_materials_for_subcontracted_items(self, raw_material_table):
@@ -360,20 +363,12 @@ class Subcontracting():
 			return
 
 		for row in self.get(self.raw_material_table):
-			self.__validate_consumed_qty(row)
-
 			key = (row.rm_item_code, row.main_item_code, row.purchase_order)
 			if not self.__transferred_items or not self.__transferred_items.get(key):
 				return
 
 			self.__validate_batch_no(row, key)
 			self.__validate_serial_no(row, key)
-
-	def __validate_consumed_qty(self, row):
-		if self.backflush_based_on != 'BOM' and flt(row.consumed_qty) == 0.0:
-			msg = f'Row {row.idx}: the consumed qty cannot be zero for the item {frappe.bold(row.rm_item_code)}'
-
-			frappe.throw(_(msg),title=_('Consumed Items Qty Check'))
 
 	def __validate_batch_no(self, row, key):
 		if row.get('batch_no') and row.get('batch_no') not in self.__transferred_items.get(key).get('batch_no'):

@@ -1,17 +1,30 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2017, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-from __future__ import unicode_literals
-import frappe, erpnext
-from frappe.model.document import Document
+
+import frappe
 from dateutil.relativedelta import relativedelta
-from frappe.utils import cint, flt, add_days, getdate, add_to_date, DATE_FORMAT, date_diff, comma_and
 from frappe import _
+from frappe.desk.reportview import get_filters_cond, get_match_cond
+from frappe.model.document import Document
+from frappe.utils import (
+	DATE_FORMAT,
+	add_days,
+	add_to_date,
+	cint,
+	comma_and,
+	date_diff,
+	flt,
+	getdate,
+)
+
+import erpnext
+from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import (
+	get_accounting_dimensions,
+)
 from erpnext.accounts.utils import get_fiscal_year
 from erpnext.hr.doctype.employee.employee import get_holiday_list_for_employee
-from frappe.desk.reportview import get_match_cond, get_filters_cond
-from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import get_accounting_dimensions
+
 
 class PayrollEntry(Document):
 	def onload(self):
@@ -47,6 +60,8 @@ class PayrollEntry(Document):
 	def on_cancel(self):
 		frappe.delete_doc("Salary Slip", frappe.db.sql_list("""select name from `tabSalary Slip`
 			where payroll_entry=%s """, (self.name)))
+		self.db_set("salary_slips_created", 0)
+		self.db_set("salary_slips_submitted", 0)
 
 	def get_emp_list(self):
 		"""
@@ -337,23 +352,24 @@ class PayrollEntry(Document):
 		currencies = []
 		multi_currency = 0
 		company_currency = erpnext.get_company_currency(self.company)
+		accounting_dimensions = get_accounting_dimensions() or []
 
 		exchange_rate, amount = self.get_amount_and_exchange_rate_for_journal_entry(self.payment_account, je_payment_amount, company_currency, currencies)
-		accounts.append({
+		accounts.append(self.update_accounting_dimensions({
 			"account": self.payment_account,
 			"bank_account": self.bank_account,
 			"credit_in_account_currency": flt(amount, precision),
 			"exchange_rate": flt(exchange_rate),
-		})
+		}, accounting_dimensions))
 
 		exchange_rate, amount = self.get_amount_and_exchange_rate_for_journal_entry(payroll_payable_account, je_payment_amount, company_currency, currencies)
-		accounts.append({
+		accounts.append(self.update_accounting_dimensions({
 			"account": payroll_payable_account,
 			"debit_in_account_currency": flt(amount, precision),
 			"exchange_rate": flt(exchange_rate),
 			"reference_type": self.doctype,
 			"reference_name": self.name
-		})
+		}, accounting_dimensions))
 
 		if len(currencies) > 1:
 				multi_currency = 1
@@ -463,11 +479,12 @@ def get_emp_list(sal_struct, cond, end_date, payroll_payable_account):
 		""" % cond, {"sal_struct": tuple(sal_struct), "from_date": end_date, "payroll_payable_account": payroll_payable_account}, as_dict=True)
 
 def remove_payrolled_employees(emp_list, start_date, end_date):
+	new_emp_list = []
 	for employee_details in emp_list:
-		if frappe.db.exists("Salary Slip", {"employee": employee_details.employee, "start_date": start_date, "end_date": end_date, "docstatus": 1}):
-			emp_list.remove(employee_details)
+		if not frappe.db.exists("Salary Slip", {"employee": employee_details.employee, "start_date": start_date, "end_date": end_date, "docstatus": 1}):
+			new_emp_list.append(employee_details)
 
-	return emp_list
+	return new_emp_list
 
 @frappe.whitelist()
 def get_start_end_dates(payroll_frequency, start_date=None, company=None):
@@ -529,7 +546,8 @@ def get_end_date(start_date, frequency):
 def get_month_details(year, month):
 	ysd = frappe.db.get_value("Fiscal Year", year, "year_start_date")
 	if ysd:
-		import calendar, datetime
+		import calendar
+		import datetime
 		diff_mnt = cint(month)-cint(ysd.month)
 		if diff_mnt<0:
 			diff_mnt = 12-int(ysd.month)+cint(month)
@@ -653,7 +671,7 @@ def get_payroll_entries_for_jv(doctype, txt, searchfield, start, page_len, filte
 				where reference_type="Payroll Entry")
 		order by name limit %(start)s, %(page_len)s"""
 		.format(key=searchfield), {
-			'txt': "%%%s%%" % frappe.db.escape(txt),
+			'txt': "%%%s%%" % txt,
 			'start': start, 'page_len': page_len
 		})
 

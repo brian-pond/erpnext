@@ -1,25 +1,33 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
+<<<<<<< HEAD
 # pylint: disable=protected-access,pointless-string-statement
 
 from __future__ import unicode_literals
+=======
+
+import json
+
+>>>>>>> temp1
 import frappe
 from frappe import _, throw
-from frappe.utils import flt, cint, add_days, cstr, add_months, getdate
-import json, copy
-from erpnext.accounts.doctype.pricing_rule.pricing_rule import get_pricing_rule_for_item, set_transaction_type
-from erpnext.setup.utils import get_exchange_rate
 from frappe.model.meta import get_field_precision
-from erpnext.stock.doctype.batch.batch import get_batch_no
-from erpnext import get_company_currency
-from erpnext.stock.doctype.item.item import get_item_defaults, get_uom_conv_factor
-from erpnext.stock.doctype.price_list.price_list import get_price_list_details
-from erpnext.setup.doctype.item_group.item_group import get_item_group_defaults
-from erpnext.setup.doctype.brand.brand import get_brand_defaults
-from erpnext.stock.doctype.item_manufacturer.item_manufacturer import get_item_manufacturer_part_no
+from frappe.utils import add_days, add_months, cint, cstr, flt, getdate
+from six import iteritems, string_types
 
-from six import string_types, iteritems
+from erpnext import get_company_currency
+from erpnext.accounts.doctype.pricing_rule.pricing_rule import (
+	get_pricing_rule_for_item,
+	set_transaction_type,
+)
+from erpnext.setup.doctype.brand.brand import get_brand_defaults
+from erpnext.setup.doctype.item_group.item_group import get_item_group_defaults
+from erpnext.setup.utils import get_exchange_rate
+from erpnext.stock.doctype.batch.batch import get_batch_no
+from erpnext.stock.doctype.item.item import get_item_defaults, get_uom_conv_factor
+from erpnext.stock.doctype.item_manufacturer.item_manufacturer import get_item_manufacturer_part_no
+from erpnext.stock.doctype.price_list.price_list import get_price_list_details
 
 sales_doctypes = ['Quotation', 'Sales Order', 'Delivery Note', 'Sales Invoice', 'POS Invoice']
 purchase_doctypes = ['Material Request', 'Supplier Quotation', 'Purchase Order', 'Purchase Receipt', 'Purchase Invoice']
@@ -80,8 +88,7 @@ def get_item_details(args, doc=None, for_validate=False, overwrite_warehouse=Tru
 
 	update_party_blanket_order(args, out)
 
-	
-	get_price_list_rate(args, item, out)
+	out.update(get_price_list_rate(args, item))
 
 	if args.customer and cint(args.is_pos):
 		out.update(get_pos_profile_item_details(args.company, args, update_data=True))
@@ -91,7 +98,13 @@ def get_item_details(args, doc=None, for_validate=False, overwrite_warehouse=Tru
 		out.update(get_bin_details(args.item_code, args.get("from_warehouse")))
 
 	elif out.get("warehouse"):
-		out.update(get_bin_details(args.item_code, out.warehouse, args.company))
+		if doc and doc.get('doctype') == 'Purchase Order':
+			# calculate company_total_stock only for po
+			bin_details = get_bin_details(args.item_code, out.warehouse, args.company)
+		else:
+			bin_details = get_bin_details(args.item_code, out.warehouse)
+
+		out.update(bin_details)
 
 	# update args with out, if key or value not exists
 	for key, value in iteritems(out):
@@ -288,6 +301,10 @@ def get_basic_details(args, item, overwrite_warehouse=True):
 		else:
 			args.uom = item.stock_uom
 
+	if (args.get("batch_no") and
+		item.name != frappe.get_cached_value('Batch', args.get("batch_no"), 'item')):
+		args['batch_no'] = ''
+
 	out = frappe._dict({
 		"item_code": item.name,
 		"item_name": item.item_name,
@@ -296,6 +313,7 @@ def get_basic_details(args, item, overwrite_warehouse=True):
 		"warehouse": warehouse,
 		"income_account": get_default_income_account(args, item_defaults, item_group_defaults, brand_defaults),
 		"expense_account": expense_account or get_default_expense_account(args, item_defaults, item_group_defaults, brand_defaults) ,
+		"discount_account": get_default_discount_account(args, item_defaults),
 		"cost_center": get_default_cost_center(args, item_defaults, item_group_defaults, brand_defaults),
 		'has_serial_no': item.has_serial_no,
 		'has_batch_no': item.has_batch_no,
@@ -313,6 +331,7 @@ def get_basic_details(args, item, overwrite_warehouse=True):
 		"net_rate": 0.0,
 		"net_amount": 0.0,
 		"discount_percentage": 0.0,
+		"discount_amount": 0.0,
 		"supplier": get_default_supplier(args, item_defaults, item_group_defaults, brand_defaults),
 		"update_stock": args.get("update_stock") if args.get('doctype') in ['Sales Invoice', 'Purchase Invoice'] else 0,
 		"delivered_by_supplier": item.delivered_by_supplier if args.get("doctype") in ["Sales Order", "Sales Invoice"] else 0,
@@ -322,7 +341,8 @@ def get_basic_details(args, item, overwrite_warehouse=True):
 		"against_blanket_order": args.get("against_blanket_order"),
 		"bom_no": item.get("default_bom"),
 		"weight_per_unit": args.get("weight_per_unit") or item.get("weight_per_unit"),
-		"weight_uom": args.get("weight_uom") or item.get("weight_uom")
+		"weight_uom": args.get("weight_uom") or item.get("weight_uom"),
+		"grant_commission": item.get("grant_commission")
 	})
 
 	if item.get("enable_deferred_revenue") or item.get("enable_deferred_expense"):
@@ -337,6 +357,7 @@ def get_basic_details(args, item, overwrite_warehouse=True):
 
 	args.conversion_factor = out.conversion_factor
 	out.stock_qty = out.qty * out.conversion_factor
+	args.stock_qty = out.stock_qty
 
 	# calculate last purchase rate
 	if args.get('doctype') in purchase_doctypes:
@@ -352,7 +373,7 @@ def get_basic_details(args, item, overwrite_warehouse=True):
 			if not out[d[1]]:
 				out[d[1]] = frappe.get_cached_value('Company',  args.company,  d[2]) if d[2] else None
 
-	for fieldname in ("item_name", "item_group", "barcodes", "brand", "stock_uom"):
+	for fieldname in ("item_name", "item_group", "brand", "stock_uom"):
 		out[fieldname] = item.get(fieldname)
 
 	if args.get("manufacturer"):
@@ -485,9 +506,15 @@ def get_item_tax_template(args, item, out):
 			"item_tax_template": None
 		}
 	"""
+<<<<<<< HEAD
 	# Datahenge: Commenting this out.  It literally gets redefined the very next line.
 	# item_tax_template = args.get("item_tax_template")
 	item_tax_template = _get_item_tax_template(args, item.taxes, out)
+=======
+	item_tax_template = None
+	if item.taxes:
+		item_tax_template = _get_item_tax_template(args, item.taxes, out)
+>>>>>>> temp1
 
 	if not item_tax_template:
 		item_group = item.item_group
@@ -503,17 +530,17 @@ def _get_item_tax_template(args, taxes, out=None, for_validate=False):
 	taxes_with_no_validity = []
 
 	for tax in taxes:
-		tax_company = frappe.get_value("Item Tax Template", tax.item_tax_template, 'company')
-		if (tax.valid_from or tax.maximum_net_rate) and tax_company == args['company']:
-			# In purchase Invoice first preference will be given to supplier invoice date
-			# if supplier date is not present then posting date
-			validation_date = args.get('transaction_date') or args.get('bill_date') or args.get('posting_date')
+		tax_company = frappe.get_cached_value("Item Tax Template", tax.item_tax_template, 'company')
+		if tax_company == args['company']:
+			if (tax.valid_from or tax.maximum_net_rate):
+				# In purchase Invoice first preference will be given to supplier invoice date
+				# if supplier date is not present then posting date
+				validation_date = args.get('transaction_date') or args.get('bill_date') or args.get('posting_date')
 
-			if getdate(tax.valid_from) <= getdate(validation_date) \
-				and is_within_valid_range(args, tax):
-				taxes_with_validity.append(tax)
-		else:
-			if tax_company == args['company']:
+				if getdate(tax.valid_from) <= getdate(validation_date) \
+					and is_within_valid_range(args, tax):
+					taxes_with_validity.append(tax)
+			else:
 				taxes_with_no_validity.append(tax)
 
 	if taxes_with_validity:
@@ -599,6 +626,10 @@ def get_default_expense_account(args, item, item_group, brand):
 		or brand.get("expense_account")
 		or args.expense_account)
 
+def get_default_discount_account(args, item):
+	return (item.get("default_discount_account")
+		or args.discount_account)
+
 def get_default_deferred_account(args, item, fieldname=None):
 	if item.get("enable_deferred_revenue") or item.get("enable_deferred_expense"):
 		return (item.get(fieldname)
@@ -648,7 +679,10 @@ def get_default_supplier(args, item, item_group, brand):
 		or item_group.get("default_supplier")
 		or brand.get("default_supplier"))
 
-def get_price_list_rate(args, item_doc, out):
+def get_price_list_rate(args, item_doc, out=None):
+	if out is None:
+		out = frappe._dict()
+
 	meta = frappe.get_meta(args.parenttype or args.doctype)
 
 	if meta.get_field("currency") or args.get('currency'):
@@ -661,17 +695,17 @@ def get_price_list_rate(args, item_doc, out):
 		if meta.get_field("currency"):
 			validate_conversion_rate(args, meta)
 
-		price_list_rate = get_price_list_rate_for(args, item_doc.name) or 0
+		price_list_rate = get_price_list_rate_for(args, item_doc.name)
 
 		# variant
-		if not price_list_rate and item_doc.variant_of:
+		if price_list_rate is None and item_doc.variant_of:
 			price_list_rate = get_price_list_rate_for(args, item_doc.variant_of)
 
 		# insert in database
-		if not price_list_rate:
+		if price_list_rate is None:
 			if args.price_list and args.rate:
 				insert_item_price(args)
-			return {}
+			return out
 
 		out.price_list_rate = flt(price_list_rate) * flt(args.plc_conversion_rate) \
 			/ flt(args.conversion_rate)
@@ -680,6 +714,8 @@ def get_price_list_rate(args, item_doc, out):
 			from erpnext.stock.doctype.item.item import get_last_purchase_details
 			out.update(get_last_purchase_details(item_doc.name,
 				args.name, args.conversion_rate))
+
+	return out
 
 def insert_item_price(args):
 	"""Insert Item Price if Price List and Price List Rate are specified and currency is the same"""
@@ -693,7 +729,7 @@ def insert_item_price(args):
 				{'item_code': args.item_code, 'price_list': args.price_list, 'currency': args.currency},
 				['name', 'price_list_rate'], as_dict=1)
 			if item_price and item_price.name:
-				if item_price.price_list_rate != price_list_rate:
+				if item_price.price_list_rate != price_list_rate and frappe.db.get_single_value('Stock Settings', 'update_existing_price_list_rate'):
 					frappe.db.set_value('Item Price', item_price.name, "price_list_rate", price_list_rate)
 					frappe.msgprint(_("Item Price updated for {0} in Price List {1}").format(args.item_code,
 						args.price_list), alert=True)
@@ -882,8 +918,7 @@ def get_pos_profile_item_details(company, args, pos_profile=None, update_data=Fa
 				res[fieldname] = pos_profile.get(fieldname)
 
 		if res.get("warehouse"):
-			res.actual_qty = get_bin_details(args.item_code,
-				res.warehouse).get("actual_qty")
+			res.actual_qty = get_bin_details(args.item_code, res.warehouse).get("actual_qty")
 
 	return res
 
@@ -1083,9 +1118,8 @@ def apply_price_list(args, as_doc=False):
 		}
 
 def apply_price_list_on_item(args):
-	item_details = frappe._dict()
-	item_doc = frappe.get_doc("Item", args.item_code)
-	get_price_list_rate(args, item_doc, item_details)
+	item_doc = frappe.db.get_value("Item", args.item_code, ['name', 'variant_of'], as_dict=1)
+	item_details = get_price_list_rate(args, item_doc)
 
 	item_details.update(get_pricing_rule_for_item(args, item_details.price_list_rate))
 

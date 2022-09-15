@@ -1,19 +1,20 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2017, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
-from __future__ import unicode_literals
+
 import json
+from datetime import datetime
+
 import frappe
 import six
-import os
-from datetime import datetime
-from frappe.model.document import Document
-from frappe.email import sendmail_to_system_managers
-from frappe.utils import add_days, add_years, nowdate, getdate, add_months, get_link_to_form
-from erpnext.non_profit.doctype.member.member import create_member
 from frappe import _
+from frappe.email import sendmail_to_system_managers
+from frappe.model.document import Document
+from frappe.utils import add_days, add_months, add_years, get_link_to_form, getdate, nowdate
+
 import erpnext
+from erpnext.non_profit.doctype.member.member import create_member
+
 
 class Membership(Document):
 	def validate(self):
@@ -103,7 +104,7 @@ class Membership(Document):
 		return invoice
 
 	def validate_membership_type_and_settings(self, plan, settings):
-		settings_link = get_link_to_form("Membership Type", self.membership_type)
+		settings_link = get_link_to_form("Non Profit Settings", "Non Profit Settings")
 
 		if not settings.membership_debit_account:
 			frappe.throw(_("You need to set <b>Debit Account</b> in {0}").format(settings_link))
@@ -207,7 +208,7 @@ def get_member_based_on_subscription(subscription_id, email=None, customer_id=No
 
 	try:
 		return frappe.get_doc("Member", members[0]["name"])
-	except:
+	except Exception:
 		return None
 
 
@@ -393,7 +394,7 @@ def notify_failure(log):
 		""".format(get_link_to_form("Error Log", log.name))
 
 		sendmail_to_system_managers("[Important] [ERPNext] Razorpay membership webhook failed , please check.", content)
-	except:
+	except Exception:
 		pass
 
 
@@ -402,14 +403,14 @@ def get_plan_from_razorpay_id(plan_id):
 
 	try:
 		return plan[0]["name"]
-	except:
+	except Exception:
 		return None
 
 
 def set_expired_status():
 	frappe.db.sql("""
 		UPDATE
-			`tabMembership` SET `status` = 'Expired'
+			`tabMembership` SET `membership_status` = 'Expired'
 		WHERE
-			`status` not in ('Cancelled') AND `to_date` < %s
+			`membership_status` not in ('Cancelled') AND `to_date` < %s
 		""", (nowdate()))

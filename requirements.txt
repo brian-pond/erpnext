@@ -7,11 +7,10 @@ pycountry~=20.7.3
 PyGithub~=1.54.1
 python-stdnum~=1.16
 python-youtube~=0.8.0
+redisearch==2.0.0
 taxjar~=1.9.2
 tweepy~=3.10.0
 Unidecode~=1.2.0
-WooCommerce==2.1.1
-
 
 # Python package requirements ERPNext v13
 # Datahenge version.
@@ -27,4 +26,3 @@ WooCommerce==2.1.1
 # python-stdnum validates all sorts of numbering conventions: Mac Address, Phone Number, IP, SSN, tons more.
 # TaxJar has an API for sales tax.  Seems like a modern Avalara
 # Tweepy: Library for Twitter API
-# WooCommerce: Built on Wordpress, alternative to Shopify.

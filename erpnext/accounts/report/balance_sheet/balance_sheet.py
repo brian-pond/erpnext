@@ -1,12 +1,18 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
-from __future__ import unicode_literals
+
 import frappe
 from frappe import _
-from frappe.utils import flt, cint
-from erpnext.accounts.report.financial_statements import (get_period_list, get_columns, get_data,
-	get_filtered_list_for_consolidated_report)
+from frappe.utils import cint, flt
+
+from erpnext.accounts.report.financial_statements import (
+	get_columns,
+	get_data,
+	get_filtered_list_for_consolidated_report,
+	get_period_list,
+)
+
 
 def execute(filters=None):
 	period_list = get_period_list(filters.from_fiscal_year, filters.to_fiscal_year,
@@ -114,11 +120,11 @@ def check_opening_balance(asset, liability, equity):
 	opening_balance = 0
 	float_precision = cint(frappe.db.get_default("float_precision")) or 2
 	if asset:
-		opening_balance = flt(asset[0].get("opening_balance", 0), float_precision)
+		opening_balance = flt(asset[-1].get("opening_balance", 0), float_precision)
 	if liability:
-		opening_balance -= flt(liability[0].get("opening_balance", 0), float_precision)
+		opening_balance -= flt(liability[-1].get("opening_balance", 0), float_precision)
 	if equity:
-		opening_balance -= flt(equity[0].get("opening_balance", 0), float_precision)
+		opening_balance -= flt(equity[-1].get("opening_balance", 0), float_precision)
 
 	opening_balance = flt(opening_balance, float_precision)
 	if opening_balance:

@@ -3,12 +3,20 @@
 
 # For license information, please see license.txt
 
+<<<<<<< HEAD
 from __future__ import unicode_literals
 import frappe
 import erpnext
+=======
+
+import frappe
+>>>>>>> temp1
 from frappe import _, msgprint, throw
-from frappe.utils import flt, fmt_money
 from frappe.model.document import Document
+from frappe.utils import flt, fmt_money
+
+import erpnext
+
 
 class OverlappingConditionError(frappe.ValidationError): pass
 class FromGreaterThanToError(frappe.ValidationError): pass

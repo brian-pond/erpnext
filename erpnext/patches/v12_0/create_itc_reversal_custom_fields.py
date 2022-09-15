@@ -1,8 +1,10 @@
-from __future__ import unicode_literals
+
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+
 from erpnext.regional.india.utils import get_gst_accounts
+
 
 def execute():
 	company = frappe.get_all('Company', filters = {'country': 'India'}, fields=['name'])
@@ -96,6 +98,8 @@ def execute():
 				'itc_central_tax': 0,
 				'itc_cess_amount': 0
 			})
+			if not gst_accounts:
+				continue
 
 			if d.account_head in gst_accounts.get('igst_account'):
 				amount_map[d.parent]['itc_integrated_tax'] += d.amount

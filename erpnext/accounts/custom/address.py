@@ -1,7 +1,10 @@
 import frappe
 from frappe import _
-from frappe.contacts.doctype.address.address import Address
-from frappe.contacts.doctype.address.address import get_address_templates, get_address_display
+from frappe.contacts.doctype.address.address import (
+	Address,
+	get_address_display,
+	get_address_templates,
+)
 
 class ERPNextAddress(Address):
 	def validate(self):
@@ -24,11 +27,12 @@ class ERPNextAddress(Address):
 
 	def on_update(self):
 		"""
-		Datahenge: After Address is updated, update the related 'Primary Address' on Customer.
+		After Address is updated, update the related 'Primary Address' on Customer.
 		"""
-		super(ERPNextAddress, self).on_update()
 		address_display = get_address_display(self.as_dict())
-		filters = { "customer_primary_address": self.name }
+		filters = {
+			"customer_primary_address": self.name
+		}
 		customers = frappe.db.get_all("Customer", filters=filters, as_list=True)
 		for customer_name in customers:
 			frappe.db.set_value("Customer", customer_name[0], "primary_address", address_display)

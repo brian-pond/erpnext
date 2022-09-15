@@ -1,26 +1,38 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
-from __future__ import unicode_literals
-import unittest
-import frappe
+
 import json
 
+import frappe
 from frappe.test_runner import make_test_objects
-from erpnext.controllers.item_variant import (create_variant, ItemVariantExistsError,
-	InvalidItemAttributeValueError, get_variant)
-from erpnext.stock.doctype.item.item import StockExistsForTemplate, InvalidBarcode
-from erpnext.stock.doctype.item.item import (get_uom_conv_factor, get_item_attribute,
-	validate_is_stock_item, get_timeline_data)
+from frappe.tests.utils import FrappeTestCase, change_settings
+
+from erpnext.controllers.item_variant import (
+	InvalidItemAttributeValueError,
+	ItemVariantExistsError,
+	create_variant,
+	get_variant,
+)
+from erpnext.stock.doctype.item.item import (
+	DataValidationError,
+	InvalidBarcode,
+	StockExistsForTemplate,
+	get_item_attribute,
+	get_timeline_data,
+	get_uom_conv_factor,
+	validate_is_stock_item,
+)
 from erpnext.stock.doctype.stock_entry.stock_entry_utils import make_stock_entry
 from erpnext.stock.get_item_details import get_item_details
-from erpnext.tests.utils import change_settings
-
 
 test_ignore = ["BOM"]
 test_dependencies = ["Warehouse", "Item Group", "Item Tax Template", "Brand", "Item Attribute"]
 
-def make_item(item_code, properties=None):
+def make_item(item_code=None, properties=None):
+	if not item_code:
+		item_code = frappe.generate_hash(length=16)
+
 	if frappe.db.exists("Item", item_code):
 		return frappe.get_doc("Item", item_code)
 
@@ -43,8 +55,9 @@ def make_item(item_code, properties=None):
 
 	return item
 
-class TestItem(unittest.TestCase):
+class TestItem(FrappeTestCase):
 	def setUp(self):
+		super().setUp()
 		frappe.flags.attribute_values = None
 
 	def get_item(self, idx):
@@ -83,14 +96,17 @@ class TestItem(unittest.TestCase):
 
 		make_test_objects("Item Price")
 
+		company = "_Test Company"
+		currency = frappe.get_cached_value("Company",  company,  "default_currency")
+
 		details = get_item_details({
 			"item_code": "_Test Item",
-			"company": "_Test Company",
+			"company": company,
 			"price_list": "_Test Price List",
-			"currency": "_Test Currency",
+			"currency": currency,
 			"doctype": "Sales Order",
 			"conversion_rate": 1,
-			"price_list_currency": "_Test Currency",
+			"price_list_currency": currency,
 			"plc_conversion_rate": 1,
 			"order_type": "Sales",
 			"customer": "_Test Customer",
@@ -219,6 +235,23 @@ class TestItem(unittest.TestCase):
 		for key, value in purchase_item_check.items():
 			self.assertEqual(value, purchase_item_details.get(key))
 
+	def test_item_default_validations(self):
+
+		with self.assertRaises(frappe.ValidationError) as ve:
+			make_item("Bad Item defaults", {
+				"item_group": "_Test Item Group",
+				"item_defaults": [{
+					"company": "_Test Company 1",
+					"default_warehouse": "_Test Warehouse - _TC",
+					"expense_account": "Stock In Hand - _TC",
+					"buying_cost_center": "_Test Cost Center - _TC",
+					"selling_cost_center": "_Test Cost Center - _TC",
+				}]
+			})
+
+		self.assertTrue("belong to company" in str(ve.exception).lower(),
+				msg="Mismatching company entities in item defaults should not be allowed.")
+
 	def test_item_attribute_change_after_variant(self):
 		frappe.delete_doc_if_exists("Item", "_Test Variant Item-L", force=1)
 
@@ -340,23 +373,44 @@ class TestItem(unittest.TestCase):
 		variant.save()
 
 	def test_item_merging(self):
-		create_item("Test Item for Merging 1")
-		create_item("Test Item for Merging 2")
+		old = create_item(frappe.generate_hash(length=20)).name
+		new = create_item(frappe.generate_hash(length=20)).name
 
-		make_stock_entry(item_code="Test Item for Merging 1", target="_Test Warehouse - _TC",
+		make_stock_entry(item_code=old, target="_Test Warehouse - _TC",
 			qty=1, rate=100)
-		make_stock_entry(item_code="Test Item for Merging 2", target="_Test Warehouse 1 - _TC",
+		make_stock_entry(item_code=old, target="_Test Warehouse 1 - _TC",
+			qty=1, rate=100)
+		make_stock_entry(item_code=new, target="_Test Warehouse 1 - _TC",
 			qty=1, rate=100)
 
-		frappe.rename_doc("Item", "Test Item for Merging 1", "Test Item for Merging 2", merge=True)
+		frappe.rename_doc("Item", old, new, merge=True)
 
-		self.assertFalse(frappe.db.exists("Item", "Test Item for Merging 1"))
+		self.assertFalse(frappe.db.exists("Item", old))
 
 		self.assertTrue(frappe.db.get_value("Bin",
-			{"item_code": "Test Item for Merging 2", "warehouse": "_Test Warehouse - _TC"}))
-
+			{"item_code": new, "warehouse": "_Test Warehouse - _TC"}))
 		self.assertTrue(frappe.db.get_value("Bin",
-			{"item_code": "Test Item for Merging 2", "warehouse": "_Test Warehouse 1 - _TC"}))
+			{"item_code": new, "warehouse": "_Test Warehouse 1 - _TC"}))
+
+	def test_item_merging_with_product_bundle(self):
+		from erpnext.selling.doctype.product_bundle.test_product_bundle import make_product_bundle
+
+		create_item("Test Item Bundle Item 1", is_stock_item=False)
+		create_item("Test Item Bundle Item 2", is_stock_item=False)
+		create_item("Test Item inside Bundle")
+		bundle_items = ["Test Item inside Bundle"]
+
+		# make bundles for both items
+		bundle1 = make_product_bundle("Test Item Bundle Item 1", bundle_items, qty=2)
+		make_product_bundle("Test Item Bundle Item 2", bundle_items, qty=2)
+
+		with self.assertRaises(DataValidationError):
+			frappe.rename_doc("Item", "Test Item Bundle Item 1", "Test Item Bundle Item 2", merge=True)
+
+		bundle1.delete()
+		frappe.rename_doc("Item", "Test Item Bundle Item 1", "Test Item Bundle Item 2", merge=True)
+
+		self.assertFalse(frappe.db.exists("Item", "Test Item Bundle Item 1"))
 
 	def test_uom_conversion_factor(self):
 		if frappe.db.exists('Item', 'Test Item UOM'):
@@ -459,7 +513,7 @@ class TestItem(unittest.TestCase):
 			item_doc.save()
 
 		# Check values saved correctly
-		barcodes = frappe.get_list(
+		barcodes = frappe.get_all(
 			'Item Barcode',
 			fields=['barcode', 'barcode_type'],
 			filters={'parent': item_code})
@@ -503,19 +557,6 @@ class TestItem(unittest.TestCase):
 			self.assertIsInstance(count, int)
 			self.assertTrue(count >= 0)
 
-	def test_index_creation(self):
-		"check if index is getting created in db"
-		from erpnext.stock.doctype.item.item import on_doctype_update
-		on_doctype_update()
-
-		indices = frappe.db.sql("show index from tabItem", as_dict=1)
-		expected_columns = {"item_code", "item_name", "item_group", "route"}
-		for index in indices:
-			expected_columns.discard(index.get("Column_name"))
-
-		if expected_columns:
-			self.fail(f"Expected db index on these columns: {', '.join(expected_columns)}")
-
 	def test_attribute_completions(self):
 		expected_attrs = {"Small", "Extra Small", "Extra Large", "Large", "2XL", "Medium"}
 
@@ -557,6 +598,16 @@ class TestItem(unittest.TestCase):
 		except frappe.ValidationError as e:
 			self.fail(f"UoM change not allowed even though no SLE / BIN with positive qty exists: {e}")
 
+	def test_erasure_of_old_conversions(self):
+		item = create_item("_item change uom")
+		item.stock_uom = "Gram"
+		item.append("uoms", frappe._dict(uom="Box", conversion_factor=2))
+		item.save()
+		item.reload()
+		item.stock_uom = "Nos"
+		item.save()
+		self.assertEqual(len(item.uoms), 1)
+
 	def test_validate_stock_item(self):
 		self.assertRaises(frappe.ValidationError, validate_is_stock_item, "_Test Non Stock Item")
 
@@ -587,8 +638,8 @@ def make_item_variant():
 test_records = frappe.get_test_records('Item')
 
 def create_item(item_code, is_stock_item=1, valuation_rate=0, warehouse="_Test Warehouse - _TC",
-		is_customer_provided_item=None, customer=None, is_purchase_item=None, opening_stock=0,
-		company="_Test Company"):
+		is_customer_provided_item=None, customer=None, is_purchase_item=None, opening_stock=0, is_fixed_asset=0,
+		asset_category=None, company="_Test Company"):
 	if not frappe.db.exists("Item", item_code):
 		item = frappe.new_doc("Item")
 		item.item_code = item_code
@@ -596,6 +647,8 @@ def create_item(item_code, is_stock_item=1, valuation_rate=0, warehouse="_Test W
 		item.description = item_code
 		item.item_group = "All Item Groups"
 		item.is_stock_item = is_stock_item
+		item.is_fixed_asset = is_fixed_asset
+		item.asset_category = asset_category
 		item.opening_stock = opening_stock
 		item.valuation_rate = valuation_rate
 		item.is_purchase_item = is_purchase_item

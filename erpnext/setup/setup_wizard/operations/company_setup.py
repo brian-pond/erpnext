@@ -1,12 +1,13 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
-from __future__ import unicode_literals
+
 import frappe
 from frappe import _
 from frappe.utils import cstr, getdate
+
 from .default_website import website_maker
-from erpnext.accounts.doctype.account.account import RootNotEditable
+
 
 def create_fiscal_year_and_company(args):
 	if (args.get('fy_start_date')):
@@ -34,7 +35,7 @@ def create_fiscal_year_and_company(args):
 def enable_shopping_cart(args):
 	# Needs price_lists
 	frappe.get_doc({
-		"doctype": "Shopping Cart Settings",
+		"doctype": "E Commerce Settings",
 		"enabled": 1,
 		'company': args.get('company_name')	,
 		'price_list': frappe.db.get_value("Price List", {"selling": 1}),
@@ -45,8 +46,15 @@ def enable_shopping_cart(args):
 def create_email_digest():
 	from frappe.utils.user import get_system_managers
 	system_managers = get_system_managers(only_name=True)
+
 	if not system_managers:
 		return
+
+	recipients = []
+	for d in system_managers:
+		recipients.append({
+			'recipient': d
+		})
 
 	companies = frappe.db.sql_list("select name FROM `tabCompany`")
 	for company in companies:
@@ -56,7 +64,7 @@ def create_email_digest():
 				"name": "Default Weekly Digest - " + company,
 				"company": company,
 				"frequency": "Weekly",
-				"recipient_list": "\n".join(system_managers)
+				"recipients": recipients
 			})
 
 			for df in edigest.meta.get("fields", {"fieldtype": "Check"}):
@@ -72,7 +80,7 @@ def create_email_digest():
 			"name": "Scheduler Errors",
 			"company": companies[0],
 			"frequency": "Daily",
-			"recipient_list": "\n".join(system_managers),
+			"recipients": recipients,
 			"scheduler_errors": 1,
 			"enabled": 1
 		})

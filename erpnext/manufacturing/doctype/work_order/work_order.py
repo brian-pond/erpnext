@@ -1,25 +1,46 @@
 # Copyright (c) 2021, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
-import frappe
 import json
-import math
-from frappe import _
-from frappe.utils import flt, get_datetime, getdate, date_diff, cint, nowdate, get_link_to_form, time_diff_in_hours
-from frappe.model.document import Document
-from erpnext.manufacturing.doctype.bom.bom import validate_bom_no, get_bom_items_as_dict, get_bom_item_rate
+
+import frappe
 from dateutil.relativedelta import relativedelta
-from erpnext.stock.doctype.item.item import validate_end_of_life, get_item_defaults
-from erpnext.manufacturing.doctype.workstation.workstation import WorkstationHolidayError
-from erpnext.projects.doctype.timesheet.timesheet import OverlapError
-from erpnext.manufacturing.doctype.manufacturing_settings.manufacturing_settings import get_mins_between_operations
-from erpnext.stock.stock_balance import get_planned_qty, update_bin_qty
-from frappe.utils.csvutils import getlink
-from erpnext.stock.utils import get_bin, validate_warehouse_company, get_latest_stock_qty
-from erpnext.utilities.transaction_base import validate_uom_is_integer
+from frappe import _
+from frappe.model.document import Document
 from frappe.model.mapper import get_mapped_doc
+from frappe.query_builder import Case
+from frappe.query_builder.functions import Sum
+from frappe.utils import (
+	cint,
+	date_diff,
+	flt,
+	get_datetime,
+	get_link_to_form,
+	getdate,
+	nowdate,
+	time_diff_in_hours,
+)
+
+from erpnext.manufacturing.doctype.bom.bom import (
+	get_bom_item_rate,
+	get_bom_items_as_dict,
+	validate_bom_no,
+)
+from erpnext.manufacturing.doctype.manufacturing_settings.manufacturing_settings import (
+	get_mins_between_operations,
+)
 from erpnext.stock.doctype.batch.batch import make_batch
-from erpnext.stock.doctype.serial_no.serial_no import get_serial_nos, get_auto_serial_nos, auto_make_serial_nos
+from erpnext.stock.doctype.item.item import get_item_defaults, validate_end_of_life
+from erpnext.stock.doctype.serial_no.serial_no import (
+	auto_make_serial_nos,
+	clean_serial_no_string,
+	get_auto_serial_nos,
+	get_serial_nos,
+)
+from erpnext.stock.stock_balance import get_planned_qty, update_bin_qty
+from erpnext.stock.utils import get_bin, get_latest_stock_qty, validate_warehouse_company
+from erpnext.utilities.transaction_base import validate_uom_is_integer
+
 
 class OverProductionError(frappe.ValidationError): pass
 class CapacityError(frappe.ValidationError): pass
@@ -47,6 +68,7 @@ class WorkOrder(Document):
 		self.validate_warehouse_belongs_to_company()
 		self.calculate_operating_cost()
 		self.validate_qty()
+		self.validate_transfer_against()
 		self.validate_operation_time()
 		self.status = self.get_status()
 
@@ -157,7 +179,7 @@ class WorkOrder(Document):
 
 	def update_status(self, status=None):
 		'''Update status of work order if unknown'''
-		if status != "Stopped":
+		if status != "Stopped" and status != "Closed":
 			status = self.get_status(status)
 
 		if status != self.status:
@@ -214,6 +236,7 @@ class WorkOrder(Document):
 					self.meta.get_label(fieldname), qty, completed_qty, self.name), StockOverProductionError)
 
 			self.db_set(fieldname, qty)
+			self.set_process_loss_qty()
 
 			from erpnext.selling.doctype.sales_order.sales_order import update_produced_qty_in_so_item
 
@@ -222,6 +245,22 @@ class WorkOrder(Document):
 
 		if self.production_plan:
 			self.update_production_plan_status()
+
+	def set_process_loss_qty(self):
+		process_loss_qty = flt(frappe.db.sql("""
+				SELECT sum(qty) FROM `tabStock Entry Detail`
+				WHERE
+					is_process_loss=1
+					AND parent IN (
+						SELECT name FROM `tabStock Entry`
+						WHERE
+							work_order=%s
+							AND purpose='Manufacture'
+							AND docstatus=1
+					)
+			""", (self.name, ))[0][0])
+		if process_loss_qty is not None:
+			self.db_set('process_loss_qty', process_loss_qty)
 
 	def update_production_plan_status(self):
 		production_plan = frappe.get_doc('Production Plan', self.production_plan)
@@ -233,7 +272,7 @@ class WorkOrder(Document):
 
 			produced_qty = total_qty[0][0] if total_qty else 0
 
-		production_plan.run_method("update_produced_qty", produced_qty, self.production_plan_item)
+		production_plan.run_method("update_produced_pending_qty", produced_qty, self.production_plan_item)
 
 	def before_submit(self):
 		self.create_serial_no_batch_no()
@@ -294,6 +333,14 @@ class WorkOrder(Document):
 		if not self.batch_size:
 			self.batch_size = total_qty
 
+		batch_auto_creation = frappe.get_cached_value("Item", self.production_item, "create_new_batch")
+		if not batch_auto_creation:
+			frappe.msgprint(
+				_("Batch not created for item {} since it does not have a batch series.")
+					.format(frappe.bold(self.production_item)),
+				alert=True, indicator="orange")
+			return
+
 		while total_qty > 0:
 			qty = self.batch_size
 			if self.batch_size >= total_qty:
@@ -321,6 +368,7 @@ class WorkOrder(Document):
 			frappe.delete_doc("Batch", row.name)
 
 	def make_serial_nos(self, args):
+		self.serial_no = clean_serial_no_string(self.serial_no)
 		serial_no_series = frappe.get_cached_value("Item", self.production_item, "serial_no_series")
 		if serial_no_series:
 			self.serial_no = get_auto_serial_nos(serial_no_series, self.qty)
@@ -410,7 +458,13 @@ class WorkOrder(Document):
 
 	def update_ordered_qty(self):
 		if self.production_plan and self.production_plan_item:
-			qty = self.qty if self.docstatus == 1 else 0
+			qty = frappe.get_value("Production Plan Item", self.production_plan_item, "ordered_qty") or 0.0
+
+			if self.docstatus == 1:
+				qty += self.qty
+			elif self.docstatus == 2:
+				qty -= self.qty
+
 			frappe.db.set_value('Production Plan Item',
 				self.production_plan_item, 'ordered_qty', qty)
 
@@ -496,7 +550,7 @@ class WorkOrder(Document):
 				if node.is_bom:
 					operations.extend(_get_operations(node.name, qty=node.exploded_qty))
 
-		bom_qty = frappe.db.get_value("BOM", self.bom_no, "quantity")
+		bom_qty = frappe.get_cached_value("BOM", self.bom_no, "quantity")
 		operations.extend(_get_operations(self.bom_no, qty=1.0/bom_qty))
 
 		for correct_index, operation in enumerate(operations, start=1):
@@ -576,7 +630,7 @@ class WorkOrder(Document):
 			frappe.delete_doc("Job Card", d.name)
 
 	def validate_production_item(self):
-		if frappe.db.get_value("Item", self.production_item, "has_variants"):
+		if frappe.get_cached_value("Item", self.production_item, "has_variants"):
 			frappe.throw(_("Work Order cannot be raised against a Item Template"), ItemHasVariantError)
 
 		if self.production_item:
@@ -586,10 +640,34 @@ class WorkOrder(Document):
 		if not self.qty > 0:
 			frappe.throw(_("Quantity to Manufacture must be greater than 0."))
 
+		if self.production_plan and self.production_plan_item:
+			qty_dict = frappe.db.get_value("Production Plan Item", self.production_plan_item, ["planned_qty", "ordered_qty"], as_dict=1)
+
+			allowance_qty = flt(frappe.db.get_single_value("Manufacturing Settings",
+			"overproduction_percentage_for_work_order"))/100 * qty_dict.get("planned_qty", 0)
+
+			max_qty = qty_dict.get("planned_qty", 0) + allowance_qty - qty_dict.get("ordered_qty", 0)
+
+			if not max_qty > 0:
+				frappe.throw(_("Cannot produce more item for {0}")
+				.format(self.production_item), OverProductionError)
+			elif self.qty > max_qty:
+				frappe.throw(_("Cannot produce more than {0} items for {1}")
+				.format(max_qty, self.production_item), OverProductionError)
+
+	def validate_transfer_against(self):
+		if not self.docstatus == 1:
+			# let user configure operations until they're ready to submit
+			return
+		if not self.operations:
+			self.transfer_material_against = "Work Order"
+		if not self.transfer_material_against:
+			frappe.throw(_("Setting {} is required").format(self.meta.get_label("transfer_material_against")), title=_("Missing value"))
+
+
 	def validate_operation_time(self):
 		for d in self.operations:
 			if not d.time_in_mins > 0:
-				print(self.bom_no, self.production_item)
 				frappe.throw(_("Operation Time must be greater than 0 for Operation {0}").format(d.operation))
 
 	def update_required_items(self):
@@ -602,7 +680,7 @@ class WorkOrder(Document):
 
 		if self.docstatus==1:
 			# calculate transferred qty based on submitted stock entries
-			self.update_transaferred_qty_for_required_items()
+			self.update_transferred_qty_for_required_items()
 
 			# update in bin
 			self.update_reserved_qty_for_production()
@@ -650,12 +728,10 @@ class WorkOrder(Document):
 					if not d.operation:
 						d.operation = operation
 			else:
-				# Attribute a big number (999) to idx for sorting putpose in case idx is NULL
-				# For instance in BOM Explosion Item child table, the items coming from sub assembly items
-				for item in sorted(item_dict.values(), key=lambda d: d['idx'] or 9999):
+				for item in sorted(item_dict.values(), key=lambda d: d['idx'] or float('inf')):
 					self.append('required_items', {
 						'rate': item.rate,
-						'amount': item.amount,
+						'amount': item.rate * item.qty,
 						'operation': item.operation or operation,
 						'item_code': item.item_code,
 						'item_name': item.item_name,
@@ -671,7 +747,7 @@ class WorkOrder(Document):
 
 			self.set_available_qty()
 
-	def update_transaferred_qty_for_required_items(self):
+	def update_transferred_qty_for_required_items(self):
 		'''update transferred qty from submitted stock entries for that item against
 			the work order'''
 
@@ -782,7 +858,7 @@ def get_item_details(item, project = None, skip_bom_info=False):
 	res = res[0]
 	if skip_bom_info: return res
 
-	filters = {"item": item, "is_default": 1}
+	filters = {"item": item, "is_default": 1, "docstatus": 1}
 
 	if project:
 		filters = {"item": item, "project": project}
@@ -838,7 +914,7 @@ def add_variant_item(variant_items, wo_doc, bom_no, table_name="items"):
 
 	for item in variant_items:
 		args = frappe._dict({
-			"item_code": item.get("varint_item_code"),
+			"item_code": item.get("variant_item_code"),
 			"required_qty": item.get("qty"),
 			"qty": item.get("qty"), # for bom
 			"source_warehouse": item.get("source_warehouse"),
@@ -859,7 +935,7 @@ def add_variant_item(variant_items, wo_doc, bom_no, table_name="items"):
 		}, bom_doc)
 
 		if not args.source_warehouse:
-			args["source_warehouse"] = get_item_defaults(item.get("varint_item_code"),
+			args["source_warehouse"] = get_item_defaults(item.get("variant_item_code"),
 				wo_doc.company).default_warehouse
 
 		args["amount"] = flt(args.get("required_qty")) * flt(args.get("rate"))
@@ -934,6 +1010,10 @@ def stop_unstop(work_order, status):
 		frappe.throw(_("Not permitted"), frappe.PermissionError)
 
 	pro_order = frappe.get_doc("Work Order", work_order)
+
+	if pro_order.status == "Closed":
+		frappe.throw(_("Closed Work Order can not be stopped or Re-opened"))
+
 	pro_order.update_status(status)
 	pro_order.update_planned_qty()
 	frappe.msgprint(_("Work Order has been {0}").format(status))
@@ -967,6 +1047,29 @@ def make_job_card(work_order, operations):
 			qty = split_qty_based_on_batch_size(work_order, row, qty)
 			if row.job_card_qty > 0:
 				create_job_card(work_order, row, auto_create=True)
+
+@frappe.whitelist()
+def close_work_order(work_order, status):
+	if not frappe.has_permission("Work Order", "write"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	work_order = frappe.get_doc("Work Order", work_order)
+	if work_order.get("operations"):
+		job_cards = frappe.get_list("Job Card",
+			filters={
+				"work_order": work_order.name,
+				"status": "Work In Progress"
+			}, pluck='name')
+
+		if job_cards:
+			job_cards = ", ".join(job_cards)
+			frappe.throw(_("Can not close Work Order. Since {0} Job Cards are in Work In Progress state.").format(job_cards))
+
+	work_order.update_status(status)
+	work_order.update_planned_qty()
+	frappe.msgprint(_("Work Order has been {0}").format(status))
+	work_order.notify_update()
+	return work_order.status
 
 def split_qty_based_on_batch_size(wo_doc, row, qty):
 	if not cint(frappe.db.get_value("Operation",
@@ -1092,3 +1195,27 @@ def create_pick_list(source_name, target_doc=None, for_qty=None):
 	doc.set_item_locations()
 
 	return doc
+
+def get_reserved_qty_for_production(item_code: str, warehouse: str) -> float:
+	"""Get total reserved quantity for any item in specified warehouse"""
+	wo = frappe.qb.DocType("Work Order")
+	wo_item = frappe.qb.DocType("Work Order Item")
+
+	return (
+	frappe.qb
+		.from_(wo)
+		.from_(wo_item)
+		.select(Sum(Case()
+				.when(wo.skip_transfer == 0, wo_item.required_qty - wo_item.transferred_qty)
+				.else_(wo_item.required_qty - wo_item.consumed_qty))
+			)
+		.where(
+			(wo_item.item_code == item_code)
+			& (wo_item.parent == wo.name)
+			& (wo.docstatus == 1)
+			& (wo_item.source_warehouse == warehouse)
+			& (wo.status.notin(["Stopped", "Completed", "Closed"]))
+			& ((wo_item.required_qty > wo_item.transferred_qty)
+				| (wo_item.required_qty > wo_item.consumed_qty))
+		)
+	).run()[0][0] or 0.0
