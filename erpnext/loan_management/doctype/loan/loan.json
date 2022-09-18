@@ -17,6 +17,7 @@
   "posting_date",
   "status",
   "repay_from_salary",
+  "manually_update_paid_amount_in_salary_slip",
   "section_break_8",
   "loan_type",
   "loan_amount",
@@ -32,6 +33,8 @@
   "monthly_repayment_amount",
   "repayment_start_date",
   "is_term_loan",
+  "accounting_dimensions_section",
+  "cost_center",
   "account_info",
   "mode_of_payment",
   "disbursement_account",
@@ -46,9 +49,13 @@
   "total_payment",
   "total_principal_paid",
   "written_off_amount",
+  "refund_amount",
+  "debit_adjustment_amount",
+  "credit_adjustment_amount",
   "column_break_19",
   "total_interest_payable",
   "total_amount_paid",
+  "is_npa",
   "amended_from"
  ],
  "fields": [
@@ -366,16 +373,61 @@
    "options": "Account",
    "read_only": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "accounting_dimensions_section",
+   "fieldtype": "Section Break",
+   "label": "Accounting Dimensions"
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "options": "Cost Center"
+  },
+  {
+   "fieldname": "refund_amount",
+   "fieldtype": "Currency",
+   "label": "Refund amount",
+   "no_copy": 1,
+   "options": "Company:company:default_currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "credit_adjustment_amount",
+   "fieldtype": "Currency",
+   "label": "Credit Adjustment Amount",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "fieldname": "debit_adjustment_amount",
+   "fieldtype": "Currency",
+   "label": "Debit Adjustment Amount",
+   "options": "Company:company:default_currency"
+  },
+  {
+   "default": "0",
+   "description": "Mark Loan as a Nonperforming asset",
+   "fieldname": "is_npa",
+   "fieldtype": "Check",
+   "label": "Is NPA"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "depends_on": "repay_from_salary",
+   "fieldname": "manually_update_paid_amount_in_salary_slip",
+   "fieldtype": "Check",
+   "label": "Manually Update Paid Amount in Salary Slip"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-01-25 16:29:16.325501",
+ "modified": "2022-09-13 02:05:25.017190",
  "modified_by": "Administrator",
  "module": "Loan Management",
  "name": "Loan",
- "naming_rule": "Expression (old style)",
  "owner": "Administrator",
  "permissions": [
   {
@@ -401,6 +453,5 @@
  "search_fields": "posting_date",
  "sort_field": "creation",
  "sort_order": "DESC",
- "states": [],
  "track_changes": 1
 }

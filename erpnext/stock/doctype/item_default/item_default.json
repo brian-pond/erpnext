@@ -9,15 +9,13 @@
   "default_warehouse",
   "column_break_3",
   "default_price_list",
-<<<<<<< HEAD
-=======
   "default_discount_account",
->>>>>>> temp1
   "purchase_defaults",
   "buying_cost_center",
   "default_supplier",
   "column_break_8",
   "expense_account",
+  "default_provisional_account",
   "selling_defaults",
   "selling_cost_center",
   "column_break_12",
@@ -73,15 +71,10 @@
    "fieldtype": "Column Break"
   },
   {
-<<<<<<< HEAD
    "columns": 2,
    "fieldname": "expense_account",
    "fieldtype": "Link",
    "in_list_view": 1,
-=======
-   "fieldname": "expense_account",
-   "fieldtype": "Link",
->>>>>>> temp1
    "label": "Default Expense Account",
    "options": "Account"
   },
@@ -105,24 +98,22 @@
    "fieldtype": "Link",
    "label": "Default Income Account",
    "options": "Account"
-<<<<<<< HEAD
-=======
   },
   {
    "fieldname": "default_discount_account",
    "fieldtype": "Link",
    "label": "Default Discount Account",
    "options": "Account"
->>>>>>> temp1
+  },
+  {
+   "fieldname": "default_provisional_account",
+   "fieldtype": "Link",
+   "label": "Default Provisional Account",
   }
  ],
  "istable": 1,
  "links": [],
-<<<<<<< HEAD
- "modified": "2021-02-13 23:09:23.442249",
-=======
- "modified": "2021-07-13 01:26:03.860065",
->>>>>>> temp1
+ "modified": "2022-04-10 20:18:54.148195",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Item Default",
@@ -131,5 +122,6 @@
  "quick_entry": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

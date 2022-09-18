@@ -234,7 +234,7 @@
   },
   {
    "fieldname": "actual_start_date",
-   "fieldtype": "Data",
+   "fieldtype": "Date",
    "label": "Actual Start Date",
    "read_only": 1
   },
@@ -458,7 +458,7 @@
  "index_web_pages_for_search": 1,
  "links": [],
  "max_attachments": 4,
- "modified": "2021-12-05 09:33:24.971478",
+ "modified": "2022-05-25 22:45:06.108499",
  "modified_by": "Administrator",
  "module": "Projects",
  "name": "Project",
@@ -501,5 +501,5 @@
  "sort_order": "DESC",
  "timeline_field": "customer",
  "title_field": "project_name",
- "track_seen": 0
+ "track_seen": 1
 }

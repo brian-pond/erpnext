@@ -1,6 +1,6 @@
 erpnext.patches.v12_0.update_is_cancelled_field
-erpnext.patches.v13_0.add_bin_unique_constraint
 erpnext.patches.v11_0.rename_production_order_to_work_order
+erpnext.patches.v13_0.add_bin_unique_constraint
 erpnext.patches.v11_0.refactor_naming_series
 erpnext.patches.v11_0.refactor_autoname_naming
 execute:frappe.reload_doc("accounts", "doctype", "POS Payment Method") #2020-05-28
@@ -248,7 +248,6 @@ execute:frappe.delete_doc("Report", "Quoted Item Comparison")
 erpnext.patches.v13_0.update_member_email_address
 erpnext.patches.v13_0.update_custom_fields_for_shopify
 erpnext.patches.v13_0.updates_for_multi_currency_payroll
-erpnext.patches.v13_0.create_leave_policy_assignment_based_on_employee_current_leave_policy
 erpnext.patches.v13_0.update_pos_closing_entry_in_merge_log
 erpnext.patches.v13_0.add_po_to_global_search
 erpnext.patches.v13_0.update_returned_qty_in_pr_dn
@@ -350,7 +349,27 @@ erpnext.patches.v13_0.enable_provisional_accounting
 erpnext.patches.v13_0.update_disbursement_account
 erpnext.patches.v13_0.update_reserved_qty_closed_wo
 erpnext.patches.v13_0.amazon_mws_deprecation_warning
+erpnext.patches.v13_0.datev_deprecation_warning
 erpnext.patches.v13_0.set_work_order_qty_in_so_from_mr
 erpnext.patches.v13_0.update_accounts_in_loan_docs
-erpnext.patches.v13_0.remove_unknown_links_to_prod_plan_items
+erpnext.patches.v13_0.remove_unknown_links_to_prod_plan_items # 24-03-2022
 erpnext.patches.v13_0.rename_non_profit_fields
+erpnext.patches.v13_0.enable_ksa_vat_docs #1
+erpnext.patches.v13_0.create_gst_custom_fields_in_quotation
+erpnext.patches.v13_0.update_expense_claim_status_for_paid_advances
+erpnext.patches.v13_0.change_default_item_manufacturer_fieldtype
+erpnext.patches.v13_0.set_return_against_in_pos_invoice_references
+erpnext.patches.v13_0.copy_custom_field_filters_to_website_item
+erpnext.patches.v13_0.set_available_for_use_date_if_missing
+erpnext.patches.v13_0.education_deprecation_warning
+erpnext.patches.v13_0.requeue_recoverable_reposts
+erpnext.patches.v13_0.create_accounting_dimensions_in_orders
+erpnext.patches.v13_0.set_per_billed_in_return_delivery_note
+erpnext.patches.v13_0.update_employee_advance_status
+erpnext.patches.v13_0.job_card_status_on_hold
+erpnext.patches.v13_0.add_cost_center_in_loans
+erpnext.patches.v13_0.show_india_localisation_deprecation_warning
+erpnext.patches.v13_0.fix_number_and_frequency_for_monthly_depreciation
+erpnext.patches.v13_0.reset_corrupt_defaults
+erpnext.patches.v13_0.show_hr_payroll_deprecation_warning
+erpnext.patches.v13_0.create_accounting_dimensions_for_asset_repair
