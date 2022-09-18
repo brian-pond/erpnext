@@ -109,6 +109,7 @@
    "fieldname": "default_provisional_account",
    "fieldtype": "Link",
    "label": "Default Provisional Account",
+   "options": "Account"
   }
  ],
  "istable": 1,

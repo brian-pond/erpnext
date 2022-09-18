@@ -3,14 +3,8 @@
 
 # For license information, please see license.txt
 
-<<<<<<< HEAD
-from __future__ import unicode_literals
-import frappe
-import erpnext
-=======
 
 import frappe
->>>>>>> temp1
 from frappe import _, msgprint, throw
 from frappe.model.document import Document
 from frappe.utils import flt, fmt_money

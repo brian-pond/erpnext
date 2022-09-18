@@ -8,10 +8,7 @@ from frappe.model.document import Document
 
 
 class ProjectType(Document):
-<<<<<<< HEAD
-	pass
-=======
 	def on_trash(self):
+		return  # You should be able to delete any Project you want to.
 		if self.name == "External":
 			frappe.throw(_("You cannot delete Project Type 'External'"))
->>>>>>> temp1

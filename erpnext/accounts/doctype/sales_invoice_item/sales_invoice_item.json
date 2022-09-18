@@ -844,8 +844,10 @@
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Sales Invoice Item",
+ "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [],
  "sort_field": "modified",
  "sort_order": "DESC"
 }
+

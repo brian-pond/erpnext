@@ -510,10 +510,6 @@
  "idx": 363,
  "image_field": "image",
  "index_web_pages_for_search": 1,
-<<<<<<< HEAD
- "links": [],
- "modified": "2021-12-05 18:15:30.191294",
-=======
  "links": [
   {
    "group": "Allowed Items",
@@ -522,7 +518,6 @@
   }
  ],
  "modified": "2021-09-06 17:38:54.196663",
->>>>>>> temp1
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",

@@ -1672,17 +1672,18 @@ def get_reference_details(reference_doctype, reference_name, party_account_curre
 			outstanding_amount = flt(total_amount) - flt(ref_doc.advance_paid)
 	else:
 		# Get the exchange rate based on the posting date of the ref doc.
-<<<<<<< HEAD
-		exchange_rate = get_exchange_rate(party_account_currency,
-			company_currency, ref_doc.posting_date)
+		exchange_rate = get_exchange_rate(party_account_currency, company_currency, ref_doc.posting_date)
 
-	return frappe._dict({
-		"due_date": ref_doc.get("due_date"),
-		"total_amount": flt(total_amount),
-		"outstanding_amount": flt(outstanding_amount),
-		"exchange_rate": flt(exchange_rate),
-		"bill_no": bill_no
-	})
+	return frappe._dict(
+		{
+			"due_date": ref_doc.get("due_date"),
+			"total_amount": flt(total_amount),
+			"outstanding_amount": flt(outstanding_amount),
+			"exchange_rate": flt(exchange_rate),
+			"bill_no": bill_no,
+		}
+	)
+
 
 def get_amounts_based_on_reference_doctype(
 	reference_doctype, ref_doc, party_account_currency, company_currency, reference_name
@@ -1708,19 +1709,11 @@ def get_amounts_based_on_reference_doctype(
 
 	return total_amount, outstanding_amount, exchange_rate
 
-<<<<<<< HEAD
-def get_amounts_based_on_ref_doc(reference_doctype, ref_doc, party_account_currency, company_currency):
-<<<<<<< HEAD
-	total_amount, outstanding_amount, exchange_rate = None, None, None
-=======
-=======
 
 def get_amounts_based_on_ref_doc(
 	reference_doctype, ref_doc, party_account_currency, company_currency
 ):
->>>>>>> official/version-13
 	total_amount = outstanding_amount = exchange_rate = None
->>>>>>> temp1
 	if ref_doc.doctype == "Expense Claim":
 		total_amount = flt(ref_doc.total_sanctioned_amount) + flt(ref_doc.total_taxes_and_charges)
 	elif ref_doc.doctype == "Employee Advance":
@@ -1768,19 +1761,11 @@ def get_total_amount_exchange_rate_base_on_currency(
 
 	return total_amount, exchange_rate
 
-<<<<<<< HEAD
-def get_bill_no_and_update_amounts(reference_doctype, ref_doc, total_amount, exchange_rate, party_account_currency, company_currency):
-<<<<<<< HEAD
-	outstanding_amount, bill_no = None, None
-=======
-=======
 
 def get_bill_no_and_update_amounts(
 	reference_doctype, ref_doc, total_amount, exchange_rate, party_account_currency, company_currency
 ):
->>>>>>> official/version-13
 	outstanding_amount = bill_no = None
->>>>>>> temp1
 	if reference_doctype in ("Sales Invoice", "Purchase Invoice"):
 		outstanding_amount = ref_doc.get("outstanding_amount")
 		bill_no = ref_doc.get("bill_no")

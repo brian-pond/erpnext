@@ -118,6 +118,9 @@ def get_price(item_code, price_list, customer_group, company, qty=1):
 			if party and party.doctype == "Customer":
 				pricing_rule_dict.update({"customer": party.name})
 
+			pricing_rule = get_pricing_rule_for_item(pricing_rule_dict)
+			price_obj = price[0]
+
 			if pricing_rule:
 				# price without any rules applied
 				mrp = price_obj.price_list_rate or 0
