@@ -263,7 +263,8 @@ def get_data_with_opening_closing(filters, account_details, gl_entries):
 	data.append(totals.opening)
 
 	if filters.get("group_by") != frappe._('Group by Voucher (Consolidated)'):
-		for _, acc_dict in iteritems(gle_map):
+		# DH: Cannot use underscore, because of Frappe's underscore function.
+		for whatever, acc_dict in iteritems(gle_map):  # pylint: disable=unused-variable
 			# acc
 			if acc_dict.entries:
 				# opening
