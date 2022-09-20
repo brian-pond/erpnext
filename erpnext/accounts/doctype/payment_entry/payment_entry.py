@@ -100,6 +100,7 @@ class PaymentEntry(AccountsController):
 		self.update_payment_schedule(cancel=1)
 		self.set_payment_req_status()
 		self.set_status(update=True)
+		self.clearance_date = None  # Spectrum Fruits: When a Payment Entry is Cancelled, remove the Clearance Date, so it does get copied during Amend.
 		self.cancel_cheque()
 
 	def set_payment_req_status(self):
