@@ -833,7 +833,12 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 	},
 
 	bill_date: function() {
+		// Datahenge: In out-of-the-box ERPNext, modifying the Supplier Invoice Date (bill_date) triggers a
+		// modification to Due Date.  Turning this off.
+		
+		/*
 		this.posting_date();
+		*/
 	},
 
 	recalculate_terms: function() {
