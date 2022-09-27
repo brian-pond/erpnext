@@ -11,7 +11,6 @@
   "supplier",
   "supplier_name",
   "tax_id",
-  "due_date",
   "is_paid",
   "is_return",
   "apply_tds",
@@ -21,6 +20,7 @@
   "posting_date",
   "posting_time",
   "set_posting_time",
+  "due_date",
   "amended_from",
   "bill_no",
   "bill_date",
@@ -216,6 +216,7 @@
   {
    "fieldname": "due_date",
    "fieldtype": "Date",
+   "in_list_view": 1,
    "label": "Due Date",
    "oldfieldname": "due_date",
    "oldfieldtype": "Date"
@@ -1312,7 +1313,7 @@
  "icon": "fa fa-file-text",
  "idx": 204,
  "is_submittable": 1,
- "modified": "2022-03-02 18:03:05.442684",
+ "modified": "2022-09-27 13:04:52.305397",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Purchase Invoice",
