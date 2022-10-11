@@ -181,38 +181,29 @@ def get_data():
 					"name": "Bank Check",
 					"description": _("Bank Checks")
 				},
-				{
-					"type": "doctype",
-					"label": _("Match Payments with Invoices"),
-					"name": "Payment Reconciliation",
-					"description": _("Match non-linked Invoices and Payments.")
-				},
-				{
-					"type": "doctype",
-					"label": _("Invoice Discounting"),
-					"name": "Invoice Discounting",
-				},
-				{
-					"type": "doctype",
-					"label": _("Update Bank Transaction Dates"),
-					"name": "Bank Reconciliation",
-					"description": _("Update bank payment dates with journals.")
-				},
-				{
-					"type": "doctype",
-					"label": _("Bank Transaction"),
-					"name": "Bank Transaction",
-					"doctype": "Bank Transaction"
-				},
+				#{
+				#	"type": "doctype",
+				#	"label": _("Bank Transaction"),
+				#	"name": "Bank Transaction",
+				#	"doctype": "Bank Transaction"
+				#},
 				{
 					"type": "report",
-					"name": "Bank Reconciliation Statement",
+					"name": "Bank Clearance Summary",
+					"label": "Bank Clearance Summary (Report)",
 					"is_query_report": True,
 					"doctype": "Journal Entry"
 				},
 				{
+					"type": "doctype",
+					"label": _("Bank Reconciliation"),
+					"name": "Bank Reconciliation",
+					"description": _("Update bank payment dates with journals.")
+				},
+				{
 					"type": "report",
-					"name": "Bank Clearance Summary",
+					"name": "Bank Reconciliation Statement",
+					"label": "Bank Reconciliation Statement (Report)",
 					"is_query_report": True,
 					"doctype": "Journal Entry"
 				},
@@ -225,6 +216,17 @@ def get_data():
 					"name": "Cheque Print Template",
 					"description": _("Setup cheque dimensions for printing")
 				},
+				{
+					"type": "doctype",
+					"label": _("Invoice Discounting"),
+					"name": "Invoice Discounting",
+				},
+				{
+					"type": "doctype",
+					"label": _("Payment Reconciliation"),
+					"name": "Payment Reconciliation",
+					"description": _("Match non-linked Invoices and Payments.")
+				},				
 			]
 		},
 		{

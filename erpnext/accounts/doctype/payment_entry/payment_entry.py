@@ -119,6 +119,11 @@ class PaymentEntry(AccountsController):
 			reference_names.append((d.reference_doctype, d.reference_name, d.payment_term))
 
 	def set_bank_account_data(self):
+
+		# Spectrum Fruits:  Let's skip this, so that 'paid_from' is not modified.
+		if self.payment_type == "Pay":
+			return
+
 		if self.bank_account:
 			bank_data = get_bank_account_details(self.bank_account)
 
@@ -1146,11 +1151,25 @@ def get_payment_entry(dt, dn, party_amount=None, bank_account=None, bank_amount=
 	pe.contact_email = doc.get("contact_email")
 	pe.ensure_supplier_is_not_blocked()
 
-	pe.paid_from = party_account if payment_type=="Receive" else bank.account
+	# Spectrum Fruits: October 11th 2022: Make the 'paid_from' the value of the GL account referenced by the Mode of Payment
+	# pe.paid_from = party_account if payment_type=="Receive" else bank.account
+	if payment_type=="Pay":
+		try:
+			account_per_mode_of_payment =  frappe.db.get_value("Mode of Payment Account",
+			{"parent": pe.mode_of_payment, "company": pe.company}, "default_account")
+		except Exception as ex:
+			print(ex)
+			account_per_mode_of_payment = None
+		pe.paid_from = party_account if payment_type=="Receive" else account_per_mode_of_payment
+	else:
+		pe.paid_from = party_account
+
+	# Paid To:
 	pe.paid_to = party_account if payment_type=="Pay" else bank.account
 	pe.paid_from_account_currency = party_account_currency \
 		if payment_type=="Receive" else bank.account_currency
 	pe.paid_to_account_currency = party_account_currency if payment_type=="Pay" else bank.account_currency
+
 	pe.paid_amount = paid_amount
 	pe.received_amount = received_amount
 	pe.letter_head = doc.get("letter_head")

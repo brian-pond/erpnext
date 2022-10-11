@@ -1,5 +1,4 @@
 {
- "actions": [],
  "allow_events_in_timeline": 1,
  "allow_import": 1,
  "allow_rename": 1,
@@ -14,11 +13,11 @@
   "naming_series",
   "supplier_name",
   "country",
-  "default_bank_account",
+  "mode_of_payment",
   "column_break_6",
   "supplier_group",
   "supplier_type",
-  "mode_of_payment",
+  "default_bank_account",
   "section_break_1",
   "tax_id",
   "tax_category",
@@ -98,10 +97,12 @@
    "options": "Country"
   },
   {
+   "description": "Note: This refers to a 'Bank Account' document, not the Chart of Accounts.",
    "fieldname": "default_bank_account",
    "fieldtype": "Link",
    "label": "Default Company Bank Account",
-   "options": "Bank Account"
+   "options": "Bank Account",
+   "read_only": 1
   },
   {
    "fieldname": "tax_id",
@@ -403,7 +404,7 @@
  "icon": "fa fa-user",
  "idx": 370,
  "image_field": "image",
- "modified": "2021-03-18 12:38:13.939663",
+ "modified": "2022-10-11 13:04:41.429875",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Supplier",
