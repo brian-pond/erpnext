@@ -190,8 +190,8 @@ class BankReconciliation(Document):
 
 		SELECT
 			'Payment Entry Deduction'		AS document_type
-			,SUM(CASE	WHEN amount > 0 THEN amount ELSE 0 END) 		AS debit 
-			,SUM(CASE	WHEN amount < 0 THEN amount ELSE 0 END) 		AS credit						
+			,SUM(CASE	WHEN amount < 0 THEN amount ELSE 0 END) 		AS debit 
+			,SUM(CASE	WHEN amount > 0 THEN amount ELSE 0 END) 		AS credit						
 		
 		FROM	
 			`tabPayment Entry Deduction`		AS PaymentEntryDeduction
