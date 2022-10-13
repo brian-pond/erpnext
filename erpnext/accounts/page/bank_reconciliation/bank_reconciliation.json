@@ -1,29 +1,30 @@
 {
- "content": null, 
- "creation": "2018-11-24 12:03:14.646669", 
- "docstatus": 0, 
- "doctype": "Page", 
- "idx": 0, 
- "modified": "2018-11-24 12:03:14.646669", 
- "modified_by": "Administrator", 
- "module": "Accounts", 
- "name": "bank-reconciliation", 
- "owner": "Administrator", 
- "page_name": "bank-reconciliation", 
+ "_user_tags": ",DM_2022_04_05,DM_2022_04_06,DM_2022_04_22",
+ "content": null,
+ "creation": "2018-11-24 12:03:14.646669",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2022-10-13 11:18:10.633246",
+ "modified_by": "Administrator",
+ "module": "Accounts",
+ "name": "bank-reconciliation",
+ "owner": "Administrator",
+ "page_name": "bank-reconciliation",
  "roles": [
   {
    "role": "System Manager"
-  }, 
+  },
   {
    "role": "Accounts Manager"
-  }, 
+  },
   {
    "role": "Accounts User"
   }
- ], 
- "script": null, 
- "standard": "Yes", 
- "style": null, 
- "system_page": 0, 
- "title": "Bank Reconciliation"
+ ],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Bank Statement Import"
 }

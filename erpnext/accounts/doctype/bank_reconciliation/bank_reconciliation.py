@@ -61,7 +61,7 @@ class BankReconciliation(Document):
 		""".format(condition=condition), {"account": self.account, "from":self.from_date,
 				"to": self.to_date, "bank_account": self.bank_account}, as_dict=1)
 
-		
+
 		pos_sales_invoices, pos_purchase_invoices = [], []
 		if self.include_pos_transactions:
 			pos_sales_invoices = frappe.db.sql("""
@@ -150,10 +150,11 @@ class BankReconciliation(Document):
 	@frappe.whitelist()
 	def update_amount_reconciled_on_date(self):
 		"""
-		Example:  All transactions with a clearance date of July 12th, 
+		Example:  All transactions with a clearance date of July 12th,
 				for GL account = 'Wells Fargo Checking - SF'
 		"""
 
+		# Spectrum Fruits, October 13th : Added Payment Entry Deductions to the calculations.
 		query = """
 		SELECT
 			'JournalEntry'											AS document_type
@@ -184,9 +185,30 @@ class BankReconciliation(Document):
 			( PaymentEntry.paid_to = %(ledger_account)s OR PaymentEntry.paid_from = %(ledger_account)s )
 		AND clearance_date = %(clearance_date)s
 		AND docstatus = 1
+
+		UNION ALL
+
+		SELECT
+			'Payment Entry Deduction'		AS document_type
+			,SUM(CASE	WHEN amount > 0 THEN amount ELSE 0 END) 		AS debit 
+			,SUM(CASE	WHEN amount < 0 THEN amount ELSE 0 END) 		AS credit						
+		
+		FROM	
+			`tabPayment Entry Deduction`		AS PaymentEntryDeduction
+
+		INNER JOIN
+			`tabPayment Entry`		AS PaymentEntry
+		ON 
+			( PaymentEntry.paid_to = %(ledger_account)s OR PaymentEntry.paid_from = %(ledger_account)s )
+		AND PaymentEntry.clearance_date = %(clearance_date)s
+		AND PaymentEntry.docstatus = 1
+		AND PaymentEntry.name = PaymentEntryDeduction.parent
+		
+		WHERE
+			PaymentEntryDeduction.account = %(ledger_account)s
 		"""
 
-		sql_results = frappe.db.sql(query, values={"ledger_account": self.account, 
+		sql_results = frappe.db.sql(query, values={"ledger_account": self.account,
 		                                           "clearance_date": self.to_date}, as_dict=True)
 
 		total_debits = 0
@@ -196,6 +218,7 @@ class BankReconciliation(Document):
 			total_debits += each_row['cleared_debit'] or 0.00
 			total_credits += each_row['cleared_credit'] or 0.00
 
+		# Spectrum Fruits additions
 		self.total_cleared_debits = total_debits
 		self.total_cleared_credits = total_credits
 		self.save()
