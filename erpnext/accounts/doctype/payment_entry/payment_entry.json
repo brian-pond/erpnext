@@ -27,6 +27,7 @@
   "remit_to_address",
   "reference_no",
   "reference_date",
+  "check_memo_line",
   "payment_accounts_section",
   "party_balance",
   "paid_from",
@@ -591,11 +592,18 @@
    "fieldtype": "Link",
    "label": "Remit-To Address",
    "options": "Address"
+  },
+  {
+   "depends_on": "eval: doc.payment_type == 'Pay';",
+   "description": "If filled-in, this is printed on the Memo Line of checks.  It will override any other logic.",
+   "fieldname": "check_memo_line",
+   "fieldtype": "Data",
+   "label": "Check Memo Line"
   }
  ],
  "is_submittable": 1,
- "modified": "2022-08-04 13:08:34.481523",
- "modified_by": "Administrator",
+ "modified": "2022-10-19 22:16:07.195834",
+ "modified_by": "brian@datahenge.com",
  "module": "Accounts",
  "name": "Payment Entry",
  "owner": "Administrator",
