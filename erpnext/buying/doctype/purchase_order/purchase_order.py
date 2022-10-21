@@ -39,6 +39,7 @@ class PurchaseOrder(BuyingController):
 			'percent_join_field': 'material_request'
 		}]
 
+
 	def validate(self):
 		super(PurchaseOrder, self).validate()
 
@@ -287,6 +288,16 @@ class PurchaseOrder(BuyingController):
 				# 3. Update the quantity on the related Blanket Order line.
 				#    Annoying side-effect.  If you update the value, and "set_route", the old Document value is still shown!
 				frappe.db.set_value("Blanket Order Item", order_line.blanket_order_item, "ordered_qty", this_quantity + other_po_qty)
+
+	def before_save(self):
+		"""
+		Spectrum Fruits: Recalculated weights upon save()
+		"""
+		total_weight = 0
+		for item in self.items:
+			item.total_weight = item.weight_per_unit  * item.qty
+			total_weight += item.total_weight
+		self.total_net_weight = total_weight
 
 	def update_status_updater(self):
 		self.status_updater.append({
