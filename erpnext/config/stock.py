@@ -48,18 +48,22 @@ def get_data():
 				{
 					"type": "report",
 					"is_query_report": True,
-					"name": "Stock Balance by Batch",
+					"name": "Stock Ledger",
 					"doctype": "Stock Ledger Entry",
-					"onboard": 0,
+					"onboard": 1,
 					"dependencies": ["Item"],
 				},
 				{
 					"type": "report",
 					"is_query_report": True,
-					"name": "Stock Ledger",
+					"name": "Stock Balance by Batch",
 					"doctype": "Stock Ledger Entry",
-					"onboard": 1,
-					"dependencies": ["Item"],
+				},
+				{
+					"type": "report",
+					"is_query_report": True,
+					"name": "Stock Balance by Batch v2",
+					"doctype": "Stock Ledger Entry",
 				},
 				{
 					"type": "report",
@@ -194,17 +198,15 @@ def get_data():
 				},
 				{
 					"type": "report",
-					"is_query_report": False,
+					"is_query_report": True,
 					"name": "Stock Balance by Batch",
-					"doctype": "Stock Ledger Entry",
-					"onboard": 0,
-					"dependencies": ["Item"],
+					"doctype": "Stock Ledger Entry"
 				},
-				{
-					"type": "doctype",
-					"name": "Installation Note",
-					"dependencies": ["Item"],
-				},
+				#{
+				#	"type": "doctype",
+				#	"name": "Installation Note",
+				#	"dependencies": ["Item"],
+				#},
 				{
 					"type": "report",
 					"name": "Serial No Service Contract Expiry",

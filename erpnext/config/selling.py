@@ -274,8 +274,8 @@ def get_data():
 				{
 					"type": "report",
 					"is_query_report": True,
-					"name": "Lead Details",
-					"doctype": "Lead"
+					"name": "Available Stock for Packing Items",
+					"doctype": "Item",
 				},
 				{
 					"type": "report",
@@ -296,18 +296,6 @@ def get_data():
 				{
 					"type": "report",
 					"is_query_report": True,
-					"name": "Available Stock for Packing Items",
-					"doctype": "Item",
-				},
-				{
-					"type": "report",
-					"is_query_report": True,
-					"name": "Pending SO Items For Purchase Request",
-					"doctype": "Sales Order"
-				},
-				{
-					"type": "report",
-					"is_query_report": True,
 					"name": "Customer Credit Balance",
 					"doctype": "Customer"
 				},
@@ -320,10 +308,16 @@ def get_data():
 				{
 					"type": "report",
 					"is_query_report": True,
+					"name": "Pending SO Items For Purchase Request",
+					"doctype": "Sales Order"
+				},
+
+				{
+					"type": "report",
+					"is_query_report": True,
 					"name": "Sales Partners Commission",
 					"doctype": "Customer"
 				}
 			]
 		},
-		
 	]
