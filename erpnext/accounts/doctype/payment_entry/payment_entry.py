@@ -58,6 +58,11 @@ class PaymentEntry(AccountsController):
 
 
 	def validate(self):
+
+		if self.is_new():
+			# Spectrum Fruits: Do not allow saving unless the Bank Check and Naming Series match up.
+			if self.mode_of_payment == 'Bank Check' and self.naming_series != 'JV-CK-':
+				raise Exception("When mode of payment is 'Bank Check', the naming series should be 'JV-CK-'")
 		self.setup_party_account_field()
 		self.set_missing_values()
 		self.validate_payment_type()
