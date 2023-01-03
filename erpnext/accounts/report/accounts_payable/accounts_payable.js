@@ -77,6 +77,9 @@ frappe.query_reports["Accounts Payable"] = {
 			"label": __("Supplier"),
 			"fieldtype": "Link",
 			"options": "Supplier",
+
+			/* Datahenge: Disabling this below, because it prevents the report from auto-refreshing
+			   when you edit a Supplier.
 			on_change: () => {
 				var supplier = frappe.query_report.get_filter_value('supplier');
 				if (supplier) {
@@ -87,6 +90,7 @@ frappe.query_reports["Accounts Payable"] = {
 					frappe.query_report.set_filter_value('tax_id', "");
 				}
 			}
+			*/
 		},
 		{
 			"fieldname":"payment_terms_template",
