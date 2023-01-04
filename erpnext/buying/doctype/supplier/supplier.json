@@ -12,6 +12,7 @@
   "basic_info",
   "naming_series",
   "supplier_name",
+  "bank_check_name",
   "country",
   "mode_of_payment",
   "column_break_6",
@@ -399,13 +400,19 @@
   {
    "fieldname": "column_break_6",
    "fieldtype": "Column Break"
+  },
+  {
+   "description": "If filled-in, this name will be printed on Checks, otherwise the 'name' (ID) will be used.",
+   "fieldname": "bank_check_name",
+   "fieldtype": "Data",
+   "label": "Bank Check Name"
   }
  ],
  "icon": "fa fa-user",
  "idx": 370,
  "image_field": "image",
- "modified": "2022-10-11 13:04:41.429875",
- "modified_by": "Administrator",
+ "modified": "2023-01-04 12:23:57.968585",
+ "modified_by": "brian@datahenge.com",
  "module": "Buying",
  "name": "Supplier",
  "name_case": "Title Case",

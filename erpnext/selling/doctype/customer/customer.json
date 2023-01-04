@@ -13,6 +13,7 @@
   "naming_series",
   "salutation",
   "customer_name",
+  "bank_check_name",
   "gender",
   "customer_type",
   "default_bank_account",
@@ -486,13 +487,19 @@
    "fieldtype": "Link",
    "label": "Default Mode of Payment",
    "options": "Mode of Payment"
+  },
+  {
+   "description": "If filled-in, this name will be printed on Checks, otherwise the 'name' (ID) will be used.",
+   "fieldname": "bank_check_name",
+   "fieldtype": "Data",
+   "label": "Bank Check Name"
   }
  ],
  "icon": "fa fa-user",
  "idx": 363,
  "image_field": "image",
- "modified": "2022-02-10 14:17:37.421353",
- "modified_by": "Administrator",
+ "modified": "2023-01-04 12:23:39.217625",
+ "modified_by": "brian@datahenge.com",
  "module": "Selling",
  "name": "Customer",
  "name_case": "Title Case",

@@ -37,7 +37,7 @@ class JournalEntry(AccountsController):
 		if self.is_new():
 			# Spectrum Fruits: Do not allow saving unless the Bank Check and Naming Series match up.
 			if self.create_bank_check and self.naming_series != 'JV-CK-':
-				raise Exception("When 'Create a Bank Check' is marked, the naming series should be 'JV-CK-'")		
+				raise Exception("When 'Create a Bank Check' is marked, the naming series should be 'JV-CK-'")
 		if not self.is_opening:
 			self.is_opening='No'
 		self.clearance_date = None

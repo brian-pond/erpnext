@@ -17,6 +17,7 @@
   "middle_name",
   "last_name",
   "employee_name",
+  "bank_check_name",
   "image",
   "column_break1",
   "company",
@@ -798,13 +799,19 @@
   {
    "fieldname": "contact_html",
    "fieldtype": "HTML"
+  },
+  {
+   "description": "If filled-in, this name will be printed on Checks, otherwise the 'name' (ID) will be used.",
+   "fieldname": "bank_check_name",
+   "fieldtype": "Data",
+   "label": "Bank Check Name"
   }
  ],
  "icon": "fa fa-user",
  "idx": 24,
  "image_field": "image",
- "modified": "2021-09-30 10:42:22.011075",
- "modified_by": "Administrator",
+ "modified": "2023-01-04 12:24:34.985554",
+ "modified_by": "brian@datahenge.com",
  "module": "HR",
  "name": "Employee",
  "name_case": "Title Case",
