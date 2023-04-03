@@ -302,5 +302,5 @@ def reconcile_dr_cr_note(dr_cr_notes, company):
 				}
 			]
 		})
-
+		jv.cheque_no = 'Payment Reconciliation' # Spectrum Fruits - Prevents an error when Cheque Date is filled-in, but not Check Number.
 		jv.submit()

@@ -185,7 +185,7 @@ def get_gl_entries(filters):
 			select_fields=select_fields, conditions=get_conditions(filters),
 			order_by_statement=order_by_statement
 		),
-		filters, as_dict=1, debug=True, explain=True)
+		filters, as_dict=1, debug=False, explain=True)
 
 	if filters.get('presentation_currency'):
 		return convert_to_presentation_currency(gl_entries, currency_map)
