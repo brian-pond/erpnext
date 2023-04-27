@@ -435,18 +435,21 @@ def get_columns(filters):
 			"label": _("Debit ({0})".format(currency)),
 			"fieldname": "debit",
 			"fieldtype": "Float",
+			"precision": 2,			
 			"width": 100
 		},
 		{
 			"label": _("Credit ({0})".format(currency)),
 			"fieldname": "credit",
 			"fieldtype": "Float",
+			"precision": 2,
 			"width": 100
 		},
 		{
 			"label": _("Balance ({0})".format(currency)),
 			"fieldname": "balance",
 			"fieldtype": "Float",
+			"precision": 2,
 			"width": 130
 		}
 	]
