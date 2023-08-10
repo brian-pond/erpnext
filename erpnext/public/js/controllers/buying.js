@@ -274,6 +274,8 @@ erpnext.buying.BuyingController = erpnext.TransactionController.extend({
 	},
 
 	project: function(doc, cdt, cdn) {
+		// Spectrum Fruits : Do not copy the same Project across all other Order Lines.
+		/*
 		var item = frappe.get_doc(cdt, cdn);
 		if(item.project) {
 			$.each(this.frm.doc["items"] || [],
@@ -284,6 +286,7 @@ erpnext.buying.BuyingController = erpnext.TransactionController.extend({
 					}
 				});
 		}
+		*/
 	},
 
 	rejected_warehouse: function(doc, cdt) {
