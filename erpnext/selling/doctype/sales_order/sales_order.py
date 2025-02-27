@@ -242,7 +242,7 @@ class SalesOrder(SellingController):
 		if self.po_no and self.customer and not self.skip_delivery_note:
 			so = frappe.db.sql(
 				"select name from `tabSales Order` \
-				where ifnull(po_no, '') = %s and name != %s and docstatus < 2\
+				where coalesce(po_no, '') = %s and name != %s and docstatus < 2\
 				and customer = %s",
 				(self.po_no, self.name, self.customer),
 			)
@@ -333,7 +333,7 @@ class SalesOrder(SellingController):
 		if self.project and self.customer_name:
 			res = frappe.db.sql(
 				"""select name from `tabProject` where name = %s
-				and (customer = %s or ifnull(customer,'')='')""",
+				and (customer = %s or coalesce(customer,'')='')""",
 				(self.project, self.customer),
 			)
 			if not res:
@@ -1215,7 +1215,7 @@ def get_events(start, end, filters=None):
 			`tabSales Order`, `tabSales Order Item`
 		where `tabSales Order`.name = `tabSales Order Item`.parent
 			and `tabSales Order`.skip_delivery_note = 0
-			and (ifnull(`tabSales Order Item`.delivery_date, '0000-00-00')!= '0000-00-00') \
+			and (coalesce(`tabSales Order Item`.delivery_date, '0000-00-00')!= '0000-00-00') \
 			and (`tabSales Order Item`.delivery_date between %(start)s and %(end)s)
 			and `tabSales Order`.docstatus < 2
 			{conditions}

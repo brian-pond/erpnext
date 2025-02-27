@@ -459,6 +459,8 @@ class PurchaseInvoice(BuyingController):
 	def set_expense_account(self, for_validate=False):
 		auto_accounting_for_stock = erpnext.is_perpetual_inventory_enabled(self.company)
 
+		stock_items = []
+		stock_not_billed_account = None
 		if auto_accounting_for_stock:
 			stock_not_billed_account = self.get_company_default("stock_received_but_not_billed")
 			stock_items = self.get_stock_items()
@@ -505,7 +507,7 @@ class PurchaseInvoice(BuyingController):
 					# check if 'Stock Received But Not Billed' account is credited in Purchase receipt or not
 					if item.purchase_receipt:
 						negative_expense_booked_in_pr = frappe.db.sql(
-							"""select name from `tabGL Entry`
+							"""select name from "tabGL Entry"
 							where voucher_type='Purchase Receipt' and voucher_no=%s and account = %s""",
 							(item.purchase_receipt, stock_not_billed_account),
 						)
@@ -668,13 +670,13 @@ class PurchaseInvoice(BuyingController):
 		for d in self.get("items"):
 			if d.purchase_order:
 				submitted = frappe.db.sql(
-					"select name from `tabPurchase Order` where docstatus = 1 and name = %s", d.purchase_order
+					"""select name from "tabPurchase Order" where docstatus = 1 and name = %s""", d.purchase_order
 				)
 				if not submitted:
 					frappe.throw(_("Purchase Order {0} is not submitted").format(d.purchase_order))
 			if d.purchase_receipt:
 				submitted = frappe.db.sql(
-					"select name from `tabPurchase Receipt` where docstatus = 1 and name = %s",
+					"""select name from "tabPurchase Receipt" where docstatus = 1 and name = %s""",
 					d.purchase_receipt,
 				)
 				if not submitted:
@@ -697,8 +699,8 @@ class PurchaseInvoice(BuyingController):
 					"second_join_field": "purchase_order_item",
 					"percent_join_field": "purchase_order",
 					"overflow_type": "receipt",
-					"extra_cond": """ and exists(select name from `tabPurchase Invoice`
-					where name=`tabPurchase Invoice Item`.parent and update_stock = 1)""",
+					"extra_cond": """ and exists(select name from "tabPurchase Invoice"
+					where name="tabPurchase Invoice Item".parent and update_stock = 1)""",
 				}
 			)
 			self.status_updater.append(
@@ -726,8 +728,8 @@ class PurchaseInvoice(BuyingController):
 						"second_source_field": "-1 * qty",
 						"second_join_field": "purchase_order_item",
 						"overflow_type": "receipt",
-						"extra_cond": """ and exists (select name from `tabPurchase Invoice`
-						where name=`tabPurchase Invoice Item`.parent and update_stock=1 and is_return=1)""",
+						"extra_cond": """ and exists (select name from "tabPurchase Invoice"
+						where name="tabPurchase Invoice Item".parent and update_stock=1 and is_return=1)""",
 					}
 				)
 
@@ -1173,7 +1175,7 @@ class PurchaseInvoice(BuyingController):
 				# Post reverse entry for Stock-Received-But-Not-Billed if it is booked in Purchase Receipt
 				if item.purchase_receipt and valuation_tax_accounts:
 					negative_expense_booked_in_pr = frappe.db.sql(
-						"""select name from `tabGL Entry`
+						"""select name from "tabGL Entry"
 							where voucher_type='Purchase Receipt' and voucher_no=%s and account in %s""",
 						(item.purchase_receipt, valuation_tax_accounts),
 					)
@@ -1618,7 +1620,7 @@ class PurchaseInvoice(BuyingController):
 				fiscal_year = get_fiscal_year(self.posting_date, company=self.company, as_dict=True)
 
 				pi = frappe.db.sql(
-					"""select name from `tabPurchase Invoice`
+					"""select name from "tabPurchase Invoice"
 					where
 						bill_no = %(bill_no)s
 						and supplier = %(supplier)s

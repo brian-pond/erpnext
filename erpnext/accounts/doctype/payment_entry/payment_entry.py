@@ -139,7 +139,7 @@ class PaymentEntry(AccountsController):
 			allowed_types = frozenset(["Sales Order", "Purchase Order"])
 			reference_types = set([x.reference_doctype for x in self.references])
 
-			# If there are referencers other than `allowed_types`, treat this as a normal payment entry
+			# If there are referencers other than "allowed_types", treat this as a normal payment entry
 			if reference_types - allowed_types:
 				self.book_advance_payments_in_separate_party_account = False
 				self.is_opening = "No"
@@ -295,7 +295,7 @@ class PaymentEntry(AccountsController):
 						).format(frappe.bold(d.reference_name), frappe.bold(idx))
 					)
 
-				# if no payment template is used by invoice and has a custom term(no `payment_term`), then invoice outstanding will be in 'None' key
+				# if no payment template is used by invoice and has a custom term(no "payment_term"), then invoice outstanding will be in 'None' key
 				latest = latest.get(d.payment_term) or latest.get(None)
 				# The reference has already been fully paid
 				if not latest:
@@ -435,7 +435,7 @@ class PaymentEntry(AccountsController):
 						# for cases where gain/loss is booked into invoice
 						# exchange_gain_loss is calculated from invoice & populated
 						# and row.exchange_rate is already set to payment entry's exchange rate
-						# refer -> `update_reference_in_payment_entry()` in utils.py
+						# refer -> "update_reference_in_payment_entry()" in utils.py
 						continue
 
 					if field == "exchange_rate" or not d.get(field) or force:
@@ -601,7 +601,7 @@ class PaymentEntry(AccountsController):
 		for d in self.get("references"):
 			if d.allocated_amount and d.reference_doctype == "Journal Entry":
 				je_accounts = frappe.db.sql(
-					"""select debit, credit from `tabJournal Entry Account`
+					"""select debit, credit from "tabJournal Entry Account"
 					where account = %s and party=%s and docstatus = 1 and parent = %s
 					and (reference_type is null or reference_type in ("", "Sales Order", "Purchase Order", "Daily Order"))
 					""",
@@ -679,11 +679,11 @@ class PaymentEntry(AccountsController):
 			if cancel:
 				frappe.db.sql(
 					"""
-					UPDATE `tabPayment Schedule`
+					UPDATE "tabPayment Schedule"
 					SET
-						paid_amount = `paid_amount` - %s,
-						discounted_amount = `discounted_amount` - %s,
-						outstanding = `outstanding` + %s
+						paid_amount = "paid_amount" - %s,
+						discounted_amount = "discounted_amount" - %s,
+						outstanding = "outstanding" + %s
 					WHERE parent = %s and payment_term = %s""",
 					(allocated_amount - discounted_amt, discounted_amt, allocated_amount, key[1], key[0]),
 				)
@@ -706,11 +706,11 @@ class PaymentEntry(AccountsController):
 				if allocated_amount and outstanding:
 					frappe.db.sql(
 						"""
-						UPDATE `tabPayment Schedule`
+						UPDATE "tabPayment Schedule"
 						SET
-							paid_amount = `paid_amount` + %s,
-							discounted_amount = `discounted_amount` + %s,
-							outstanding = `outstanding` - %s
+							paid_amount = "paid_amount" + %s,
+							discounted_amount = "discounted_amount" + %s,
+							outstanding = "outstanding" - %s
 						WHERE parent = %s and payment_term = %s""",
 						(allocated_amount - discounted_amt, discounted_amt, allocated_amount, key[1], key[0]),
 					)
@@ -952,7 +952,7 @@ class PaymentEntry(AccountsController):
 				flt(d.allocated_amount) * flt(exchange_rate), self.precision("base_paid_amount")
 			)
 
-			# on rare case, when `exchange_rate` is unset, gain/loss amount is incorrectly calculated
+			# on rare case, when "exchange_rate" is unset, gain/loss amount is incorrectly calculated
 			# for base currency transactions
 			if d.exchange_rate is None:
 				d.exchange_rate = 1
@@ -1041,7 +1041,7 @@ class PaymentEntry(AccountsController):
 	def clear_unallocated_reference_document_rows(self):
 		self.set("references", self.get("references", {"allocated_amount": ["not in", [0, None, ""]]}))
 		frappe.db.sql(
-			"""delete from `tabPayment Entry Reference`
+			"""delete from "tabPayment Entry Reference"
 			where parent = %s and allocated_amount = 0""",
 			self.name,
 		)
@@ -1949,7 +1949,7 @@ def get_orders_to_be_billed(
 			(if({rounded_total_field}, {rounded_total_field}, {grand_total_field}) - advance_paid) as outstanding_amount,
 			transaction_date as posting_date
 		from
-			`tab{voucher_type}`
+			"tab{voucher_type}"
 		where
 			{party_type} = %s
 			and docstatus = 1
@@ -2026,7 +2026,7 @@ def get_negative_outstanding_invoices(
 			outstanding_amount, posting_date,
 			due_date, conversion_rate as exchange_rate
 		from
-			`tab{voucher_type}`
+			"tab{voucher_type}"
 		where
 			{party_type} = %s and {party_account} = %s and docstatus = 1 and
 			outstanding_amount < 0
@@ -2715,8 +2715,8 @@ def get_paid_amount(dt, dn, party_type, party, account, due_date):
 
 	paid_amount = frappe.db.sql(
 		f"""
-		select ifnull(sum({dr_or_cr}), 0) as paid_amount
-		from `tabGL Entry`
+		select coalesce(sum({dr_or_cr}), 0) as paid_amount
+		from "tabGL Entry"
 		where against_voucher_type = %s
 			and against_voucher = %s
 			and party_type = %s

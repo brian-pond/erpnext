@@ -307,7 +307,7 @@ class ReceivablePayableReport:
 
 				if self.is_invoice(row) and self.filters.based_on_payment_terms:
 					# is an invoice, allocate based on fifo
-					# adds a list `payment_terms` which contains new rows for each term
+					# adds a list "payment_terms" which contains new rows for each term
 					self.allocate_outstanding_based_on_payment_terms(row)
 
 					if row.payment_terms:
@@ -369,7 +369,7 @@ class ReceivablePayableReport:
 			si_against_dn = frappe.db.sql(
 				"""
 				select parent, delivery_note
-				from `tabSales Invoice Item`
+				from "tabSales Invoice Item"
 				where docstatus=1 and parent in (%s)
 			"""
 				% (",".join(["%s"] * len(self.invoices))),
@@ -384,7 +384,7 @@ class ReceivablePayableReport:
 			dn_against_si = frappe.db.sql(
 				"""
 				select distinct parent, against_sales_invoice
-				from `tabDelivery Note Item`
+				from "tabDelivery Note Item"
 				where against_sales_invoice in (%s)
 			"""
 				% (",".join(["%s"] * len(self.invoices))),
@@ -401,7 +401,7 @@ class ReceivablePayableReport:
 			si_list = frappe.db.sql(
 				"""
 				select name, due_date, po_no
-				from `tabSales Invoice`
+				from "tabSales Invoice"
 				where posting_date <= %s
 			""",
 				self.filters.report_date,
@@ -415,7 +415,7 @@ class ReceivablePayableReport:
 				sales_team = frappe.db.sql(
 					"""
 					select parent, sales_person
-					from `tabSales Team`
+					from "tabSales Team"
 					where parenttype = 'Sales Invoice'
 				""",
 					as_dict=1,
@@ -429,7 +429,7 @@ class ReceivablePayableReport:
 			for pi in frappe.db.sql(
 				"""
 				select name, due_date, bill_no, bill_date
-				from `tabPurchase Invoice`
+				from "tabPurchase Invoice"
 				where posting_date <= %s
 			""",
 				self.filters.report_date,
@@ -441,7 +441,7 @@ class ReceivablePayableReport:
 		journal_entries = frappe.db.sql(
 			"""
 			select name, due_date, bill_no, bill_date
-			from `tabJournal Entry`
+			from "tabJournal Entry"
 			where posting_date <= %s
 		""",
 			self.filters.report_date,
@@ -483,7 +483,7 @@ class ReceivablePayableReport:
 				si.name, si.party_account_currency, si.currency, si.conversion_rate,
 				si.total_advance, ps.due_date, ps.payment_term, ps.payment_amount, ps.base_payment_amount,
 				ps.description, ps.paid_amount, ps.discounted_amount
-			from `tab{row.voucher_type}` si, `tabPayment Schedule` ps
+			from "tab{row.voucher_type}" si, "tabPayment Schedule" ps
 			where
 				si.name = ps.parent and
 				si.name = %s
@@ -814,9 +814,9 @@ class ReceivablePayableReport:
 			records = frappe.db.sql(
 				"""
 				select distinct parent, parenttype
-				from `tabSales Team` steam
+				from "tabSales Team" steam
 				where parenttype in ('Customer', 'Sales Invoice')
-					and exists(select name from `tabSales Person` where lft >= %s and rgt <= %s and name = steam.sales_person)
+					and exists(select name from "tabSales Person" where lft >= %s and rgt <= %s and name = steam.sales_person)
 			""",
 				(lft, rgt),
 				as_dict=1,
@@ -1058,7 +1058,7 @@ class ReceivablePayableReport:
 		if self.account_type == "Receivable":
 			self.add_column(_("Credit Note"), fieldname="credit_note")
 		else:
-			# note: fieldname is still `credit_note`
+			# note: fieldname is still "credit_note"
 			self.add_column(_("Debit Note"), fieldname="credit_note")
 		self.add_column(_("Outstanding Amount"), fieldname="outstanding")
 

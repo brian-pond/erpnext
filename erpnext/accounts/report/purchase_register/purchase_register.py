@@ -1,12 +1,12 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
+from pypika import Order
 
 import frappe
 from frappe import _, msgprint
 from frappe.query_builder.custom import ConstantColumn
 from frappe.utils import flt, getdate
-from pypika import Order
 
 from erpnext.accounts.party import get_party_account
 from erpnext.accounts.report.utils import (
@@ -328,7 +328,7 @@ def get_account_columns(invoice_list, include_payments):
 		unrealized_profit_loss_accounts = frappe.db.sql_list(
 			"""SELECT distinct unrealized_profit_loss_account
 			from `tabPurchase Invoice` where docstatus = 1 and name in (%s)
-			and ifnull(unrealized_profit_loss_account, '') != ''
+			and coalesce(unrealized_profit_loss_account, '') != ''
 			order by unrealized_profit_loss_account"""
 			% ", ".join(["%s"] * len(invoice_list)),
 			tuple(inv.name for inv in invoice_list),

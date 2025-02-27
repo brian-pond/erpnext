@@ -1019,9 +1019,9 @@ def pricing_rule_matches_coupon_list(pricing_rule, coupon_code_list, verbose=Fal
 	# to be prolific throughout ERPNext.
 	coupon_codes = coupon_code_list
 	result = frappe.db.sql(""" SELECT Code.coupon_code
-		FROM `tabCoupon Code`	AS Code
+		FROM "tabCoupon Code"	AS Code
 		INNER JOIN
-			`tabCoupon Code Pricing Rule` 	CodePricingRule
+			"tabCoupon Code Pricing Rule" 	CodePricingRule
 		ON
 			CodePricingRule.parenttype = 'Coupon Code'
 		AND CodePricingRule.parent = Code.name

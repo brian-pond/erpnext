@@ -137,11 +137,11 @@ def get_payment_entries_for_bank_clearance(
 				sum(t2.debit_in_account_currency) as debit, sum(t2.credit_in_account_currency) as credit,
 				t1.posting_date, t2.against_account, t1.clearance_date, t2.account_currency
 			from
-				`tabJournal Entry` t1, `tabJournal Entry Account` t2
+				"tabJournal Entry" t1, "tabJournal Entry Account" t2
 			where
 				t2.parent = t1.name and t2.account = %(account)s and t1.docstatus=1
 				and t1.posting_date >= %(from)s and t1.posting_date <= %(to)s
-				and ifnull(t1.is_opening, 'No') = 'No' {condition}
+				and coalesce(t1.is_opening, 'No') = 'No' {condition}
 			group by t2.account, t1.name
 			order by t1.posting_date ASC, t1.name DESC
 		""",
@@ -159,9 +159,9 @@ def get_payment_entries_for_bank_clearance(
 				reference_no as cheque_number, reference_date as cheque_date,
 				if(paid_from=%(account)s, paid_amount + total_taxes_and_charges, 0) as credit,
 				if(paid_from=%(account)s, 0, received_amount) as debit,
-				posting_date, ifnull(party,if(paid_from=%(account)s,paid_to,paid_from)) as against_account, clearance_date,
+				posting_date, coalesce(party,if(paid_from=%(account)s,paid_to,paid_from)) as against_account, clearance_date,
 				if(paid_to=%(account)s, paid_to_account_currency, paid_from_account_currency) as account_currency
-			from `tabPayment Entry`
+			from "tabPayment Entry"
 			where
 				(paid_from=%(account)s or paid_to=%(account)s) and docstatus=1
 				and posting_date >= %(from)s and posting_date <= %(to)s

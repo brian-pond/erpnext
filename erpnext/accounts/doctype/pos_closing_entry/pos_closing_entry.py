@@ -153,9 +153,9 @@ def get_pos_invoices(start, end, pos_profile, user):
 	select
 		name, timestamp(posting_date, posting_time) as "timestamp"
 	from
-		`tabPOS Invoice`
+		"tabPOS Invoice"
 	where
-		owner = %s and docstatus = 1 and pos_profile = %s and ifnull(consolidated_invoice,'') = ''
+		owner = %s and docstatus = 1 and pos_profile = %s and coalesce(consolidated_invoice,'') = ''
 	""",
 		(user, pos_profile),
 		as_dict=1,

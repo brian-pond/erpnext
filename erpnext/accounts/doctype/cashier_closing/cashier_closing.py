@@ -46,7 +46,7 @@ class CashierClosing(Document):
 		values = frappe.db.sql(
 			"""
 			select sum(outstanding_amount)
-			from `tabSales Invoice`
+			from "tabSales Invoice"
 			where posting_date=%s and posting_time>=%s and posting_time<=%s and owner=%s
 		""",
 			(self.date, self.from_time, self.time, self.user),

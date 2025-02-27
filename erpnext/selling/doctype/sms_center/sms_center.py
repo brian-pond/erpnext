@@ -47,21 +47,21 @@ class SMSCenter(Document):
 			if self.customer:
 				where_clause += (
 					" and dl.link_name = '%s'" % self.customer.replace("'", "'")
-					or " and ifnull(dl.link_name, '') != ''"
+					or " and coalesce(dl.link_name, '') != ''"
 				)
 		if self.send_to == "All Supplier Contact":
 			where_clause = " and dl.link_doctype = 'Supplier'"
 			if self.supplier:
 				where_clause += (
 					" and dl.link_name = '%s'" % self.supplier.replace("'", "'")
-					or " and ifnull(dl.link_name, '') != ''"
+					or " and coalesce(dl.link_name, '') != ''"
 				)
 		if self.send_to == "All Sales Partner Contact":
 			where_clause = " and dl.link_doctype = 'Sales Partner'"
 			if self.sales_partner:
 				where_clause += (
 					"and dl.link_name = '%s'" % self.sales_partner.replace("'", "'")
-					or " and ifnull(dl.link_name, '') != ''"
+					or " and coalesce(dl.link_name, '') != ''"
 				)
 		if self.send_to in [
 			"All Contact",
@@ -70,8 +70,8 @@ class SMSCenter(Document):
 			"All Sales Partner Contact",
 		]:
 			rec = frappe.db.sql(
-				"""select CONCAT(ifnull(c.first_name,''), ' ', ifnull(c.last_name,'')),
-				c.mobile_no from `tabContact` c, `tabDynamic Link` dl  where ifnull(c.mobile_no,'')!='' and
+				"""select CONCAT(coalesce(c.first_name,''), ' ', coalesce(c.last_name,'')),
+				c.mobile_no from `tabContact` c, `tabDynamic Link` dl  where coalesce(c.mobile_no,'')!='' and
 				c.docstatus != 2 and dl.parent = c.name%s"""
 				% where_clause
 			)
@@ -79,7 +79,7 @@ class SMSCenter(Document):
 		elif self.send_to == "All Lead (Open)":
 			rec = frappe.db.sql(
 				"""select lead_name, mobile_no from `tabLead` where
-				ifnull(mobile_no,'')!='' and docstatus != 2 and status='Open'"""
+				coalesce(mobile_no,'')!='' and docstatus != 2 and status='Open'"""
 			)
 
 		elif self.send_to == "All Employee (Active)":
@@ -91,7 +91,7 @@ class SMSCenter(Document):
 			rec = frappe.db.sql(
 				"""select employee_name, cell_number from
 				`tabEmployee` where status = 'Active' and docstatus < 2 and
-				ifnull(cell_number,'')!='' %s"""
+				coalesce(cell_number,'')!='' %s"""
 				% where_clause
 			)
 
@@ -100,7 +100,7 @@ class SMSCenter(Document):
 				"""select sales_person_name,
 				tabEmployee.cell_number from `tabSales Person` left join tabEmployee
 				on `tabSales Person`.employee = tabEmployee.name
-				where ifnull(tabEmployee.cell_number,'')!=''"""
+				where coalesce(tabEmployee.cell_number,'')!=''"""
 			)
 
 		rec_list = ""

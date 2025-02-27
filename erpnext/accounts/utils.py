@@ -228,7 +228,7 @@ def get_balance_on(
 		if cc.is_group:
 			cond.append(
 				f""" exists (
-				select 1 from `tabCost Center` cc where cc.name = gle.cost_center
+				select 1 from "tabCost Center" cc where cc.name = gle.cost_center
 				and cc.lft >= {cc.lft} and cc.rgt <= {cc.rgt}
 			)"""
 			)
@@ -244,7 +244,7 @@ def get_balance_on(
 		if acc.is_group:
 			cond.append(
 				f"""exists (
-				select name from `tabAccount` ac where ac.name = gle.account
+				select name from "tabAccount" ac where ac.name = gle.account
 				and ac.lft >= {acc.lft} and ac.rgt <= {acc.rgt}
 			)"""
 			)
@@ -291,7 +291,7 @@ def get_balance_on(
 		bal = frappe.db.sql(
 			"""
 			SELECT {}
-			FROM `tabGL Entry` gle
+			FROM "tabGL Entry" gle
 			WHERE {}""".format(select_field, " and ".join(cond)),
 			(precision, precision),
 		)[0][0]
@@ -333,7 +333,7 @@ def get_count_on(account, fieldname, date):
 		if acc.is_group:
 			cond.append(
 				f"""exists (
-				select name from `tabAccount` ac where ac.name = gle.account
+				select name from "tabAccount" ac where ac.name = gle.account
 				and ac.lft >= {acc.lft} and ac.rgt <= {acc.rgt}
 			)"""
 			)
@@ -344,7 +344,7 @@ def get_count_on(account, fieldname, date):
 			"""
 			SELECT name, posting_date, account, party_type, party,debit,credit,
 				voucher_type, voucher_no, against_voucher_type, against_voucher
-			FROM `tabGL Entry` gle
+			FROM "tabGL Entry" gle
 			WHERE {}""".format(" and ".join(cond)),
 			as_dict=True,
 		)
@@ -357,9 +357,9 @@ def get_count_on(account, fieldname, date):
 				dr_or_cr = "debit" if fieldname == "invoiced_amount" else "credit"
 				cr_or_dr = "credit" if fieldname == "invoiced_amount" else "debit"
 				select_fields = (
-					"ifnull(sum(credit-debit),0)"
+					"coalesce(sum(credit-debit),0)"
 					if fieldname == "invoiced_amount"
-					else "ifnull(sum(debit-credit),0)"
+					else "coalesce(sum(debit-credit),0)"
 				)
 
 				if (
@@ -370,7 +370,7 @@ def get_count_on(account, fieldname, date):
 					payment_amount = frappe.db.sql(
 						f"""
 						SELECT {select_fields}
-						FROM `tabGL Entry` gle
+						FROM "tabGL Entry" gle
 						WHERE docstatus < 2 and posting_date <= %(date)s and against_voucher = %(voucher_no)s
 						and party = %(party)s and name != %(name)s""",
 						{"date": date, "voucher_no": gle.voucher_no, "party": gle.party, "name": gle.name},
@@ -476,7 +476,7 @@ def reconcile_against_document(
 		doc = frappe.get_doc(voucher_type, voucher_no)
 		frappe.flags.ignore_party_validation = True
 
-		# For payments with `Advance` in separate account feature enabled, only new ledger entries are posted for each reference.
+		# For payments with "Advance" in separate account feature enabled, only new ledger entries are posted for each reference.
 		# No need to cancel/delete payment ledger entries
 		if voucher_type == "Payment Entry" and doc.book_advance_payments_in_separate_party_account:
 			doc.make_advance_gl_entries(cancel=1)
@@ -513,7 +513,7 @@ def reconcile_against_document(
 		doc = frappe.get_doc(entry.voucher_type, entry.voucher_no)
 
 		if voucher_type == "Payment Entry" and doc.book_advance_payments_in_separate_party_account:
-			# both ledgers must be posted to for `Advance` in separate account feature
+			# both ledgers must be posted to for "Advance" in separate account feature
 			# TODO: find a more efficient way post only for the new linked vouchers
 			doc.make_advance_gl_entries()
 		else:
@@ -690,6 +690,8 @@ def update_reference_in_payment_entry(
 		"dimensions": d.dimensions,
 	}
 	update_advance_paid = []
+
+	row = None  # DH: Avoid possibility of returning before assignment
 
 	if d.voucher_detail_no:
 		existing_row = payment_entry.get("references", {"name": d["voucher_detail_no"]})[0]
@@ -952,7 +954,7 @@ def fix_total_debit_credit():
 	vouchers = frappe.db.sql(
 		"""select voucher_type, voucher_no,
 		sum(debit) - sum(credit) as diff
-		from `tabGL Entry`
+		from "tabGL Entry"
 		group by voucher_type, voucher_no
 		having sum(debit) != sum(credit)""",
 		as_dict=1,
@@ -963,7 +965,7 @@ def fix_total_debit_credit():
 			dr_or_cr = d.voucher_type == "Sales Invoice" and "credit" or "debit"
 
 			frappe.db.sql(
-				"""update `tabGL Entry` set {} = {} + {}
+				"""update "tabGL Entry" set {} = {} + {}
 				where voucher_type = {} and voucher_no = {} and {} > 0 limit 1""".format(
 					dr_or_cr, dr_or_cr, "%s", "%s", "%s", dr_or_cr
 				),
@@ -989,7 +991,7 @@ def get_held_invoices(party_type, party):
 
 	if party_type == "Supplier":
 		held_invoices = frappe.db.sql(
-			"select name from `tabPurchase Invoice` where on_hold = 1 and release_date IS NOT NULL and release_date > CURDATE()",
+			"""SELECT name FROM "tabPurchase Invoice" WHERE on_hold = 1 and release_date IS NOT NULL and release_date > CURDATE()""",
 			as_dict=1,
 		)
 		held_invoices = set(d["name"] for d in held_invoices)
@@ -1105,7 +1107,7 @@ def get_children(doctype, parent, company, is_root=False):
 	fields = ["name as value", "is_group as expandable"]
 	filters = [["docstatus", "<", 2]]
 
-	filters.append([f'ifnull(`{parent_fieldname}`,"")', "=", "" if is_root else parent])
+	filters.append([f'coalesce("{parent_fieldname}","")', "=", "" if is_root else parent])
 
 	if is_root:
 		fields += ["root_type", "report_type", "account_currency"] if doctype == "Account" else []
@@ -1395,7 +1397,7 @@ def get_future_stock_vouchers(posting_date, posting_time, for_warehouses=None, f
 
 	future_stock_vouchers = frappe.db.sql(
 		f"""select distinct sle.voucher_type, sle.voucher_no
-		from `tabStock Ledger Entry` sle
+		from "tabStock Ledger Entry" sle
 		where
 			timestamp(sle.posting_date, sle.posting_time) >= timestamp(%s, %s)
 			and is_cancelled = 0
@@ -1426,7 +1428,7 @@ def get_voucherwise_gl_entries(future_stock_vouchers, posting_date):
 	gles = frappe.db.sql(
 		"""
 		select name, account, credit, debit, cost_center, project, voucher_type, voucher_no
-			from `tabGL Entry`
+			from "tabGL Entry"
 		where
 			posting_date >= {} and voucher_no in ({})""".format("%s", ", ".join(["%s"] * len(voucher_nos))),
 		tuple([posting_date, *voucher_nos]),

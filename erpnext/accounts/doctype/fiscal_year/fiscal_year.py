@@ -36,7 +36,7 @@ class FiscalYear(Document):
 		if not self.is_new():
 			year_start_end_dates = frappe.db.sql(
 				"""select year_start_date, year_end_date
-				from `tabFiscal Year` where name=%s""",
+				from "tabFiscal Year" where name=%s""",
 				(self.name),
 			)
 
@@ -75,7 +75,7 @@ class FiscalYear(Document):
 
 	def validate_overlap(self):
 		existing_fiscal_years = frappe.db.sql(
-			"""select name from `tabFiscal Year`
+			"""select name from "tabFiscal Year"
 			where (
 				(%(year_start_date)s between year_start_date and year_end_date)
 				or (%(year_end_date)s between year_start_date and year_end_date)
@@ -93,7 +93,7 @@ class FiscalYear(Document):
 		if existing_fiscal_years:
 			for existing in existing_fiscal_years:
 				company_for_existing = frappe.db.sql_list(
-					"""select company from `tabFiscal Year Company`
+					"""select company from "tabFiscal Year Company"
 					where parent=%s""",
 					existing.name,
 				)
@@ -118,7 +118,7 @@ class FiscalYear(Document):
 @frappe.whitelist()
 def check_duplicate_fiscal_year(doc):
 	year_start_end_dates = frappe.db.sql(
-		"""select name, year_start_date, year_end_date from `tabFiscal Year` where name!=%s""",
+		"""select name, year_start_date, year_end_date from "tabFiscal Year" where name!=%s""",
 		(doc.name),
 	)
 	for fiscal_year, ysd, yed in year_start_end_dates:
@@ -135,7 +135,7 @@ def check_duplicate_fiscal_year(doc):
 @frappe.whitelist()
 def auto_create_fiscal_year():
 	for d in frappe.db.sql(
-		"""select name from `tabFiscal Year` where year_end_date = date_add(current_date, interval 3 day)"""
+		"""select name from "tabFiscal Year" where year_end_date = date_add(current_date, interval 3 day)"""
 	):
 		try:
 			current_fy = frappe.get_doc("Fiscal Year", d[0])

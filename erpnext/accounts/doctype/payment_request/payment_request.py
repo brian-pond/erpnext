@@ -567,7 +567,7 @@ def get_existing_payment_request_amount(ref_dt, ref_dn):
 	existing_payment_request_amount = frappe.db.sql(
 		"""
 		select sum(grand_total)
-		from `tabPayment Request`
+		from "tabPayment Request"
 		where
 			reference_doctype = %s
 			and reference_name = %s
@@ -685,7 +685,7 @@ def get_dummy_message(doc):
 def get_subscription_details(reference_doctype, reference_name):
 	if reference_doctype == "Sales Invoice":
 		subscriptions = frappe.db.sql(
-			"""SELECT parent as sub_name FROM `tabSubscription Invoice` WHERE invoice=%s""",
+			"""SELECT parent as sub_name FROM "tabSubscription Invoice" WHERE invoice=%s""",
 			reference_name,
 			as_dict=1,
 		)

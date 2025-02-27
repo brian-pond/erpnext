@@ -62,7 +62,7 @@ def lead_query(doctype, txt, searchfield, start, page_len, filters):
 	return frappe.db.sql(
 		"""select {fields} from `tabLead`
 		where docstatus < 2
-			and ifnull(status, '') != 'Converted'
+			and coalesce(status, '') != 'Converted'
 			and ({key} like %(txt)s
 				or lead_name like %(txt)s
 				or company_name like %(txt)s
@@ -106,7 +106,7 @@ def tax_account_query(doctype, txt, searchfield, start, page_len, filters):
 				AND is_group = 0
 				AND company = %(company)s
 				AND disabled = %(disabled)s
-				AND (account_currency = %(currency)s or ifnull(account_currency, '') = '')
+				AND (account_currency = %(currency)s or coalesce(account_currency, '') = '')
 				AND `{searchfield}` LIKE %(txt)s
 				{get_match_cond(doctype)}
 			ORDER BY idx DESC, name
@@ -204,7 +204,7 @@ def item_query(doctype, txt, searchfield, start, page_len, filters, as_dict=Fals
 		where tabItem.docstatus < 2
 			and tabItem.disabled=0
 			and tabItem.has_variants=0
-			and (tabItem.end_of_life > %(today)s or ifnull(tabItem.end_of_life, '0000-00-00')='0000-00-00')
+			and (tabItem.end_of_life > %(today)s or coalesce(tabItem.end_of_life, '0000-00-00')='0000-00-00')
 			and ({scond} or tabItem.item_code IN (select parent from `tabItem Barcode` where barcode LIKE %(txt)s)
 				{description_cond})
 			{fcond} {mcond}
@@ -674,13 +674,13 @@ def warehouse_query(doctype, txt, searchfield, start, page_len, filters):
 		warehouse_field = meta.get("title_field")
 
 	query = """select `tabWarehouse`.`{warehouse_field}`,
-		CONCAT_WS(' : ', 'Actual Qty', ifnull(round(`tabBin`.actual_qty, 2), 0 )) actual_qty
+		CONCAT_WS(' : ', 'Actual Qty', coalesce(round(`tabBin`.actual_qty, 2), 0 )) actual_qty
 		from `tabWarehouse` left join `tabBin`
 		on `tabBin`.warehouse = `tabWarehouse`.name {bin_conditions}
 		where
 			`tabWarehouse`.`{key}` like {txt}
 			{fcond} {mcond}
-		order by ifnull(`tabBin`.actual_qty, 0) desc, `tabWarehouse`.`{warehouse_field}` asc
+		order by coalesce(`tabBin`.actual_qty, 0) desc, `tabWarehouse`.`{warehouse_field}` asc
 		limit
 			{page_len} offset {start}
 		""".format(

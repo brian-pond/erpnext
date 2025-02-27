@@ -85,8 +85,8 @@ class CostCenter(NestedSet):
 
 	def check_if_child_exists(self):
 		return frappe.db.sql(
-			"select name from `tabCost Center` where \
-			parent_cost_center = %s and docstatus != 2",
+			"""select name from "tabCost Center" where \
+			parent_cost_center = %s and docstatus != 2""",
 			self.name,
 		)
 

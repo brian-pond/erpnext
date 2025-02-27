@@ -70,14 +70,14 @@ def get_asset_categories_for_grouped_by_category(filters):
 	if filters.get("asset_category"):
 		condition += " and asset_category = %(asset_category)s"
 	if filters.get("finance_book"):
-		condition += " and exists (select 1 from `tabAsset Depreciation Schedule` ads where ads.asset = a.name and ads.finance_book = %(finance_book)s)"
+		condition += """ and exists (select 1 from "tabAsset Depreciation Schedule" ads where ads.asset = a.name and ads.finance_book = %(finance_book)s)"""
 
 	# nosemgrep
 	return frappe.db.sql(
 		f"""
 		SELECT a.asset_category,
-			   ifnull(sum(case when a.purchase_date < %(from_date)s then
-							   case when ifnull(a.disposal_date, 0) = 0 or a.disposal_date >= %(from_date)s then
+			   coalesce(sum(case when a.purchase_date < %(from_date)s then
+							   case when coalesce(a.disposal_date, 0) = 0 or a.disposal_date >= %(from_date)s then
 									a.gross_purchase_amount
 							   else
 									0
@@ -85,12 +85,12 @@ def get_asset_categories_for_grouped_by_category(filters):
 						   else
 								0
 						   end), 0) as cost_as_on_from_date,
-			   ifnull(sum(case when a.purchase_date >= %(from_date)s then
+			   coalesce(sum(case when a.purchase_date >= %(from_date)s then
 			   						a.gross_purchase_amount
 			   				   else
 			   				   		0
 			   				   end), 0) as cost_of_new_purchase,
-			   ifnull(sum(case when ifnull(a.disposal_date, 0) != 0
+			   coalesce(sum(case when coalesce(a.disposal_date, 0) != 0
 			   						and a.disposal_date >= %(from_date)s
 			   						and a.disposal_date <= %(to_date)s then
 							   case when a.status = "Sold" then
@@ -101,7 +101,7 @@ def get_asset_categories_for_grouped_by_category(filters):
 						   else
 								0
 						   end), 0) as cost_of_sold_asset,
-			   ifnull(sum(case when ifnull(a.disposal_date, 0) != 0
+			   coalesce(sum(case when coalesce(a.disposal_date, 0) != 0
 			   						and a.disposal_date >= %(from_date)s
 			   						and a.disposal_date <= %(to_date)s then
 							   case when a.status = "Scrapped" then
@@ -112,9 +112,9 @@ def get_asset_categories_for_grouped_by_category(filters):
 						   else
 								0
 						   end), 0) as cost_of_scrapped_asset
-		from `tabAsset` a
+		from "tabAsset" a
 		where docstatus=1 and company=%(company)s and purchase_date <= %(to_date)s {condition}
-		and not exists(select name from `tabAsset Capitalization Asset Item` where asset = a.name)
+		and not exists(select name from "tabAsset Capitalization Asset Item" where asset = a.name)
 		group by a.asset_category
 	""",
 		{
@@ -133,14 +133,14 @@ def get_asset_details_for_grouped_by_category(filters):
 	if filters.get("asset"):
 		condition += " and name = %(asset)s"
 	if filters.get("finance_book"):
-		condition += " and exists (select 1 from `tabAsset Depreciation Schedule` ads where ads.asset = `tabAsset`.name and ads.finance_book = %(finance_book)s)"
+		condition += """ and exists (select 1 from "tabAsset Depreciation Schedule" ads where ads.asset = "tabAsset".name and ads.finance_book = %(finance_book)s)"""
 
 	# nosemgrep
 	return frappe.db.sql(
 		f"""
 		SELECT name,
-			   ifnull(sum(case when purchase_date < %(from_date)s then
-							   case when ifnull(disposal_date, 0) = 0 or disposal_date >= %(from_date)s then
+			   coalesce(sum(case when purchase_date < %(from_date)s then
+							   case when coalesce(disposal_date, 0) = 0 or disposal_date >= %(from_date)s then
 									gross_purchase_amount
 							   else
 									0
@@ -148,12 +148,12 @@ def get_asset_details_for_grouped_by_category(filters):
 						   else
 								0
 						   end), 0) as cost_as_on_from_date,
-			   ifnull(sum(case when purchase_date >= %(from_date)s then
+			   coalesce(sum(case when purchase_date >= %(from_date)s then
 			   						gross_purchase_amount
 			   				   else
 			   				   		0
 			   				   end), 0) as cost_of_new_purchase,
-			   ifnull(sum(case when ifnull(disposal_date, 0) != 0
+			   coalesce(sum(case when coalesce(disposal_date, 0) != 0
 			   						and disposal_date >= %(from_date)s
 			   						and disposal_date <= %(to_date)s then
 							   case when status = "Sold" then
@@ -164,7 +164,7 @@ def get_asset_details_for_grouped_by_category(filters):
 						   else
 								0
 						   end), 0) as cost_of_sold_asset,
-			   ifnull(sum(case when ifnull(disposal_date, 0) != 0
+			   coalesce(sum(case when coalesce(disposal_date, 0) != 0
 			   						and disposal_date >= %(from_date)s
 			   						and disposal_date <= %(to_date)s then
 							   case when status = "Scrapped" then
@@ -175,7 +175,7 @@ def get_asset_details_for_grouped_by_category(filters):
 						   else
 								0
 						   end), 0) as cost_of_scrapped_asset
-		from `tabAsset`
+		from "tabAsset"
 		where docstatus=1 and company=%(company)s and purchase_date <= %(to_date)s {condition}
 		group by name
 	""",
@@ -240,46 +240,46 @@ def get_assets_for_grouped_by_category(filters):
 			   sum(results.depreciation_eliminated_during_the_period) as depreciation_eliminated_during_the_period,
 			   sum(results.depreciation_amount_during_the_period) as depreciation_amount_during_the_period
 		from (SELECT a.asset_category,
-				   ifnull(sum(case when gle.posting_date < %(from_date)s and (ifnull(a.disposal_date, 0) = 0 or a.disposal_date >= %(from_date)s) then
+				   coalesce(sum(case when gle.posting_date < %(from_date)s and (coalesce(a.disposal_date, 0) = 0 or a.disposal_date >= %(from_date)s) then
 								   gle.debit
 							  else
 								   0
 							  end), 0) as accumulated_depreciation_as_on_from_date,
-				   ifnull(sum(case when ifnull(a.disposal_date, 0) != 0 and a.disposal_date >= %(from_date)s
+				   coalesce(sum(case when coalesce(a.disposal_date, 0) != 0 and a.disposal_date >= %(from_date)s
 										and a.disposal_date <= %(to_date)s and gle.posting_date <= a.disposal_date then
 								   gle.debit
 							  else
 								   0
 							  end), 0) as depreciation_eliminated_during_the_period,
-				   ifnull(sum(case when gle.posting_date >= %(from_date)s and gle.posting_date <= %(to_date)s
-										and (ifnull(a.disposal_date, 0) = 0 or gle.posting_date <= a.disposal_date) then
+				   coalesce(sum(case when gle.posting_date >= %(from_date)s and gle.posting_date <= %(to_date)s
+										and (coalesce(a.disposal_date, 0) = 0 or gle.posting_date <= a.disposal_date) then
 								   gle.debit
 							  else
 								   0
 							  end), 0) as depreciation_amount_during_the_period
-			from `tabGL Entry` gle
-			join `tabAsset` a on
+			from "tabGL Entry" gle
+			join "tabAsset" a on
 				gle.against_voucher = a.name
-			join `tabAsset Category Account` aca on
+			join "tabAsset Category Account" aca on
 				aca.parent = a.asset_category and aca.company_name = %(company)s
-			join `tabCompany` company on
+			join "tabCompany" company on
 				company.name = %(company)s
-			where a.docstatus=1 and a.company=%(company)s and a.purchase_date <= %(to_date)s and gle.debit != 0 and gle.is_cancelled = 0 and gle.account = ifnull(aca.depreciation_expense_account, company.depreciation_expense_account) {0}
+			where a.docstatus=1 and a.company=%(company)s and a.purchase_date <= %(to_date)s and gle.debit != 0 and gle.is_cancelled = 0 and gle.account = coalesce(aca.depreciation_expense_account, company.depreciation_expense_account) {0}
 			group by a.asset_category
 			union
 			SELECT a.asset_category,
-				   ifnull(sum(case when ifnull(a.disposal_date, 0) != 0 and (a.disposal_date < %(from_date)s or a.disposal_date > %(to_date)s) then
+				   coalesce(sum(case when coalesce(a.disposal_date, 0) != 0 and (a.disposal_date < %(from_date)s or a.disposal_date > %(to_date)s) then
 									0
 							   else
 									a.opening_accumulated_depreciation
 							   end), 0) as accumulated_depreciation_as_on_from_date,
-				   ifnull(sum(case when a.disposal_date >= %(from_date)s and a.disposal_date <= %(to_date)s then
+				   coalesce(sum(case when a.disposal_date >= %(from_date)s and a.disposal_date <= %(to_date)s then
 								   a.opening_accumulated_depreciation
 							  else
 								   0
 							  end), 0) as depreciation_eliminated_during_the_period,
 				   0 as depreciation_amount_during_the_period
-			from `tabAsset` a
+			from "tabAsset" a
 			where a.docstatus=1 and a.company=%(company)s and a.purchase_date <= %(to_date)s {0}
 			group by a.asset_category) as results
 		group by results.asset_category
@@ -300,46 +300,46 @@ def get_assets_for_grouped_by_asset(filters):
 			   sum(results.depreciation_eliminated_during_the_period) as depreciation_eliminated_during_the_period,
 			   sum(results.depreciation_amount_during_the_period) as depreciation_amount_during_the_period
 		from (SELECT a.name as name,
-				   ifnull(sum(case when gle.posting_date < %(from_date)s and (ifnull(a.disposal_date, 0) = 0 or a.disposal_date >= %(from_date)s) then
+				   coalesce(sum(case when gle.posting_date < %(from_date)s and (coalesce(a.disposal_date, 0) = 0 or a.disposal_date >= %(from_date)s) then
 								   gle.debit
 							  else
 								   0
 							  end), 0) as accumulated_depreciation_as_on_from_date,
-				   ifnull(sum(case when ifnull(a.disposal_date, 0) != 0 and a.disposal_date >= %(from_date)s
+				   coalesce(sum(case when coalesce(a.disposal_date, 0) != 0 and a.disposal_date >= %(from_date)s
 										and a.disposal_date <= %(to_date)s and gle.posting_date <= a.disposal_date then
 								   gle.debit
 							  else
 								   0
 							  end), 0) as depreciation_eliminated_during_the_period,
-				   ifnull(sum(case when gle.posting_date >= %(from_date)s and gle.posting_date <= %(to_date)s
-										and (ifnull(a.disposal_date, 0) = 0 or gle.posting_date <= a.disposal_date) then
+				   coalesce(sum(case when gle.posting_date >= %(from_date)s and gle.posting_date <= %(to_date)s
+										and (coalesce(a.disposal_date, 0) = 0 or gle.posting_date <= a.disposal_date) then
 								   gle.debit
 							  else
 								   0
 							  end), 0) as depreciation_amount_during_the_period
-			from `tabGL Entry` gle
-			join `tabAsset` a on
+			from "tabGL Entry" gle
+			join "tabAsset" a on
 				gle.against_voucher = a.name
-			join `tabAsset Category Account` aca on
+			join "tabAsset Category Account" aca on
 				aca.parent = a.asset_category and aca.company_name = %(company)s
-			join `tabCompany` company on
+			join "tabCompany" company on
 				company.name = %(company)s
-			where a.docstatus=1 and a.company=%(company)s and a.purchase_date <= %(to_date)s and gle.debit != 0 and gle.is_cancelled = 0 and gle.account = ifnull(aca.depreciation_expense_account, company.depreciation_expense_account) {0}
+			where a.docstatus=1 and a.company=%(company)s and a.purchase_date <= %(to_date)s and gle.debit != 0 and gle.is_cancelled = 0 and gle.account = coalesce(aca.depreciation_expense_account, company.depreciation_expense_account) {0}
 			group by a.name
 			union
 			SELECT a.name as name,
-				   ifnull(sum(case when ifnull(a.disposal_date, 0) != 0 and (a.disposal_date < %(from_date)s or a.disposal_date > %(to_date)s) then
+				   coalesce(sum(case when coalesce(a.disposal_date, 0) != 0 and (a.disposal_date < %(from_date)s or a.disposal_date > %(to_date)s) then
 									0
 							   else
 									a.opening_accumulated_depreciation
 							   end), 0) as accumulated_depreciation_as_on_from_date,
-				   ifnull(sum(case when a.disposal_date >= %(from_date)s and a.disposal_date <= %(to_date)s then
+				   coalesce(sum(case when a.disposal_date >= %(from_date)s and a.disposal_date <= %(to_date)s then
 								   a.opening_accumulated_depreciation
 							  else
 								   0
 							  end), 0) as depreciation_eliminated_during_the_period,
 				   0 as depreciation_amount_during_the_period
-			from `tabAsset` a
+			from "tabAsset" a
 			where a.docstatus=1 and a.company=%(company)s and a.purchase_date <= %(to_date)s {0}
 			group by a.name) as results
 		group by results.name

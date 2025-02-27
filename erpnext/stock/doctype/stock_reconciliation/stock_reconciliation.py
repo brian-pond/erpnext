@@ -1232,7 +1232,7 @@ def get_items_for_stock_reco(warehouse, company):
 			`tabBin` bin, `tabItem` i
 		where
 			i.name = bin.item_code
-			and IFNULL(i.disabled, 0) = 0
+			and coalesce(i.disabled, 0) = 0
 			and i.is_stock_item = 1
 			and i.has_variants = 0
 			and exists(
@@ -1255,7 +1255,7 @@ def get_items_for_stock_reco(warehouse, company):
 			)
 			and i.is_stock_item = 1
 			and i.has_variants = 0
-			and IFNULL(i.disabled, 0) = 0
+			and coalesce(i.disabled, 0) = 0
 			and id.company = %s
 		group by i.name
 	""",

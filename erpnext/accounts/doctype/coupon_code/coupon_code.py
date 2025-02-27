@@ -117,20 +117,20 @@ class CouponCode(Document):
 				,PricingRule.name
 				,PricingRule.nth_order_only
 			FROM
-				`tabCoupon Code`		AS Coupon
+				"tabCoupon Code"		AS Coupon
 				
 			INNER JOIN
-				`tabCoupon Code Pricing Rule`		AS PricingRuleMap
+				"tabCoupon Code Pricing Rule"		AS PricingRuleMap
 			ON
 				PricingRuleMap.parenttype = 'Coupon Code'
 			AND PricingRuleMap.parent = Coupon.name
 
 			INNER JOIN
-				`tabPricing Rule`		AS PricingRule
+				"tabPricing Rule"		AS PricingRule
 			ON
 				PricingRule.name = PricingRuleMap.pricing_rule
 			AND PricingRule.selling = 1
-			AND IFNULL(nth_order_only,0) > 0
+			AND COALESCE(nth_order_only,0) > 0
 
 			WHERE
 				Coupon.coupon_code = %(coupon_code)s

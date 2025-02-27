@@ -201,7 +201,7 @@ class JournalEntry(AccountsController):
 			self.repost_accounting_entries()
 
 	def on_cancel(self):
-		# References for this Journal are removed on the `on_cancel` event in accounts_controller
+		# References for this Journal are removed on the "on_cancel" event in accounts_controller
 		super().on_cancel()
 		self.ignore_linked_doctypes = (
 			"GL Entry",
@@ -529,7 +529,7 @@ class JournalEntry(AccountsController):
 
 	def unlink_asset_adjustment_entry(self):
 		frappe.db.sql(
-			""" update `tabAsset Value Adjustment`
+			""" update "tabAsset Value Adjustment"
 			set journal_entry = null where journal_entry = %s""",
 			self.name,
 		)
@@ -639,7 +639,7 @@ class JournalEntry(AccountsController):
 					frappe.throw(_("You can not enter current voucher in 'Against Journal Entry' column"))
 
 				against_entries = frappe.db.sql(
-					"""select * from `tabJournal Entry Account`
+					"""select * from "tabJournal Entry Account"
 					where account = %s and docstatus = 1 and parent = %s
 					and (reference_type is null or reference_type in ('', 'Sales Order', 'Purchase Order'))
 					""",
@@ -981,7 +981,7 @@ class JournalEntry(AccountsController):
 			if d.reference_type == "Purchase Invoice" and d.debit:
 				bill_no = frappe.db.sql(
 					"""select bill_no, bill_date
-					from `tabPurchase Invoice` where name=%s""",
+					from "tabPurchase Invoice" where name=%s""",
 					d.reference_name,
 				)
 				if (
@@ -1188,7 +1188,7 @@ class JournalEntry(AccountsController):
 		if self.write_off_based_on == "Accounts Receivable":
 			return frappe.db.sql(
 				"""select name, debit_to as account, customer as party, outstanding_amount
-				from `tabSales Invoice` where docstatus = 1 and company = {}
+				from "tabSales Invoice" where docstatus = 1 and company = {}
 				and outstanding_amount > 0 {}""".format("%s", cond),
 				self.company,
 				as_dict=True,
@@ -1196,7 +1196,7 @@ class JournalEntry(AccountsController):
 		elif self.write_off_based_on == "Accounts Payable":
 			return frappe.db.sql(
 				"""select name, credit_to as account, supplier as party, outstanding_amount
-				from `tabPurchase Invoice` where docstatus = 1 and company = {}
+				from "tabPurchase Invoice" where docstatus = 1 and company = {}
 				and outstanding_amount > 0 {}""".format("%s", cond),
 				self.company,
 				as_dict=True,
@@ -1436,16 +1436,16 @@ def get_against_jv(doctype, txt, searchfield, start, page_len, filters):
 	return frappe.db.sql(
 		f"""
 		SELECT jv.name, jv.posting_date, jv.user_remark
-		FROM `tabJournal Entry` jv, `tabJournal Entry Account` jv_detail
+		FROM "tabJournal Entry" jv, "tabJournal Entry Account" jv_detail
 		WHERE jv_detail.parent = jv.name
 			AND jv_detail.account = %(account)s
-			AND IFNULL(jv_detail.party, '') = %(party)s
+			AND coalesce(jv_detail.party, '') = %(party)s
 			AND (
 				jv_detail.reference_type IS NULL
 				OR jv_detail.reference_type = ''
 			)
 			AND jv.docstatus = 1
-			AND jv.`{searchfield}` LIKE %(txt)s
+			AND jv."{searchfield}" LIKE %(txt)s
 		ORDER BY jv.name DESC
 		LIMIT %(limit)s offset %(offset)s
 		""",
@@ -1476,7 +1476,7 @@ def get_outstanding(args):
 		against_jv_amount = frappe.db.sql(
 			f"""
 			select sum(debit_in_account_currency) - sum(credit_in_account_currency)
-			from `tabJournal Entry Account` where parent=%(docname)s and account=%(account)s {condition}
+			from "tabJournal Entry Account" where parent=%(docname)s and account=%(account)s {condition}
 			and (reference_type is null or reference_type = '')""",
 			args,
 		)

@@ -57,7 +57,7 @@ def valdiate_taxes_and_charges_template(doc):
 
 	if doc.is_default == 1:
 		frappe.db.sql(
-			f"""update `tab{doc.doctype}` set is_default = 0
+			f"""update "tab{doc.doctype}" set is_default = 0
 			where is_default = 1 and name != %s and company = %s""",
 			(doc.name, doc.company),
 		)

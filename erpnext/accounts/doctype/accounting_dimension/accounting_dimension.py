@@ -178,7 +178,7 @@ def delete_accounting_dimension(doc):
 
 	frappe.db.sql(
 		"""
-		DELETE FROM `tabCustom Field`
+		DELETE FROM "tabCustom Field"
 		WHERE fieldname = {}
 		AND dt IN ({})""".format("%s", ", ".join(["%s"] * len(doclist))),  # nosec
 		tuple([doc.fieldname, *doclist]),
@@ -186,7 +186,7 @@ def delete_accounting_dimension(doc):
 
 	frappe.db.sql(
 		"""
-		DELETE FROM `tabProperty Setter`
+		DELETE FROM "tabProperty Setter"
 		WHERE field_name = {}
 		AND doc_type IN ({})""".format("%s", ", ".join(["%s"] * len(doclist))),  # nosec
 		tuple([doc.fieldname, *doclist]),
@@ -259,7 +259,7 @@ def get_checks_for_pl_and_bs_accounts():
 		# nosemgrep
 		frappe.flags.accounting_dimensions_details = frappe.db.sql(
 			"""SELECT p.label, p.disabled, p.fieldname, c.default_dimension, c.company, c.mandatory_for_pl, c.mandatory_for_bs
-			FROM `tabAccounting Dimension`p ,`tabAccounting Dimension Detail` c
+			FROM "tabAccounting Dimension"p ,"tabAccounting Dimension Detail" c
 			WHERE p.name = c.parent""",
 			as_dict=1,
 		)

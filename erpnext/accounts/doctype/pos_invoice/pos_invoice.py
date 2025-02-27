@@ -391,7 +391,7 @@ class POSInvoice(SalesInvoice):
 					serial_no_exists = frappe.db.sql(
 						"""
 						SELECT name
-						FROM `tabPOS Invoice Item`
+						FROM "tabPOS Invoice Item"
 						WHERE
 							parent = %s
 							and (serial_no = %s
@@ -753,7 +753,7 @@ def get_bundle_availability(bundle_item_code, warehouse):
 
 def get_bin_qty(item_code, warehouse):
 	bin_qty = frappe.db.sql(
-		"""select actual_qty from `tabBin`
+		"""select actual_qty from "tabBin"
 		where item_code = %s and warehouse = %s
 		limit 1""",
 		(item_code, warehouse),

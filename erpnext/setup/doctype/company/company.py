@@ -124,7 +124,7 @@ class Company(NestedSet):
 			"Supplier Quotation",
 		]:
 			if frappe.db.sql(
-				"""select name from `tab{}` where company={} and docstatus=1
+				"""select name from "tab{}" where company={} and docstatus=1
 					limit 1""".format(doctype, "%s"),
 				self.name,
 			):
@@ -271,8 +271,6 @@ class Company(NestedSet):
 			frappe.local.enable_perpetual_inventory[self.name] = self.enable_perpetual_inventory
 
 		if frappe.flags.parent_company_changed:
-			from frappe.utils.nestedset import rebuild_tree
-
 			rebuild_tree("Company", "parent_company")
 
 		frappe.clear_cache()
@@ -605,7 +603,7 @@ class Company(NestedSet):
 		self.db_set("company_name", newdn)
 
 		frappe.db.sql(
-			"""update `tabDefaultValue` set defvalue=%s
+			"""update "tabDefaultValue" set defvalue=%s
 			where defkey='Company' and defvalue=%s""",
 			(newdn, olddn),
 		)
@@ -622,37 +620,37 @@ class Company(NestedSet):
 		NestedSet.validate_if_child_exists(self)
 		frappe.utils.nestedset.update_nsm(self)
 
-		rec = frappe.db.sql("SELECT name from `tabGL Entry` where company = %s", self.name)
+		rec = frappe.db.sql("""SELECT name from "tabGL Entry" where company = %s""", self.name)
 		if not rec:
 			frappe.db.sql(
-				"""delete from `tabBudget Account`
+				"""delete from "tabBudget Account"
 				where exists(select name from tabBudget
-					where name=`tabBudget Account`.parent and company = %s)""",
+					where name="tabBudget Account".parent and company = %s)""",
 				self.name,
 			)
 
 			for doctype in ["Account", "Cost Center", "Budget", "Party Account"]:
-				frappe.db.sql(f"delete from `tab{doctype}` where company = %s", self.name)
+				frappe.db.sql(f""" delete from "tab{doctype}" where company = %s """, self.name)
 
 		if not frappe.db.get_value("Stock Ledger Entry", {"company": self.name}):
-			frappe.db.sql("""delete from `tabWarehouse` where company=%s""", self.name)
+			frappe.db.sql("""delete from "tabWarehouse" where company=%s""", self.name)
 
 		frappe.defaults.clear_default("company", value=self.name)
 		for doctype in ["Mode of Payment Account", "Item Default"]:
-			frappe.db.sql(f"delete from `tab{doctype}` where company = %s", self.name)
+			frappe.db.sql(f"""delete from "tab{doctype}" where company = %s""", self.name)
 
 		# clear default accounts, warehouses from item
 		warehouses = frappe.db.sql_list("select name from tabWarehouse where company=%s", self.name)
 		if warehouses:
 			frappe.db.sql(
-				"""delete from `tabItem Reorder` where warehouse in (%s)"""
+				"""delete from "tabItem Reorder" where warehouse in (%s)"""
 				% ", ".join(["%s"] * len(warehouses)),
 				tuple(warehouses),
 			)
 
 		# reset default company
 		frappe.db.sql(
-			"""update `tabSingles` set value=''
+			"""update "tabSingles" set value=''
 			where doctype='Global Defaults' and field='default_company'
 			and value=%s""",
 			self.name,
@@ -660,7 +658,7 @@ class Company(NestedSet):
 
 		# reset default company
 		frappe.db.sql(
-			"""update `tabSingles` set value=''
+			"""update "tabSingles" set value=''
 			where doctype='Chart of Accounts Importer' and field='company'
 			and value=%s""",
 			self.name,
@@ -672,23 +670,23 @@ class Company(NestedSet):
 			frappe.db.sql("delete from tabBOM where company=%s", self.name)
 			for dt in ("BOM Operation", "BOM Item", "BOM Scrap Item", "BOM Explosion Item"):
 				frappe.db.sql(
-					"delete from `tab{}` where parent in ({})" "".format(dt, ", ".join(["%s"] * len(boms))),
+					"""delete from "tab{}" where parent in ({})""" "".format(dt, ", ".join(["%s"] * len(boms))),
 					tuple(boms),
 				)
 
 		frappe.db.sql("delete from tabEmployee where company=%s", self.name)
 		frappe.db.sql("delete from tabDepartment where company=%s", self.name)
-		frappe.db.sql("delete from `tabTax Withholding Account` where company=%s", self.name)
-		frappe.db.sql("delete from `tabTransaction Deletion Record` where company=%s", self.name)
+		frappe.db.sql("""delete from "tabTax Withholding Account" where company=%s""", self.name)
+		frappe.db.sql("""delete from "tabTransaction Deletion Record" where company=%s""", self.name)
 
 		# delete tax templates
-		frappe.db.sql("delete from `tabSales Taxes and Charges Template` where company=%s", self.name)
-		frappe.db.sql("delete from `tabPurchase Taxes and Charges Template` where company=%s", self.name)
-		frappe.db.sql("delete from `tabItem Tax Template` where company=%s", self.name)
+		frappe.db.sql("""delete from "tabSales Taxes and Charges Template" where company=%s""", self.name)
+		frappe.db.sql("""delete from "tabPurchase Taxes and Charges Template" where company=%s""", self.name)
+		frappe.db.sql("""delete from "tabItem Tax Template" where company=%s""", self.name)
 
 		# delete Process Deferred Accounts if no GL Entry found
 		if not frappe.db.get_value("GL Entry", {"company": self.name}):
-			frappe.db.sql("delete from `tabProcess Deferred Accounting` where company=%s", self.name)
+			frappe.db.sql("""delete from "tabProcess Deferred Accounting" where company=%s""", self.name)
 
 	def check_parent_changed(self):
 		frappe.flags.parent_company_changed = False
@@ -731,11 +729,11 @@ def update_company_current_month_sales(company):
 		f"""
 		SELECT
 			SUM(base_grand_total) AS total,
-			DATE_FORMAT(`posting_date`, '%m-%Y') AS month_year
+			DATE_FORMAT("posting_date", '%m-%Y') AS month_year
 		FROM
-			`tabSales Invoice`
+			"tabSales Invoice"
 		WHERE
-			DATE_FORMAT(`posting_date`, '%m-%Y') = '{current_month_year}'
+			DATE_FORMAT("posting_date", '%m-%Y') = '{current_month_year}'
 			AND docstatus = 1
 			AND company = {frappe.db.escape(company)}
 		GROUP BY
@@ -751,7 +749,6 @@ def update_company_current_month_sales(company):
 
 def update_company_monthly_sales(company):
 	"""Cache past year monthly sales of every company based on sales invoices"""
-	import json
 
 	from frappe.utils.goal import get_monthly_results
 
@@ -790,9 +787,9 @@ def get_children(doctype, parent=None, company=None, is_root=False):
 			name as value,
 			is_group as expandable
 		from
-			`tabCompany` comp
+			"tabCompany" comp
 		where
-			ifnull(parent_company, "")={frappe.db.escape(parent)}
+			coalesce(parent_company, "")={frappe.db.escape(parent)}
 		""",
 		as_dict=1,
 	)
@@ -820,32 +817,32 @@ def get_all_transactions_annual_history(company):
 
 		from (
 			select name, transaction_date, company
-			from `tabQuotation`
+			from "tabQuotation"
 
 			UNION ALL
 
 			select name, transaction_date, company
-			from `tabSales Order`
+			from "tabSales Order"
 
 			UNION ALL
 
 			select name, posting_date as transaction_date, company
-			from `tabDelivery Note`
+			from "tabDelivery Note"
 
 			UNION ALL
 
 			select name, posting_date as transaction_date, company
-			from `tabSales Invoice`
+			from "tabSales Invoice"
 
 			UNION ALL
 
 			select name, creation as transaction_date, company
-			from `tabIssue`
+			from "tabIssue"
 
 			UNION ALL
 
 			select name, creation as transaction_date, company
-			from `tabProject`
+			from "tabProject"
 		) t
 
 		where
@@ -895,10 +892,10 @@ def get_default_company_address(name, sort_key="is_primary_address", existing_ad
 		""" SELECT
 			addr.name, addr.{}
 		FROM
-			`tabAddress` addr, `tabDynamic Link` dl
+			"tabAddress" addr, "tabDynamic Link" dl
 		WHERE
 			dl.parent = addr.name and dl.link_doctype = 'Company' and
-			dl.link_name = {} and ifnull(addr.disabled, 0) = 0
+			dl.link_name = {} and coalesce(addr.disabled, 0) = 0
 		""".format(sort_key, "%s"),
 		(name),
 	)  # nosec

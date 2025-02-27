@@ -348,7 +348,7 @@ def get_account_columns(invoice_list, include_payments):
 	if invoice_list:
 		income_accounts = frappe.db.sql_list(
 			"""select distinct income_account
-			from `tabSales Invoice Item` where docstatus = 1 and parent in (%s)
+			from "tabSales Invoice Item" where docstatus = 1 and parent in (%s)
 			order by income_account"""
 			% ", ".join(["%s"] * len(invoice_list)),
 			tuple(inv.name for inv in invoice_list),
@@ -365,9 +365,9 @@ def get_account_columns(invoice_list, include_payments):
 
 		unrealized_profit_loss_accounts = frappe.db.sql_list(
 			"""SELECT distinct unrealized_profit_loss_account
-			from `tabSales Invoice` where docstatus = 1 and name in (%s)
+			from "tabSales Invoice" where docstatus = 1 and name in (%s)
 			and is_internal_customer = 1
-			and ifnull(unrealized_profit_loss_account, '') != ''
+			and coalesce(unrealized_profit_loss_account, '') != ''
 			order by unrealized_profit_loss_account"""
 			% ", ".join(["%s"] * len(invoice_list)),
 			tuple(inv.name for inv in invoice_list),
@@ -490,7 +490,7 @@ def get_payments(filters):
 def get_invoice_income_map(invoice_list):
 	income_details = frappe.db.sql(
 		"""select parent, income_account, sum(base_net_amount) as amount
-		from `tabSales Invoice Item` where parent in (%s) group by parent, income_account"""
+		from "tabSales Invoice Item" where parent in (%s) group by parent, income_account"""
 		% ", ".join(["%s"] * len(invoice_list)),
 		tuple(inv.name for inv in invoice_list),
 		as_dict=1,
@@ -507,7 +507,7 @@ def get_invoice_income_map(invoice_list):
 def get_internal_invoice_map(invoice_list):
 	unrealized_amount_details = frappe.db.sql(
 		"""SELECT name, unrealized_profit_loss_account,
-		base_net_total as amount from `tabSales Invoice` where name in (%s)
+		base_net_total as amount from "tabSales Invoice" where name in (%s)
 		and is_internal_customer = 1 and company = represents_company"""
 		% ", ".join(["%s"] * len(invoice_list)),
 		tuple(inv.name for inv in invoice_list),
@@ -526,7 +526,7 @@ def get_invoice_tax_map(invoice_list, invoice_income_map, income_accounts, inclu
 	tax_details = frappe.db.sql(
 		"""select parent, account_head,
 		sum(base_tax_amount_after_discount_amount) as tax_amount
-		from `tabSales Taxes and Charges` where parent in (%s) group by parent, account_head"""
+		from "tabSales Taxes and Charges" where parent in (%s) group by parent, account_head"""
 		% ", ".join(["%s"] * len(invoice_list)),
 		tuple(inv.name for inv in invoice_list),
 		as_dict=1,
@@ -552,7 +552,7 @@ def get_invoice_tax_map(invoice_list, invoice_income_map, income_accounts, inclu
 def get_invoice_so_dn_map(invoice_list):
 	si_items = frappe.db.sql(
 		"""select parent, sales_order, delivery_note, so_detail
-		from `tabSales Invoice Item` where parent in (%s)
+		from "tabSales Invoice Item" where parent in (%s)
 		and (sales_order != '' or delivery_note != '')"""
 		% ", ".join(["%s"] * len(invoice_list)),
 		tuple(inv.name for inv in invoice_list),
@@ -571,7 +571,7 @@ def get_invoice_so_dn_map(invoice_list):
 			delivery_note_list = [d.delivery_note]
 		elif d.sales_order:
 			delivery_note_list = frappe.db.sql_list(
-				"""select distinct parent from `tabDelivery Note Item`
+				"""select distinct parent from "tabDelivery Note Item"
 				where docstatus=1 and so_detail=%s""",
 				d.so_detail,
 			)
@@ -587,7 +587,7 @@ def get_invoice_so_dn_map(invoice_list):
 def get_invoice_cc_wh_map(invoice_list):
 	si_items = frappe.db.sql(
 		"""select parent, cost_center, warehouse
-		from `tabSales Invoice Item` where parent in (%s)
+		from "tabSales Invoice Item" where parent in (%s)
 		and (cost_center != '' or warehouse != '')"""
 		% ", ".join(["%s"] * len(invoice_list)),
 		tuple(inv.name for inv in invoice_list),
@@ -614,7 +614,7 @@ def get_mode_of_payments(invoice_list):
 	if invoice_list:
 		inv_mop = frappe.db.sql(
 			"""select parent, mode_of_payment
-			from `tabSales Invoice Payment` where parent in (%s) group by parent, mode_of_payment"""
+			from "tabSales Invoice Payment" where parent in (%s) group by parent, mode_of_payment"""
 			% ", ".join(["%s"] * len(invoice_list)),
 			tuple(invoice_list),
 			as_dict=1,

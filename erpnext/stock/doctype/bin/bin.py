@@ -13,7 +13,7 @@ from frappe.utils import flt
 # SELECT
 # 	warehouse, item_code, stock_uom, reserved_qty, actual_qty, ordered_qty, indented_qty, planned_qty, projected_qty,
 # 	reserved_qty_for_production, reserved_qty_for_sub_contract, valuation_rate, stock_value
-# FROM  `tabBin`
+# FROM  "tabBin"
 # WHERE item_code = 'ADD-VEG-2389'
 #
 # DEFINITIONS:

@@ -489,7 +489,7 @@ def get_party_gle_currency(party_type, party, company):
 def get_party_gle_account(party_type, party, company):
 	def generator():
 		existing_gle_account = frappe.db.sql(
-			"""select account from `tabGL Entry`
+			"""select account from "tabGL Entry"
 			where docstatus=1 and company=%(company)s and party_type=%(party_type)s and party=%(party)s
 			limit 1""",
 			{"company": company, "party_type": party_type, "party": party},
@@ -809,7 +809,7 @@ def get_dashboard_info(party_type, party, loyalty_program=None):
 		frappe.db.sql(
 			"""
 		select company, sum(debit_in_account_currency) - sum(credit_in_account_currency)
-		from `tabGL Entry`
+		from "tabGL Entry"
 		where party_type = %s and party=%s
 		and is_cancelled = 0
 		group by company""",

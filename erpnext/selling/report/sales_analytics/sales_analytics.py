@@ -126,7 +126,7 @@ class Analytics:
 		self.entries = frappe.db.sql(
 			""" select s.order_type as entity, s.{value_field} as value_field, s.{date_field}
 			from `tab{doctype}` s where s.docstatus = 1 and s.company = %s and s.{date_field} between %s and %s
-			and ifnull(s.order_type, '') != '' order by s.order_type
+			and coalesce(s.order_type, '') != '' order by s.order_type
 		""".format(date_field=self.date_field, value_field=value_field, doctype=self.filters.doc_type),
 			(self.filters.company, self.filters.from_date, self.filters.to_date),
 			as_dict=1,
@@ -376,7 +376,7 @@ class Analytics:
 		self.group_entries = frappe.db.sql(
 			f""" select * from (select "Order Types" as name, 0 as lft,
 			2 as rgt, '' as parent union select distinct order_type as name, 1 as lft, 1 as rgt, "Order Types" as parent
-			from `tab{self.filters.doc_type}` where ifnull(order_type, '') != '') as b order by lft, name
+			from `tab{self.filters.doc_type}` where coalesce(order_type, '') != '') as b order by lft, name
 		""",
 			as_dict=1,
 		)

@@ -292,9 +292,9 @@ def get_customers_based_on_sales_person(sales_person):
 	records = frappe.db.sql(
 		"""
 		select distinct parent, parenttype
-		from `tabSales Team` steam
+		from "tabSales Team" steam
 		where parenttype = 'Customer'
-			and exists(select name from `tabSales Person` where lft >= %s and rgt <= %s and name = steam.sales_person)
+			and exists(select name from "tabSales Person" where lft >= %s and rgt <= %s and name = steam.sales_person)
 	""",
 		(lft, rgt),
 		as_dict=1,
@@ -392,13 +392,13 @@ def get_customer_emails(customer_name, primary_mandatory, billing_and_primary=Tr
 		SELECT
 			email.email_id
 		FROM
-			`tabContact Email` AS email
+			"tabContact Email" AS email
 		JOIN
-			`tabDynamic Link` AS link
+			"tabDynamic Link" AS link
 		ON
 			email.parent=link.parent
 		JOIN
-			`tabContact` AS contact
+			"tabContact" AS contact
 		ON
 			contact.name=link.parent
 		WHERE

@@ -175,12 +175,12 @@ class Account(NestedSet):
 			if db_value:
 				if self.report_type != db_value.report_type:
 					frappe.db.sql(
-						"update `tabAccount` set report_type=%s where lft > %s and rgt < %s",
+						"""update "tabAccount" set report_type=%s where lft > %s and rgt < %s """,
 						(self.report_type, self.lft, self.rgt),
 					)
 				if self.root_type != db_value.root_type:
 					frappe.db.sql(
-						"update `tabAccount` set root_type=%s where lft > %s and rgt < %s",
+						""" update "tabAccount" set root_type=%s where lft > %s and rgt < %s """,
 						(self.root_type, self.lft, self.rgt),
 					)
 
@@ -399,7 +399,7 @@ class Account(NestedSet):
 
 	def check_if_child_exists(self):
 		return frappe.db.sql(
-			"""select name from `tabAccount` where parent_account = %s
+			"""select name from "tabAccount" where parent_account = %s
 			and docstatus != 2""",
 			self.name,
 		)

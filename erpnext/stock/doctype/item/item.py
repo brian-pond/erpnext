@@ -1,6 +1,8 @@
 # Copyright (c) 2021, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
+# pylint: disable=protected-access
+
 import copy
 import json
 
@@ -61,7 +63,6 @@ class Item(Document):
 
 		from erpnext.stock.doctype.item_barcode.item_barcode import ItemBarcode
 		from erpnext.stock.doctype.item_customer_detail.item_customer_detail import ItemCustomerDetail
-		from erpnext.stock.doctype.item_default.item_default import ItemDefault
 		from erpnext.stock.doctype.item_reorder.item_reorder import ItemReorder
 		from erpnext.stock.doctype.item_supplier.item_supplier import ItemSupplier
 		from erpnext.stock.doctype.item_tax.item_tax import ItemTax
@@ -271,8 +272,7 @@ class Item(Document):
 			default_warehouse = default.default_warehouse or frappe.db.get_single_value(
 				"Stock Settings", "default_warehouse"
 			)
-			if default_warehouse:
-				warehouse_company = frappe.db.get_value("Warehouse", default_warehouse, "company")
+			warehouse_company = frappe.db.get_value("Warehouse", default_warehouse, "company") if default_warehouse else None
 
 			if not default_warehouse or warehouse_company != default.company:
 				default_warehouse = frappe.db.get_value(
@@ -567,7 +567,7 @@ class Item(Document):
 		for dt in ("Sales Taxes and Charges", "Purchase Taxes and Charges"):
 			for d in frappe.db.sql(
 				f"""select name, item_wise_tax_detail from `tab{dt}`
-					where ifnull(item_wise_tax_detail, '') != ''""",
+					where coalesce(item_wise_tax_detail, '') != ''""",
 				as_dict=1,
 			):
 				item_wise_tax_detail = json.loads(d.item_wise_tax_detail)

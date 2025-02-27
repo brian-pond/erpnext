@@ -112,7 +112,7 @@ class TaxRule(Document):
 		for d in filters:
 			if conds:
 				conds += " and "
-			conds += f"""ifnull({d}, '') = {frappe.db.escape(cstr(filters[d]))}"""
+			conds += f"""coalesce({d}, '') = {frappe.db.escape(cstr(filters[d]))}"""
 
 		if self.from_date and self.to_date:
 			conds += f""" and ((from_date > '{self.from_date}' and from_date < '{self.to_date}') or
@@ -201,7 +201,7 @@ def get_tax_template(posting_date, args):
 		conditions.append("(from_date is null) and (to_date is null)")
 
 	conditions.append(
-		"ifnull(tax_category, '') = {}".format(frappe.db.escape(cstr(args.get("tax_category"))))
+		"coalesce(tax_category, '') = {}".format(frappe.db.escape(cstr(args.get("tax_category"))))
 	)
 	if "tax_category" in args.keys():
 		del args["tax_category"]
@@ -213,9 +213,9 @@ def get_tax_template(posting_date, args):
 			if not value:
 				value = get_root_of("Customer Group")
 			customer_group_condition = get_customer_group_condition(value)
-			conditions.append(f"ifnull({key}, '') in ('', {customer_group_condition})")
+			conditions.append(f"coalesce({key}, '') in ('', {customer_group_condition})")
 		else:
-			conditions.append(f"ifnull({key}, '') in ('', {frappe.db.escape(cstr(value))})")
+			conditions.append(f"coalesce({key}, '') in ('', {frappe.db.escape(cstr(value))})")
 
 	tax_rule = frappe.db.sql(
 		"""select * from `tabTax Rule`

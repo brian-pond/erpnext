@@ -138,7 +138,7 @@ def validate_accounting_period(gl_map):
 		""" SELECT
 			ap.name as name
 		FROM
-			`tabAccounting Period` ap, `tabClosed Document` cd
+			"tabAccounting Period" ap, "tabClosed Document" cd
 		WHERE
 			ap.name = cd.parent
 			AND ap.company = %(company)s
@@ -720,7 +720,7 @@ def set_as_cancel(voucher_type, voucher_no):
 	Set is_cancelled=1 in all original gl entries for the voucher
 	"""
 	frappe.db.sql(
-		"""UPDATE `tabGL Entry` SET is_cancelled = 1,
+		"""UPDATE "tabGL Entry" SET is_cancelled = 1,
 		modified=%s, modified_by=%s
 		where voucher_type=%s and voucher_no=%s and is_cancelled = 0""",
 		(now(), frappe.session.user, voucher_type, voucher_no),

@@ -64,10 +64,10 @@ def get_warehouse_account(warehouse, warehouse_account=None):
 			account = frappe.db.sql(
 				"""
 				select
-					account from `tabWarehouse`
+					account from "tabWarehouse"
 				where
 					lft <= %s and rgt >= %s and company = %s
-					and account is not null and ifnull(account, '') !=''
+					and account is not null and coalesce(account, '') !=''
 				order by lft desc limit 1""",
 				(warehouse.lft, warehouse.rgt, warehouse.company),
 				as_list=1,

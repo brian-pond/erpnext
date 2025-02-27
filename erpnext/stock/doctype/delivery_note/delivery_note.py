@@ -159,8 +159,8 @@ class DeliveryNote(SellingController):
 				"second_source_field": "qty",
 				"second_join_field": "so_detail",
 				"overflow_type": "delivery",
-				"second_source_extra_cond": """ and exists(select name from `tabSales Invoice`
-				where name=`tabSales Invoice Item`.parent and update_stock = 1)""",
+				"second_source_extra_cond": """ and exists(select name from "tabSales Invoice"
+				where name="tabSales Invoice Item".parent and update_stock = 1)""",
 			},
 			{
 				"source_dt": "Delivery Note Item",
@@ -413,7 +413,7 @@ class DeliveryNote(SellingController):
 			res = frappe.db.sql(
 				"""select name from `tabProject`
 				where name = %s and (customer = %s or
-					ifnull(customer,'')='')""",
+					coalesce(customer,'')='')""",
 				(self.project, self.customer),
 			)
 			if not res:

@@ -604,8 +604,8 @@ class SalesInvoice(SellingController):
 					"second_source_field": "qty",
 					"second_join_field": "so_detail",
 					"overflow_type": "delivery",
-					"extra_cond": """ and exists(select name from `tabSales Invoice`
-					where name=`tabSales Invoice Item`.parent and update_stock = 1)""",
+					"extra_cond": """ and exists(select name from "tabSales Invoice"
+					where name="tabSales Invoice Item".parent and update_stock = 1)""",
 				}
 			)
 			if cint(self.is_return):
@@ -620,7 +620,7 @@ class SalesInvoice(SellingController):
 						"second_source_dt": "Delivery Note Item",
 						"second_source_field": "-1 * qty",
 						"second_join_field": "so_detail",
-						"extra_cond": """ and exists (select name from `tabSales Invoice` where name=`tabSales Invoice Item`.parent and update_stock=1 and is_return=1)""",
+						"extra_cond": """ and exists (select name from "tabSales Invoice" where name="tabSales Invoice Item".parent and update_stock=1 and is_return=1)""",
 					}
 				)
 
@@ -882,7 +882,7 @@ class SalesInvoice(SellingController):
 		self.set("payments", self.get("payments", {"amount": ["not in", [0, None, ""]]}))
 
 		frappe.db.sql(
-			"""delete from `tabSales Invoice Payment` where parent = %s
+			"""delete from "tabSales Invoice Payment" where parent = %s
 			and amount = 0""",
 			self.name,
 		)
@@ -984,7 +984,7 @@ class SalesInvoice(SellingController):
 		"""check for does customer belong to same project as entered.."""
 		if self.project and self.customer:
 			res = frappe.db.sql(
-				"""select name from `tabProject`
+				"""select name from "tabProject"
 				where name = %s and (customer = %s or customer is null or customer = '')""",
 				(self.project, self.customer),
 			)
@@ -1039,7 +1039,7 @@ class SalesInvoice(SellingController):
 		for d in self.get("items"):
 			if d.item_code and d.warehouse:
 				bin = frappe.db.sql(
-					"select actual_qty from `tabBin` where item_code = %s and warehouse = %s",
+					""" select actual_qty from "tabBin" where item_code = %s and warehouse = %s """,
 					(d.item_code, d.warehouse),
 					as_dict=1,
 				)
@@ -1047,7 +1047,7 @@ class SalesInvoice(SellingController):
 
 		for d in self.get("packed_items"):
 			bin = frappe.db.sql(
-				"select actual_qty, projected_qty from `tabBin` where item_code =	%s and warehouse = %s",
+				""" select actual_qty, projected_qty from "tabBin" where item_code =	%s and warehouse = %s """,
 				(d.item_code, d.warehouse),
 				as_dict=1,
 			)
@@ -1106,15 +1106,15 @@ class SalesInvoice(SellingController):
 
 	def get_warehouse(self):
 		user_pos_profile = frappe.db.sql(
-			"""select name, warehouse from `tabPOS Profile`
-			where ifnull(user,'') = %s and company = %s""",
+			"""select name, warehouse from "tabPOS Profile"
+			where coalesce(user,'') = %s and company = %s""",
 			(frappe.session["user"], self.company),
 		)
 		warehouse = user_pos_profile[0][1] if user_pos_profile else None
 
 		if not warehouse:
 			global_pos_profile = frappe.db.sql(
-				"""select name, warehouse from `tabPOS Profile`
+				"""select name, warehouse from "tabPOS Profile"
 				where (user is null or user = '') and company = %s""",
 				self.company,
 			)
@@ -1419,7 +1419,7 @@ class SalesInvoice(SellingController):
 				title=_("Missing Asset"),
 			)
 
-		self.check_finance_books(item, asset)
+		self.check_finance_books(item, asset)  # pylint: disable=possibly-used-before-assignment
 		return asset
 
 	@property
@@ -1651,7 +1651,7 @@ class SalesInvoice(SellingController):
 		for d in self.get("items"):
 			if d.dn_detail:
 				billed_amt = frappe.db.sql(
-					"""select sum(amount) from `tabSales Invoice Item`
+					"""select sum(amount) from "tabSales Invoice Item"
 					where dn_detail=%s and docstatus=1""",
 					d.dn_detail,
 				)
@@ -1780,13 +1780,13 @@ class SalesInvoice(SellingController):
 	# valdite the redemption and then delete the loyalty points earned on cancel of the invoice
 	def delete_loyalty_point_entry(self):
 		lp_entry = frappe.db.sql(
-			"select name from `tabLoyalty Point Entry` where invoice=%s", (self.name), as_dict=1
+			""" select name from "tabLoyalty Point Entry" where invoice=%s """, (self.name), as_dict=1
 		)
 
 		if not lp_entry:
 			return
 		against_lp_entry = frappe.db.sql(
-			"""select name, invoice from `tabLoyalty Point Entry`
+			"""select name, invoice from "tabLoyalty Point Entry"
 			where redeem_against=%s""",
 			(lp_entry[0].name),
 			as_dict=1,
@@ -1799,7 +1799,7 @@ class SalesInvoice(SellingController):
 				).format(self.doctype, self.doctype, invoice_list)
 			)
 		else:
-			frappe.db.sql("""delete from `tabLoyalty Point Entry` where invoice=%s""", (self.name))
+			frappe.db.sql("""delete from "tabLoyalty Point Entry" where invoice=%s""", (self.name))
 			# Set loyalty program
 			self.set_loyalty_program_tier()
 
@@ -1953,7 +1953,7 @@ def get_discounting_status(sales_invoice):
 	invoice_discounting_list = frappe.db.sql(
 		"""
 		select status
-		from `tabInvoice Discounting` id, `tabDiscounted Invoice` d
+		from "tabInvoice Discounting" id, "tabDiscounted Invoice" d
 		where
 			id.name = d.parent
 			and d.sales_invoice=%s
@@ -2626,7 +2626,7 @@ def get_all_mode_of_payments(doc):
 	return frappe.db.sql(
 		"""
 		select mpa.default_account, mpa.parent, mp.type as type
-		from `tabMode of Payment Account` mpa,`tabMode of Payment` mp
+		from "tabMode of Payment Account" mpa,"tabMode of Payment" mp
 		where mpa.parent = mp.name and mpa.company = %(company)s and mp.enabled = 1""",
 		{"company": doc.company},
 		as_dict=1,
@@ -2639,7 +2639,7 @@ def get_mode_of_payments_info(mode_of_payments, company):
 		select
 			mpa.default_account, mpa.parent as mop, mp.type as type
 		from
-			`tabMode of Payment Account` mpa,`tabMode of Payment` mp
+			"tabMode of Payment Account" mpa,"tabMode of Payment" mp
 		where
 			mpa.parent = mp.name and
 			mpa.company = %s and
@@ -2659,7 +2659,7 @@ def get_mode_of_payment_info(mode_of_payment, company):
 	return frappe.db.sql(
 		"""
 		select mpa.default_account, mpa.parent, mp.type as type
-		from `tabMode of Payment Account` mpa,`tabMode of Payment` mp
+		from "tabMode of Payment Account" mpa,"tabMode of Payment" mp
 		where mpa.parent = mp.name and mpa.company = %s and mp.enabled = 1 and mp.name = %s""",
 		(company, mode_of_payment),
 		as_dict=1,
@@ -2734,7 +2734,7 @@ def check_if_return_invoice_linked_with_payment_entry(self):
 		SELECT
 			t1.name
 		FROM
-			`tabPayment Entry` t1, `tabPayment Entry Reference` t2
+			"tabPayment Entry" t1, "tabPayment Entry Reference" t2
 		WHERE
 			t1.name = t2.parent
 			and t1.docstatus = 1

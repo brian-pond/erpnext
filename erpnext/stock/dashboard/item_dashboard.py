@@ -21,8 +21,8 @@ def get_data(
 		lft, rgt = frappe.db.get_value("Item Group", item_group, ["lft", "rgt"])
 		items = frappe.db.sql_list(
 			"""
-			select i.name from `tabItem` i
-			where exists(select name from `tabItem Group`
+			select i.name from "tabItem" i
+			where exists(select name from "tabItem Group"
 				where name=i.item_group and lft >=%s and rgt<=%s)
 		""",
 			(lft, rgt),

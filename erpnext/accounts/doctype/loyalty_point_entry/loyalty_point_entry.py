@@ -41,7 +41,7 @@ def get_loyalty_point_entries(customer, loyalty_program, company, expiry_date=No
 	return frappe.db.sql(
 		"""
 		select name, loyalty_points, expiry_date, loyalty_program_tier, invoice_type, invoice
-		from `tabLoyalty Point Entry`
+		from "tabLoyalty Point Entry"
 		where customer=%s and loyalty_program=%s
 			and expiry_date>=%s and loyalty_points>0 and company=%s
 		order by expiry_date
@@ -56,7 +56,7 @@ def get_redemption_details(customer, loyalty_program, company):
 		frappe.db.sql(
 			"""
 		select redeem_against, sum(loyalty_points)
-		from `tabLoyalty Point Entry`
+		from "tabLoyalty Point Entry"
 		where customer=%s and loyalty_program=%s and loyalty_points<0 and company=%s
 		group by redeem_against
 	""",

@@ -35,7 +35,7 @@ class PaymentGatewayAccount(Document):
 	def update_default_payment_gateway(self):
 		if self.is_default:
 			frappe.db.sql(
-				"""update `tabPayment Gateway Account` set is_default = 0
+				"""update "tabPayment Gateway Account" set is_default = 0
 				where is_default = 1 """
 			)
 

@@ -842,7 +842,7 @@ def make_post_gl_entry():
 		if cint(asset_category.enable_cwip_accounting):
 			assets = frappe.db.sql_list(
 				""" select name from `tabAsset`
-				where asset_category = %s and ifnull(booked_fixed_asset, 0) = 0
+				where asset_category = %s and coalesce(booked_fixed_asset, 0) = 0
 				and available_for_use_date = %s""",
 				(asset_category.name, nowdate()),
 			)

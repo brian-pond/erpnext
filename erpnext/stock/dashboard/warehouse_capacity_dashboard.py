@@ -42,7 +42,7 @@ def get_filters(item_code=None, warehouse=None, parent_warehouse=None, company=N
 		lft, rgt = frappe.db.get_value("Warehouse", parent_warehouse, ["lft", "rgt"])
 		warehouses = frappe.db.sql_list(
 			"""
-			select name from `tabWarehouse`
+			select name from "tabWarehouse"
 			where lft >=%s and rgt<=%s
 		""",
 			(lft, rgt),

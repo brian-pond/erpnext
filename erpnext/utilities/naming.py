@@ -21,8 +21,8 @@ def set_by_naming_series(doctype, fieldname, naming_series, hide_name_field=True
 		# set values for mandatory
 		try:
 			frappe.db.sql(
-				"""update `tab{doctype}` set naming_series={s} where
-				ifnull(naming_series, '')=''""".format(doctype=doctype, s="%s"),
+				"""update "tab{doctype}" set naming_series={s} where
+				coalesce(naming_series, '')=''""".format(doctype=doctype, s="%s"),
 				get_default_naming_series(doctype),
 			)
 		except NamingSeriesNotSetError:
@@ -43,6 +43,6 @@ def set_by_naming_series(doctype, fieldname, naming_series, hide_name_field=True
 
 			# set values for mandatory
 			frappe.db.sql(
-				f"""update `tab{doctype}` set `{fieldname}`=`name` where
-				ifnull({fieldname}, '')=''"""
+				f"""update "tab{doctype}" set "{fieldname}"="name" where
+				coalesce({fieldname}, '')=''"""
 			)

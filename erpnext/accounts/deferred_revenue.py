@@ -77,10 +77,10 @@ def convert_deferred_expense_to_expense(deferred_process, start_date=None, end_d
 	invoices = frappe.db.sql_list(
 		f"""
 		select distinct item.parent
-		from `tabPurchase Invoice Item` item, `tabPurchase Invoice` p
+		from "tabPurchase Invoice Item" item, "tabPurchase Invoice" p
 		where item.service_start_date<=%s and item.service_end_date>=%s
 		and item.enable_deferred_expense = 1 and item.parent=p.name
-		and item.docstatus = 1 and ifnull(item.amount, 0) > 0
+		and item.docstatus = 1 and COALESCE(item.amount, 0) > 0
 		{conditions}
 	""",
 		(end_date, start_date),
@@ -107,10 +107,10 @@ def convert_deferred_revenue_to_income(deferred_process, start_date=None, end_da
 	invoices = frappe.db.sql_list(
 		f"""
 		select distinct item.parent
-		from `tabSales Invoice Item` item, `tabSales Invoice` p
+		from "tabSales Invoice Item" item, "tabSales Invoice" p
 		where item.service_start_date<=%s and item.service_end_date>=%s
 		and item.enable_deferred_revenue = 1 and item.parent=p.name
-		and item.docstatus = 1 and ifnull(item.amount, 0) > 0
+		and item.docstatus = 1 and COALESCE(item.amount, 0) > 0
 		{conditions}
 	""",
 		(end_date, start_date),
@@ -137,7 +137,7 @@ def get_booking_dates(doc, item, posting_date=None, prev_posting_date=None):
 	if not prev_posting_date:
 		prev_gl_entry = frappe.db.sql(
 			"""
-			select name, posting_date from `tabGL Entry` where company=%s and account=%s and
+			select name, posting_date from "tabGL Entry" where company=%s and account=%s and
 			voucher_type=%s and voucher_no=%s and voucher_detail_no=%s
 			and is_cancelled = 0
 			order by posting_date desc limit 1
@@ -148,7 +148,7 @@ def get_booking_dates(doc, item, posting_date=None, prev_posting_date=None):
 
 		prev_gl_via_je = frappe.db.sql(
 			"""
-			SELECT p.name, p.posting_date FROM `tabJournal Entry` p, `tabJournal Entry Account` c
+			SELECT p.name, p.posting_date FROM "tabJournal Entry" p, "tabJournal Entry Account" c
 			WHERE p.name = c.parent and p.company=%s and c.account=%s
 			and c.reference_type=%s and c.reference_name=%s
 			and c.reference_detail_no=%s and c.docstatus < 2 order by posting_date desc limit 1
@@ -279,7 +279,7 @@ def get_already_booked_amount(doc, item):
 	gl_entries_details = frappe.db.sql(
 		"""
 		select sum({}) as total_credit, sum({}) as total_credit_in_account_currency, voucher_detail_no
-		from `tabGL Entry` where company=%s and account=%s and voucher_type=%s and voucher_no=%s and voucher_detail_no=%s
+		from "tabGL Entry" where company=%s and account=%s and voucher_type=%s and voucher_no=%s and voucher_detail_no=%s
 		and is_cancelled = 0
 		group by voucher_detail_no
 	""".format(total_credit_debit, total_credit_debit_currency),
@@ -290,7 +290,7 @@ def get_already_booked_amount(doc, item):
 	journal_entry_details = frappe.db.sql(
 		"""
 		SELECT sum(c.{}) as total_credit, sum(c.{}) as total_credit_in_account_currency, reference_detail_no
-		FROM `tabJournal Entry` p , `tabJournal Entry Account` c WHERE p.name = c.parent and
+		FROM "tabJournal Entry" p , "tabJournal Entry Account" c WHERE p.name = c.parent and
 		p.company = %s and c.account=%s and c.reference_type=%s and c.reference_name=%s and c.reference_detail_no=%s
 		and p.docstatus < 2 group by reference_detail_no
 	""".format(total_credit_debit, total_credit_debit_currency),

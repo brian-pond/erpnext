@@ -884,7 +884,7 @@ class BOM(WebsiteGenerator):
 				bom_item.rate,
 				bom_item.include_item_in_manufacturing,
 				bom_item.sourced_by_supplier,
-				bom_item.stock_qty / ifnull(bom.quantity, 1) AS qty_consumed_per_unit
+				bom_item.stock_qty / coalesce(bom.quantity, 1) AS qty_consumed_per_unit
 			FROM `tabBOM Explosion Item` bom_item, `tabBOM` bom
 			WHERE
 				bom_item.parent = bom.name
@@ -1099,11 +1099,11 @@ def get_bom_items_as_dict(
 				bom_item.item_code,
 				bom_item.idx,
 				item.item_name,
-				sum(bom_item.{qty_field}/ifnull(bom.quantity, 1)) * %(qty)s as qty,
+				sum(bom_item.{qty_field}/coalesce(bom.quantity, 1)) * %(qty)s as qty,
 				item.image,
 				bom.project,
 				bom_item.rate,
-				sum(bom_item.{qty_field}/ifnull(bom.quantity, 1)) * bom_item.rate * %(qty)s as amount,
+				sum(bom_item.{qty_field}/coalesce(bom.quantity, 1)) * bom_item.rate * %(qty)s as amount,
 				item.stock_uom,
 				item.item_group,
 				item.allow_alternative_item,
@@ -1284,7 +1284,7 @@ def add_non_stock_items_cost(stock_entry, work_order, expense_account):
 	non_stock_items = frappe.get_all(
 		"Item",
 		fields="name",
-		filters={"name": ("in", list(items.keys())), "ifnull(is_stock_item, 0)": 0},
+		filters={"name": ("in", list(items.keys())), "coalesce(is_stock_item, 0)": 0},
 		as_list=1,
 	)
 
@@ -1406,7 +1406,7 @@ def item_query(doctype, txt, searchfield, start, page_len, filters):
 		if field not in searchfields
 	]
 
-	query_filters = {"disabled": 0, "ifnull(end_of_life, '3099-12-31')": (">", today())}
+	query_filters = {"disabled": 0, "coalesce(end_of_life, '3099-12-31')": (">", today())}
 
 	or_cond_filters = {}
 	if txt:

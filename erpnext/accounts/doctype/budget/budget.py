@@ -68,7 +68,7 @@ class Budget(Document):
 		existing_budget = frappe.db.sql(
 			"""
 			select
-				b.name, ba.account from `tabBudget` b, `tabBudget Account` ba
+				b.name, ba.account from "tabBudget" b, "tabBudget Account" ba
 			where
 				ba.parent = b.name and b.docstatus < 2 and b.company = {} and {}={} and
 				b.fiscal_year={} and b.name != {} and ba.account in ({}) """.format(
@@ -186,7 +186,7 @@ def validate_expense_against_budget(args, expense_amount=0):
 
 			if frappe.get_cached_value("DocType", doctype, "is_tree"):
 				lft, rgt = frappe.get_cached_value(doctype, args.get(budget_against), ["lft", "rgt"])
-				condition = f"""and exists(select name from `tab{doctype}`
+				condition = f"""and exists(select name from "tab{doctype}"
 					where lft<={lft} and rgt>={rgt} and name=b.{budget_against})"""  # nosec
 				args.is_tree = True
 			else:
@@ -200,14 +200,14 @@ def validate_expense_against_budget(args, expense_amount=0):
 				f"""
 				select
 					b.{budget_against} as budget_against, ba.budget_amount, b.monthly_distribution,
-					ifnull(b.applicable_on_material_request, 0) as for_material_request,
-					ifnull(applicable_on_purchase_order, 0) as for_purchase_order,
-					ifnull(applicable_on_booking_actual_expenses,0) as for_actual_expenses,
+					coalesce(b.applicable_on_material_request, 0) as for_material_request,
+					coalesce(applicable_on_purchase_order, 0) as for_purchase_order,
+					coalesce(applicable_on_booking_actual_expenses,0) as for_actual_expenses,
 					b.action_if_annual_budget_exceeded, b.action_if_accumulated_monthly_budget_exceeded,
 					b.action_if_annual_budget_exceeded_on_mr, b.action_if_accumulated_monthly_budget_exceeded_on_mr,
 					b.action_if_annual_budget_exceeded_on_po, b.action_if_accumulated_monthly_budget_exceeded_on_po
 				from
-					`tabBudget` b, `tabBudget Account` ba
+					"tabBudget" b, "tabBudget Account" ba
 				where
 					b.name=ba.parent and b.fiscal_year=%s
 					and ba.account=%s and b.docstatus=1
@@ -398,8 +398,8 @@ def get_requested_amount(args):
 	condition = get_other_condition(args, "Material Request")
 
 	data = frappe.db.sql(
-		""" select ifnull((sum(child.stock_qty - child.ordered_qty) * rate), 0) as amount
-		from `tabMaterial Request Item` child, `tabMaterial Request` parent where parent.name = child.parent and
+		""" select coalesce((sum(child.stock_qty - child.ordered_qty) * rate), 0) as amount
+		from "tabMaterial Request Item" child, "tabMaterial Request" parent where parent.name = child.parent and
 		child.item_code = %s and parent.docstatus = 1 and child.stock_qty > child.ordered_qty and {} and
 		parent.material_request_type = 'Purchase' and parent.status != 'Stopped'""".format(condition),
 		item_code,
@@ -414,8 +414,8 @@ def get_ordered_amount(args):
 	condition = get_other_condition(args, "Purchase Order")
 
 	data = frappe.db.sql(
-		f""" select ifnull(sum(child.amount - child.billed_amt), 0) as amount
-		from `tabPurchase Order Item` child, `tabPurchase Order` parent where
+		f""" select coalesce(sum(child.amount - child.billed_amt), 0) as amount
+		from "tabPurchase Order Item" child, "tabPurchase Order" parent where
 		parent.name = child.parent and child.item_code = %s and parent.docstatus = 1 and child.amount > child.billed_amt
 		and parent.status != 'Closed' and {condition}""",
 		item_code,
@@ -458,11 +458,11 @@ def get_actual_expense(args):
 
 		args.update(lft_rgt)
 
-		condition2 = f"""and exists(select name from `tab{args.budget_against_doctype}`
+		condition2 = f"""and exists(select name from "tab{args.budget_against_doctype}"
 			where lft>=%(lft)s and rgt<=%(rgt)s
 			and name=gle.{budget_against_field})"""
 	else:
-		condition2 = f"""and exists(select name from `tab{args.budget_against_doctype}`
+		condition2 = f"""and exists(select name from "tab{args.budget_against_doctype}"
 		where name=gle.{budget_against_field} and
 		gle.{budget_against_field} = %({budget_against_field})s)"""
 
@@ -470,7 +470,7 @@ def get_actual_expense(args):
 		frappe.db.sql(
 			f"""
 		select sum(gle.debit) - sum(gle.credit)
-		from `tabGL Entry` gle
+		from "tabGL Entry" gle
 		where
 			is_cancelled = 0
 			and gle.account=%(account)s
@@ -492,7 +492,7 @@ def get_accumulated_monthly_budget(monthly_distribution, posting_date, fiscal_ye
 	if monthly_distribution:
 		for d in frappe.db.sql(
 			"""select mdp.month, mdp.percentage_allocation
-			from `tabMonthly Distribution Percentage` mdp, `tabMonthly Distribution` md
+			from "tabMonthly Distribution Percentage" mdp, "tabMonthly Distribution" md
 			where mdp.parent=md.name and md.fiscal_year=%s""",
 			fiscal_year,
 			as_dict=1,

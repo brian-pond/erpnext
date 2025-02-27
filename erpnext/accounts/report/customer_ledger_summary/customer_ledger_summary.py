@@ -250,20 +250,20 @@ class PartyLedgerSummaryReport:
 		join = join_field = ""
 		if self.filters.party_type == "Customer":
 			join_field = ", p.customer_name as party_name"
-			join = "left join `tabCustomer` p on gle.party = p.name"
+			join = """left join "tabCustomer" p on gle.party = p.name"""
 		elif self.filters.party_type == "Supplier":
 			join_field = ", p.supplier_name as party_name"
-			join = "left join `tabSupplier` p on gle.party = p.name"
+			join = """left join "tabSupplier" p on gle.party = p.name"""
 
 		self.gl_entries = frappe.db.sql(
 			f"""
 			select
 				gle.posting_date, gle.party, gle.voucher_type, gle.voucher_no, gle.against_voucher_type,
 				gle.against_voucher, gle.debit, gle.credit, gle.is_opening {join_field}
-			from `tabGL Entry` gle
+			from "tabGL Entry" gle
 			{join}
 			where
-				gle.docstatus < 2 and gle.is_cancelled = 0 and gle.party_type=%(party_type)s and ifnull(gle.party, '') != ''
+				gle.docstatus < 2 and gle.is_cancelled = 0 and gle.party_type=%(party_type)s and coalesce(gle.party, '') != ''
 				and gle.posting_date <= %(to_date)s {conditions}
 			order by gle.posting_date
 		""",
@@ -278,7 +278,7 @@ class PartyLedgerSummaryReport:
 			conditions.append("gle.company=%(company)s")
 
 		if self.filters.finance_book:
-			conditions.append("ifnull(finance_book,'') in (%(finance_book)s, '')")
+			conditions.append("coalesce(finance_book,'') in (%(finance_book)s, '')")
 
 		if self.filters.get("party"):
 			conditions.append("party=%(party)s")
@@ -291,7 +291,7 @@ class PartyLedgerSummaryReport:
 
 				conditions.append(
 					f"""party in (select name from tabCustomer
-					where exists(select name from `tabCustomer Group` where lft >= {lft} and rgt <= {rgt}
+					where exists(select name from "tabCustomer Group" where lft >= {lft} and rgt <= {rgt}
 						and name=tabCustomer.customer_group))"""
 				)
 
@@ -300,7 +300,7 @@ class PartyLedgerSummaryReport:
 
 				conditions.append(
 					f"""party in (select name from tabCustomer
-					where exists(select name from `tabTerritory` where lft >= {lft} and rgt <= {rgt}
+					where exists(select name from "tabTerritory" where lft >= {lft} and rgt <= {rgt}
 						and name=tabCustomer.territory))"""
 				)
 
@@ -320,11 +320,11 @@ class PartyLedgerSummaryReport:
 				)
 
 				conditions.append(
-					"""exists(select name from `tabSales Team` steam where
-					steam.sales_person in (select name from `tabSales Person` where lft >= {} and rgt <= {})
+					f"""exists(select name from "tabSales Team" steam where
+					steam.sales_person in (select name from "tabSales Person" where lft >= {lft} and rgt <= rgt
 					and ((steam.parent = voucher_no and steam.parenttype = voucher_type)
 						or (steam.parent = against_voucher and steam.parenttype = against_voucher_type)
-						or (steam.parent = party and steam.parenttype = 'Customer')))""".format(lft, rgt)
+						or (steam.parent = party and steam.parenttype = 'Customer')))"""
 				)
 
 		if self.filters.party_type == "Supplier":
@@ -384,14 +384,14 @@ class PartyLedgerSummaryReport:
 			select
 				posting_date, account, party, voucher_type, voucher_no, debit, credit
 			from
-				`tabGL Entry`
+				"tabGL Entry"
 			where
 				docstatus < 2 and is_cancelled = 0
 				and (voucher_type, voucher_no) in (
 				{accounts_query}
 				) and (voucher_type, voucher_no) in (
-					select voucher_type, voucher_no from `tabGL Entry` gle
-					where gle.party_type=%(party_type)s and ifnull(party, '') != ''
+					select voucher_type, voucher_no from "tabGL Entry" gle
+					where gle.party_type=%(party_type)s and coalesce(party, '') != ''
 					and gle.posting_date between %(from_date)s and %(to_date)s and gle.docstatus < 2 {conditions}
 				)
 			""",

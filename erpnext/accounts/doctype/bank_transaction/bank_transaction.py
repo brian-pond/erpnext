@@ -276,9 +276,9 @@ def get_related_bank_gl_entries(doctype, docname):
 			ABS(gle.credit_in_account_currency - gle.debit_in_account_currency) AS amount,
 			gle.account AS gl_account
 		FROM
-			`tabGL Entry` gle
+			"tabGL Entry" gle
 		LEFT JOIN
-			`tabAccount` ac ON ac.name=gle.account
+			"tabAccount" ac ON ac.name=gle.account
 		WHERE
 			ac.account_type = 'Bank'
 			AND gle.voucher_type = %(doctype)s
@@ -307,9 +307,9 @@ def get_total_allocated_amount(doctype, docname):
 				FIRST_VALUE(bt.date) OVER w AS latest_date,
 				ba.account AS gl_account
 			FROM
-				`tabBank Transaction Payments` btp
-			LEFT JOIN `tabBank Transaction` bt ON bt.name=btp.parent
-			LEFT JOIN `tabBank Account` ba ON ba.name=bt.bank_account
+				"tabBank Transaction Payments" btp
+			LEFT JOIN "tabBank Transaction" bt ON bt.name=btp.parent
+			LEFT JOIN "tabBank Account" ba ON ba.name=bt.bank_account
 			WHERE
 				btp.payment_document = %(doctype)s
 				AND btp.payment_entry = %(docname)s

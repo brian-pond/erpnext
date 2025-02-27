@@ -337,7 +337,7 @@ def get_data(companies, root_type, balance_must_be, fiscal_year, filters=None, i
 	gl_entries_by_account = {}
 	for root in frappe.db.sql(
 		"""select lft, rgt from tabAccount
-			where root_type=%s and ifnull(parent_account, '') = ''""",
+			where root_type=%s and coalesce(parent_account, '') = ''""",
 		root_type,
 		as_dict=1,
 	):
@@ -461,9 +461,9 @@ def get_account_heads(root_type, companies, filters):
 def update_parent_account_names(accounts):
 	"""Update parent_account_name in accounts list.
 
-	parent_name is `name` of parent account which could have other prefix
+	parent_name is "name" of parent account which could have other prefix
 	of account_number and suffix of company abbr. This function adds key called
-	`parent_account_name` which does not have such prefix/suffix.
+	"parent_account_name" which does not have such prefix/suffix.
 	"""
 	name_to_account_map = {}
 
@@ -498,7 +498,7 @@ def get_subsidiary_companies(company):
 	lft, rgt = frappe.get_cached_value("Company", company, ["lft", "rgt"])
 
 	return frappe.db.sql_list(
-		f"""select name from `tabCompany`
+		f"""select name from "tabCompany"
 		where lft >= {lft} and rgt <= {rgt} order by lft, rgt"""
 	)
 
@@ -597,7 +597,7 @@ def set_gl_entries_by_account(
 	company_lft, company_rgt = frappe.get_cached_value("Company", filters.get("company"), ["lft", "rgt"])
 
 	companies = frappe.db.sql(
-		""" select name, default_currency from `tabCompany`
+		""" select name, default_currency from "tabCompany"
 		where lft >= %(company_lft)s and rgt <= %(company_rgt)s""",
 		{
 			"company_lft": company_lft,

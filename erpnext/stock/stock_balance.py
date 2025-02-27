@@ -24,7 +24,7 @@ def repost(only_actual=False, allow_negative_stock=False, allow_zero_rate=False,
 		from
 			(select item_code, warehouse from tabBin
 			union
-			select item_code, warehouse from `tabStock Ledger Entry`) a
+			select item_code, warehouse from "tabStock Ledger Entry") a
 	"""
 	)
 	for d in item_warehouses:
@@ -85,7 +85,7 @@ def get_balance_qty_from_sle(item_code, warehouse):
 	"""
 
 	balance_qty = frappe.db.sql(
-		"""select qty_after_transaction from `tabStock Ledger Entry`
+		"""select qty_after_transaction from "tabStock Ledger Entry"
 		where item_code=%s and warehouse=%s and is_cancelled=0
 		order by posting_date desc, posting_time desc, creation desc
 		limit 1""",

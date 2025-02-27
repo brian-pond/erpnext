@@ -32,9 +32,9 @@ def get_stock_value_from_bin(warehouse=None, item_code=None):
 	values = {}
 	conditions = ""
 	if warehouse:
-		conditions += """ and `tabBin`.warehouse in (
+		conditions += """ and "tabBin".warehouse in (
 						select w2.name from `tabWarehouse` w1
-						join `tabWarehouse` w2 on
+						join "tabWarehouse" w2 on
 						w1.name = %(warehouse)s
 						and w2.lft between w1.lft and w1.rgt
 						) """
@@ -42,13 +42,12 @@ def get_stock_value_from_bin(warehouse=None, item_code=None):
 		values["warehouse"] = warehouse
 
 	if item_code:
-		conditions += " and `tabBin`.item_code = %(item_code)s"
-
+		conditions += """ and "tabBin".item_code = %(item_code)s """
 		values["item_code"] = item_code
 
 	query = (
-		"""select sum(stock_value) from `tabBin`, `tabItem` where 1 = 1
-		and `tabItem`.name = `tabBin`.item_code and ifnull(`tabItem`.disabled, 0) = 0 %s"""
+		"""select sum(stock_value) from "tabBin", "tabItem" where 1 = 1
+		and "tabItem".name = "tabBin".item_code and coalesce("tabItem".disabled, 0) = 0 %s"""
 		% conditions
 	)
 

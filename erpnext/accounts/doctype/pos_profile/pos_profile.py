@@ -86,7 +86,7 @@ class POSProfile(Document):
 			res = frappe.db.sql(
 				"""select pf.name
 				from
-					`tabPOS Profile User` pfu, `tabPOS Profile` pf
+					"tabPOS Profile User" pfu, "tabPOS Profile" pf
 				where
 					pf.name = pfu.parent and pfu.user = %s and pf.name != %s and pf.company = %s
 					and pfu.default=1 and pf.disabled = 0""",
@@ -181,7 +181,7 @@ class POSProfile(Document):
 
 		pos_view_users = frappe.db.sql_list(
 			f"""select pfu.user
-			from `tabPOS Profile User` as pfu {condition}"""
+			from "tabPOS Profile User" as pfu {condition}"""
 		)
 
 		for user in pos_view_users:
@@ -208,7 +208,7 @@ def get_item_groups(pos_profile):
 def get_child_nodes(group_type, root):
 	lft, rgt = frappe.db.get_value(group_type, root, ["lft", "rgt"])
 	return frappe.db.sql(
-		f""" Select name, lft, rgt from `tab{group_type}` where
+		f""" Select name, lft, rgt from "tab{group_type}" where
 			lft >= {lft} and rgt <= {rgt} order by lft""",
 		as_dict=1,
 	)
@@ -248,7 +248,7 @@ def pos_profile_query(doctype, txt, searchfield, start, page_len, filters):
 	pos_profile = frappe.db.sql(
 		"""select pf.name
 		from
-			`tabPOS Profile` pf, `tabPOS Profile User` pfu
+			"tabPOS Profile" pf, "tabPOS Profile User" pfu
 		where
 			pfu.parent = pf.name and pfu.user = %(user)s and pf.company = %(company)s
 			and (pf.name like %(txt)s)
@@ -262,11 +262,11 @@ def pos_profile_query(doctype, txt, searchfield, start, page_len, filters):
 		pos_profile = frappe.db.sql(
 			"""select pf.name
 			from
-				`tabPOS Profile` pf left join `tabPOS Profile User` pfu
+				"tabPOS Profile" pf left join "tabPOS Profile User" pfu
 			on
 				pf.name = pfu.parent
 			where
-				ifnull(pfu.user, '') = ''
+				coalesce(pfu.user, '') = ''
 				and pf.company = %(company)s
 				and pf.name like %(txt)s
 				and pf.disabled = 0""",
@@ -283,7 +283,7 @@ def set_default_profile(pos_profile, company):
 
 	if pos_profile and company:
 		frappe.db.sql(
-			""" update `tabPOS Profile User` pfu, `tabPOS Profile` pf
+			""" update "tabPOS Profile User" pfu, "tabPOS Profile" pf
 			set
 				pfu.default = 0, pf.modified = %s, pf.modified_by = %s
 			where
@@ -294,7 +294,7 @@ def set_default_profile(pos_profile, company):
 		)
 
 		frappe.db.sql(
-			""" update `tabPOS Profile User` pfu, `tabPOS Profile` pf
+			""" update "tabPOS Profile User" pfu, "tabPOS Profile" pf
 			set
 				pfu.default = 1, pf.modified = %s, pf.modified_by = %s
 			where

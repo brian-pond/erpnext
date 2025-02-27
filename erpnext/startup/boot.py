@@ -53,7 +53,7 @@ def boot_session(bootinfo):
 			update={"doctype": ":Company"},
 		)
 
-		party_account_types = frappe.db.sql(""" select name, ifnull(account_type, '') from `tabParty Type`""")
+		party_account_types = frappe.db.sql(""" select name, coalesce(account_type, '') from `tabParty Type`""")
 		bootinfo.party_account_types = frappe._dict(party_account_types)
 
 		bootinfo.sysdefaults.demo_company = frappe.db.get_single_value("Global Defaults", "demo_company")

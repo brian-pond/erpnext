@@ -110,7 +110,7 @@ class Customer(TransactionBase):
 	def get_customer_name(self):
 		if frappe.db.get_value("Customer", self.customer_name) and not frappe.flags.in_import:
 			count = frappe.db.sql(
-				"""select ifnull(MAX(CAST(SUBSTRING_INDEX(name, ' ', -1) AS UNSIGNED)), 0) from tabCustomer
+				"""select coalesce(MAX(CAST(SUBSTRING_INDEX(name, ' ', -1) AS UNSIGNED)), 0) from tabCustomer
 				 where name like %s""",
 				f"%{self.customer_name} - %",
 				as_list=1,
@@ -498,7 +498,7 @@ def get_loyalty_programs(doc):
 		filters={
 			"auto_opt_in": 1,
 			"from_date": ["<=", today()],
-			"ifnull(to_date, '2500-01-01')": [">=", today()],
+			"coalesce(to_date, '2500-01-01')": [">=", today()],
 		},
 	)
 
@@ -651,8 +651,8 @@ def get_customer_outstanding(customer, company, ignore_outstanding_sales_order=F
 			dn.name = dn_item.parent
 			and dn.customer=%s and dn.company=%s
 			and dn.docstatus = 1 and dn.status not in ('Closed', 'Stopped')
-			and ifnull(dn_item.against_sales_order, '') = ''
-			and ifnull(dn_item.against_sales_invoice, '') = ''
+			and coalesce(dn_item.against_sales_order, '') = ''
+			and coalesce(dn_item.against_sales_invoice, '') = ''
 		""",
 		(customer, company),
 		as_dict=True,

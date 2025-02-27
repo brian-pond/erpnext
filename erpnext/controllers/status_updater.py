@@ -408,7 +408,7 @@ class StatusUpdater(Document):
 					args["second_source_extra_cond"] = ""
 
 				args["second_source_condition"] = frappe.db.sql(
-					""" select ifnull((select sum({second_source_field})
+					""" select coalesce((select sum({second_source_field})
 					from `tab{second_source_dt}`
 					where `{second_join_field}`='{detail_id}'
 					and (`tab{second_source_dt}`.docstatus=1)
@@ -422,7 +422,7 @@ class StatusUpdater(Document):
 				args["source_dt_value"] = (
 					frappe.db.sql(
 						"""
-						(select ifnull(sum({source_field}), 0)
+						(select coalesce(sum({source_field}), 0)
 							from `tab{source_dt}` where `{join_field}`='{detail_id}'
 							and (docstatus=1 {cond}) {extra_cond})
 				""".format(**args)
@@ -465,8 +465,8 @@ class StatusUpdater(Document):
 			frappe.db.sql(
 				"""update `tab{target_parent_dt}`
 				set {target_parent_field} = round(
-					ifnull((select
-						ifnull(sum(case when abs({target_ref_field}) > abs({target_field}) then abs({target_field}) else abs({target_ref_field}) end), 0)
+					coalesce((select
+						coalesce(sum(case when abs({target_ref_field}) > abs({target_field}) then abs({target_field}) else abs({target_ref_field}) end), 0)
 						/ sum(abs({target_ref_field})) * 100
 					from `tab{target_dt}` where parent='{name}' and parenttype='{target_parent_dt}' having sum(abs({target_ref_field})) > 0), 0), 6)
 					{update_modified}
@@ -525,7 +525,7 @@ class StatusUpdater(Document):
 		for ref_dn in zero_amount_refdoc:
 			ref_doc_qty = flt(
 				frappe.db.sql(
-					"""select ifnull(sum(qty), 0) from `tab{} Item`
+					"""select coalesce(sum(qty), 0) from `tab{} Item`
 				where parent={}""".format(ref_dt, "%s"),
 					(ref_dn),
 				)[0][0]
@@ -533,7 +533,7 @@ class StatusUpdater(Document):
 
 			billed_qty = flt(
 				frappe.db.sql(
-					"""select ifnull(sum(qty), 0)
+					"""select coalesce(sum(qty), 0)
 				from `tab{} Item` where {}={} and docstatus=1""".format(self.doctype, ref_fieldname, "%s"),
 					(ref_dn),
 				)[0][0]

@@ -343,12 +343,12 @@ def get_invoices(filters):
 			posting_date,
 			outstanding_amount,
 			debit_to
-		from `tabSales Invoice` si
+		from "tabSales Invoice" si
 		where
 			docstatus = 1
 			and outstanding_amount > 0
 			%s
-			and not exists(select di.name from `tabDiscounted Invoice` di
+			and not exists(select di.name from "tabDiscounted Invoice" di
 				where di.docstatus=1 and di.sales_invoice=si.name)
 	"""
 		% where_condition,
@@ -362,7 +362,7 @@ def get_party_account_based_on_invoice_discounting(sales_invoice):
 	invoice_discounting = frappe.db.sql(
 		"""
 		select par.accounts_receivable_discounted, par.accounts_receivable_unpaid, par.status
-		from `tabInvoice Discounting` par, `tabDiscounted Invoice` ch
+		from "tabInvoice Discounting" par, "tabDiscounted Invoice" ch
 		where par.name=ch.parent
 			and par.docstatus=1
 			and ch.sales_invoice = %s

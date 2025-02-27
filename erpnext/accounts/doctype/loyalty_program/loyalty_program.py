@@ -53,7 +53,7 @@ def get_loyalty_details(
 
 	loyalty_point_details = frappe.db.sql(
 		f"""select sum(loyalty_points) as loyalty_points,
-		sum(purchase_amount) as total_spent from `tabLoyalty Point Entry`
+		sum(purchase_amount) as total_spent from "tabLoyalty Point Entry"
 		where customer=%s and loyalty_program=%s and posting_date <= %s
 		{condition}
 		group by customer""",

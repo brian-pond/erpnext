@@ -1226,7 +1226,7 @@ def get_job_details(start, end, filters=None):
 
 	job_cards = frappe.db.sql(
 		f""" SELECT `tabJob Card`.name, `tabJob Card`.work_order,
-			`tabJob Card`.status, ifnull(`tabJob Card`.remarks, ''),
+			`tabJob Card`.status, coalesce(`tabJob Card`.remarks, ''),
 			min(`tabJob Card Time Log`.from_time) as from_time,
 			max(`tabJob Card Time Log`.to_time) as to_time
 		FROM `tabJob Card` , `tabJob Card Time Log`

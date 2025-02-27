@@ -43,7 +43,7 @@ class AccountingDimensionFilter(Document):
 		accounts = frappe.db.sql(
 			"""
 				SELECT a.applicable_on_account as account
-				FROM `tabApplicable On Account` a, `tabAccounting Dimension Filter` d
+				FROM "tabApplicable On Account" a, "tabAccounting Dimension Filter" d
 				WHERE d.name = a.parent
 				and d.name != %s
 				and d.accounting_dimension = %s
@@ -74,8 +74,8 @@ def get_dimension_filter_map():
 				a.applicable_on_account, d.dimension_value, p.accounting_dimension,
 				p.allow_or_restrict, a.is_mandatory
 			FROM
-				`tabApplicable On Account` a, `tabAllowed Dimension` d,
-				`tabAccounting Dimension Filter` p
+				"tabApplicable On Account" a, "tabAllowed Dimension" d,
+				"tabAccounting Dimension Filter" p
 			WHERE
 				p.name = a.parent
 				AND p.disabled = 0

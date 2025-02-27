@@ -186,7 +186,7 @@ def get_children(doctype, parent=None, company=None, is_root=False):
 
 	fields = ["name as value", "is_group as expandable"]
 	filters = [
-		["ifnull(`parent_warehouse`, '')", "=", parent],
+		["""coalesce("parent_warehouse", '')""", "=", parent],
 		["company", "in", (company, None, "")],
 	]
 

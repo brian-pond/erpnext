@@ -45,7 +45,7 @@ class AccountingPeriod(Document):
 
 	def validate_overlap(self):
 		existing_accounting_period = frappe.db.sql(
-			"""select name from `tabAccounting Period`
+			"""select name from "tabAccounting Period`
 			where (
 				(%(start_date)s between start_date and end_date)
 				or (%(end_date)s between start_date and end_date)

@@ -303,7 +303,7 @@ def validate_balance_type(account, adv_adj=False):
 		if balance_must_be:
 			balance = frappe.db.sql(
 				"""select sum(debit) - sum(credit)
-				from `tabGL Entry` where account = %s""",
+				from "tabGL Entry" where account = %s""",
 				account,
 			)[0][0]
 
@@ -336,7 +336,7 @@ def update_outstanding_amt(
 		frappe.db.sql(
 			f"""
 		select sum(debit_in_account_currency) - sum(credit_in_account_currency)
-		from `tabGL Entry`
+		from "tabGL Entry"
 		where against_voucher_type=%s and against_voucher=%s
 		and voucher_type != 'Invoice Discounting'
 		{party_condition} {account_condition}""",
@@ -352,7 +352,7 @@ def update_outstanding_amt(
 			frappe.db.sql(
 				f"""
 			select sum(debit_in_account_currency) - sum(credit_in_account_currency)
-			from `tabGL Entry` where voucher_type = 'Journal Entry' and voucher_no = %s
+			from "tabGL Entry" where voucher_type = 'Journal Entry' and voucher_no = %s
 			and account = %s and (against_voucher is null or against_voucher='') {party_condition}""",
 				(against_voucher, account),
 			)[0][0]
@@ -455,7 +455,7 @@ def rename_temporarily_named_docs(doctype):
 			set_name_from_naming_options(frappe.get_meta(doctype).autoname, doc)
 			newname = doc.name
 			frappe.db.sql(
-				f"UPDATE `tab{doctype}` SET name = %s, to_rename = 0 where name = %s",
+				f"""UPDATE "tab{doctype}" SET name = %s, to_rename = 0 where name = %s """,
 				(newname, oldname),
 				auto_commit=True,
 			)

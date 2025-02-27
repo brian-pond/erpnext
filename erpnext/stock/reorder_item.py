@@ -26,7 +26,7 @@ def _reorder_item():
 	material_requests = {"Purchase": {}, "Transfer": {}, "Material Issue": {}, "Manufacture": {}}
 	warehouse_company = frappe._dict(
 		frappe.db.sql(
-			"""select name, company from `tabWarehouse`
+			"""select name, company from "tabWarehouse"
 		where disabled=0"""
 		)
 	)
