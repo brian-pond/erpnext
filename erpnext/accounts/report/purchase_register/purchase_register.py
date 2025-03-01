@@ -309,7 +309,7 @@ def get_account_columns(invoice_list, include_payments):
 	if invoice_list:
 		expense_accounts = frappe.db.sql_list(
 			"""select distinct expense_account
-			from `tabPurchase Invoice Item` where docstatus = 1
+			from "tabPurchase Invoice Item" where docstatus = 1
 			and (expense_account is not null and expense_account != '')
 			and parent in (%s) order by expense_account"""
 			% ", ".join(["%s"] * len(invoice_list)),
@@ -327,7 +327,7 @@ def get_account_columns(invoice_list, include_payments):
 
 		unrealized_profit_loss_accounts = frappe.db.sql_list(
 			"""SELECT distinct unrealized_profit_loss_account
-			from `tabPurchase Invoice` where docstatus = 1 and name in (%s)
+			from "tabPurchase Invoice" where docstatus = 1 and name in (%s)
 			and coalesce(unrealized_profit_loss_account, '') != ''
 			order by unrealized_profit_loss_account"""
 			% ", ".join(["%s"] * len(invoice_list)),
@@ -450,7 +450,7 @@ def get_invoice_expense_map(invoice_list):
 	expense_details = frappe.db.sql(
 		"""
 		select parent, expense_account, sum(base_net_amount) as amount
-		from `tabPurchase Invoice Item`
+		from "tabPurchase Invoice Item"
 		where parent in (%s)
 		group by parent, expense_account
 	"""
@@ -470,7 +470,7 @@ def get_invoice_expense_map(invoice_list):
 def get_internal_invoice_map(invoice_list):
 	unrealized_amount_details = frappe.db.sql(
 		"""SELECT name, unrealized_profit_loss_account,
-		base_net_total as amount from `tabPurchase Invoice` where name in (%s)
+		base_net_total as amount from "tabPurchase Invoice" where name in (%s)
 		and is_internal_supplier = 1 and company = represents_company"""
 		% ", ".join(["%s"] * len(invoice_list)),
 		tuple(inv.name for inv in invoice_list),
@@ -490,7 +490,7 @@ def get_invoice_tax_map(invoice_list, invoice_expense_map, expense_accounts, inc
 		"""
 		select parent, account_head, case add_deduct_tax when "Add" then sum(base_tax_amount_after_discount_amount)
 		else sum(base_tax_amount_after_discount_amount) * -1 end as tax_amount
-		from `tabPurchase Taxes and Charges`
+		from "tabPurchase Taxes and Charges"
 		where parent in (%s) and category in ('Total', 'Valuation and Total')
 			and base_tax_amount_after_discount_amount != 0
 		group by parent, account_head, add_deduct_tax
@@ -521,7 +521,7 @@ def get_invoice_po_pr_map(invoice_list):
 	pi_items = frappe.db.sql(
 		"""
 		select parent, purchase_order, purchase_receipt, po_detail, project
-		from `tabPurchase Invoice Item`
+		from "tabPurchase Invoice Item"
 		where parent in (%s)
 	"""
 		% ", ".join(["%s"] * len(invoice_list)),
@@ -541,7 +541,7 @@ def get_invoice_po_pr_map(invoice_list):
 			pr_list = [d.purchase_receipt]
 		elif d.po_detail:
 			pr_list = frappe.db.sql_list(
-				"""select distinct parent from `tabPurchase Receipt Item`
+				"""select distinct parent from "tabPurchase Receipt Item"
 				where docstatus=1 and purchase_order_item=%s""",
 				d.po_detail,
 			)

@@ -108,7 +108,7 @@ def get_period_list(
 def get_fiscal_year_data(from_fiscal_year, to_fiscal_year):
 	fiscal_year = frappe.db.sql(
 		"""select min(year_start_date) as year_start_date,
-		max(year_end_date) as year_end_date from `tabFiscal Year` where
+		max(year_end_date) as year_end_date from "tabFiscal Year" where
 		name between %(from_fiscal_year)s and %(to_fiscal_year)s""",
 		{"from_fiscal_year": from_fiscal_year, "to_fiscal_year": to_fiscal_year},
 		as_dict=1,
@@ -173,7 +173,7 @@ def get_data(
 	gl_entries_by_account = {}
 	for root in frappe.db.sql(
 		"""select lft, rgt from tabAccount
-			where root_type=%s and coalesce(parent_account, '') = ''""",
+			where root_type=%s and ifnull(parent_account, '') = ''""",
 		root_type,
 		as_dict=1,
 	):
@@ -360,7 +360,7 @@ def get_accounts(company, root_type):
 	return frappe.db.sql(
 		"""
 		select name, account_number, parent_account, lft, rgt, root_type, report_type, account_name, include_in_gross, account_type, is_group, lft, rgt
-		from `tabAccount`
+		from "tabAccount"
 		where company=%s and root_type=%s order by lft""",
 		(company, root_type),
 		as_dict=True,

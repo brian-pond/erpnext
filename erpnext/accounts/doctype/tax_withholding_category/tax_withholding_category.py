@@ -291,8 +291,8 @@ def get_tax_amount(party_type, parties, inv, tax_details, posting_date, pan_no=N
 	if taxable_vouchers:
 		tax_deducted = get_deducted_tax(taxable_vouchers, tax_details)
 
-	# If advance is outside the current tax withholding period (usually a fiscal year), `get_deducted_tax` won't fetch it.
-	# updating `tax_deducted` with correct advance tax value (from current and previous previous withholding periods), will allow the
+	# If advance is outside the current tax withholding period (usually a fiscal year), "get_deducted_tax" won't fetch it.
+	# updating "tax_deducted" with correct advance tax value (from current and previous previous withholding periods), will allow the
 	# rest of the below logic to function properly
 	# ---FY 2023-------------||---------------------FY 2024-----------------------||--
 	# ---Advance-------------||---------Inv_1--------Inv_2------------------------||--
@@ -366,7 +366,7 @@ def get_invoice_vouchers(parties, tax_details, company, party_type="Supplier"):
 	journal_entries_details = frappe.db.sql(
 		"""
 		SELECT j.name, ja.credit - ja.debit AS amount
-			FROM `tabJournal Entry` j, `tabJournal Entry Account` ja
+			FROM "tabJournal Entry" j, "tabJournal Entry Account" ja
 		WHERE
 			j.name = ja.parent
 			AND j.docstatus = 1

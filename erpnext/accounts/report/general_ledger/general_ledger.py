@@ -191,7 +191,7 @@ def get_gl_entries(filters, accounting_dimensions):
 			cost_center, project, {transaction_currency_fields}
 			against_voucher_type, against_voucher, account_currency,
 			against, is_opening, creation {select_fields}
-		from `tabGL Entry`
+		from "tabGL Entry"
 		where company=%(company)s {get_conditions(filters)}
 		{order_by_statement}
 	""",
@@ -554,7 +554,7 @@ def get_result_as_list(data, filters):
 def get_supplier_invoice_details():
 	inv_details = {}
 	for d in frappe.db.sql(
-		""" select name, bill_no from `tabPurchase Invoice`
+		""" select name, bill_no from "tabPurchase Invoice"
 		where docstatus = 1 and bill_no is not null and bill_no != '' """,
 		as_dict=1,
 	):

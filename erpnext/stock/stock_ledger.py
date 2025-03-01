@@ -1656,7 +1656,7 @@ def get_stock_ledger_entries(
 	return frappe.db.sql(
 		"""
 		select *, posting_datetime as "timestamp"
-		from `tabStock Ledger Entry` USE INDEX(ftp_perf_idx_1A)
+		from `tabStock Ledger Entry`
 		where item_code = %(item_code)s
 		and is_cancelled = 0
 		{conditions}
@@ -1758,7 +1758,6 @@ def get_valuation_rate(
 			)
 		)
 
-		# TODO:  For PyPika, how do I include a FORCE INDEX (ftp_perf_idx_2A) or FORCE INDEX (ftp_perf_idx_2B)
 		last_valuation_rate = query.run()
 		if last_valuation_rate:
 			return flt(last_valuation_rate[0][0])
@@ -1781,7 +1780,7 @@ def get_valuation_rate(
 	# Get valuation rate from last sle for the same item and warehouse
 	if last_valuation_rate := frappe.db.sql(  # nosemgrep
 		"""select valuation_rate
-		from `tabStock Ledger Entry` force index (item_warehouse)
+		from `tabStock Ledger Entry`
 		where
 			item_code = %s
 			AND warehouse = %s

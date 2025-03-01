@@ -1,6 +1,7 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
+# pylint: disable=protected-access
 
 import frappe
 from frappe import _, bold, json, msgprint
@@ -1442,7 +1443,7 @@ def _archive_stock_ledger_entry(doc_stock_recon, perform_deletion=False):
 	delete_statement = f"""
 		DELETE StockLedgerEntry
 		FROM {source_database_name}.`tabStock Ledger Entry` 			AS StockLedgerEntry
-		INNER JOIN archive.`tabStock Ledger Entry` 		AS Archive		USE INDEX (PRIMARY)
+		INNER JOIN archive.`tabStock Ledger Entry` 		AS Archive
 		ON Archive.name = StockLedgerEntry.name
 	"""
 

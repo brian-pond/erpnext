@@ -179,8 +179,8 @@ class SupplierQuotation(BuyingController):
 					SELECT
 						COUNT(sqi.name) as count
 					FROM
-						`tabSupplier Quotation Item` as sqi,
-						`tabSupplier Quotation` as sq
+						"tabSupplier Quotation Item" as sqi,
+						"tabSupplier Quotation" as sq
 					WHERE sq.supplier = %(supplier)s
 						AND sqi.docstatus = 1
 						AND sq.name != %(me)s
@@ -309,9 +309,9 @@ def set_expired_status():
 	frappe.db.sql(
 		"""
 		UPDATE
-			`tabSupplier Quotation` SET `status` = 'Expired'
+			"tabSupplier Quotation" SET "status" = 'Expired'
 		WHERE
-			`status` not in ('Cancelled', 'Stopped') AND `valid_till` < %s
+			"status" not in ('Cancelled', 'Stopped') AND "valid_till" < %s
 		""",
 		(nowdate()),
 	)

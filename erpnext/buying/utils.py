@@ -128,7 +128,7 @@ def get_linked_material_requests(items):
 				(mr_item.qty - mr_item.ordered_qty) AS qty,
 				mr_item.item_code AS item_code,
 				mr_item.name AS mr_item
-			FROM `tabMaterial Request` mr, `tabMaterial Request Item` mr_item
+			FROM "tabMaterial Request" mr, "tabMaterial Request Item" mr_item
 			WHERE mr.name = mr_item.parent
 				AND mr_item.item_code = %(item)s
 				AND mr.material_request_type = 'Purchase'

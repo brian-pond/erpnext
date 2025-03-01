@@ -552,7 +552,7 @@ def get_tax_accounts(
 		select
 			name, parent, description, item_wise_tax_detail, account_head,
 			charge_type, {add_deduct_tax}, base_tax_amount_after_discount_amount
-		from `tab%s`
+		from "tab%s"
 		where
 			parenttype = %s and docstatus = 1
 			and (description is not null and description != '')

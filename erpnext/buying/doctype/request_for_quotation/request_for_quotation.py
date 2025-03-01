@@ -323,8 +323,8 @@ class RequestforQuotation(BuyingController):
 						SELECT
 							COUNT(sqi.name) as count
 						FROM
-							`tabSupplier Quotation Item` as sqi,
-							`tabSupplier Quotation` as sq
+							"tabSupplier Quotation Item" as sqi,
+							"tabSupplier Quotation" as sq
 						WHERE sq.supplier = %(supplier)s
 							AND sqi.docstatus = 1
 							AND sqi.request_for_quotation_item = %(rqi)s
@@ -483,7 +483,7 @@ def get_pdf(
 	if supplier:
 		doc.update_supplier_part_no(supplier)
 
-	# permissions get checked in `download_pdf`
+	# permissions get checked in "download_pdf"
 	download_pdf(
 		doc.doctype,
 		doc.name,
@@ -501,10 +501,10 @@ def get_item_from_material_requests_based_on_supplier(source_name, target_doc=No
 		SELECT
 			mr.name, mr_item.item_code
 		FROM
-			`tabItem` as item,
-			`tabItem Supplier` as item_supp,
-			`tabMaterial Request Item` as mr_item,
-			`tabMaterial Request`  as mr
+			"tabItem" as item,
+			"tabItem Supplier" as item_supp,
+			"tabMaterial Request Item" as mr_item,
+			"tabMaterial Request"  as mr
 		WHERE item_supp.supplier = %(supplier)s
 			AND item.name = item_supp.parent
 			AND mr_item.parent = mr.name
@@ -573,7 +573,7 @@ def get_rfq_containing_supplier(doctype, txt, searchfield, start, page_len, filt
 			distinct rfq.name, rfq.transaction_date,
 			rfq.company
 		from
-			`tabRequest for Quotation` rfq, `tabRequest for Quotation Supplier` rfq_supplier
+			"tabRequest for Quotation" rfq, "tabRequest for Quotation Supplier" rfq_supplier
 		where
 			rfq.name = rfq_supplier.parent
 			and rfq_supplier.supplier = %(supplier)s

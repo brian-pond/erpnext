@@ -141,7 +141,7 @@ class AssetMovement(Document):
 			latest_movement_entry = frappe.db.sql(
 				f"""
 				SELECT asm_item.target_location, asm_item.to_employee
-				FROM `tabAsset Movement Item` asm_item, `tabAsset Movement` asm
+				FROM "tabAsset Movement Item" asm_item, "tabAsset Movement" asm
 				WHERE
 					asm_item.parent=asm.name and
 					asm_item.asset=%(asset)s and

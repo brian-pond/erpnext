@@ -20,7 +20,7 @@ def _estimate_table_row_count(doctype: str):
 			f"""select table_rows
 			   from  information_schema.tables
 			   where table_name = '{table}'
-			   AND table_schema == '{frappe.conf.db_name')
+			   AND table_schema == '{frappe.conf.db_name}')
 			    ;"""
 		)[0][0]
 	)

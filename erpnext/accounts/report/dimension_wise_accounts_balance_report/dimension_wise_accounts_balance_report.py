@@ -36,7 +36,7 @@ def get_data(filters, dimension_list):
 			name, account_number, parent_account, lft, rgt, root_type,
 			report_type, account_name, include_in_gross, account_type, is_group
 		from
-			`tabAccount`
+			"tabAccount"
 		where
 			company=%s
 			order by lft""",
@@ -50,13 +50,13 @@ def get_data(filters, dimension_list):
 	accounts, accounts_by_name, parent_children_map = filter_accounts(acc)
 
 	min_lft, max_rgt = frappe.db.sql(
-		"""select min(lft), max(rgt) from `tabAccount`
+		"""select min(lft), max(rgt) from "tabAccount"
 		where company=%s""",
 		(filters.company),
 	)[0]
 
 	account = frappe.db.sql_list(
-		"""select name from `tabAccount`
+		"""select name from "tabAccount"
 		where lft >= %s and rgt <= %s and company = %s""",
 		(min_lft, max_rgt, filters.company),
 	)
@@ -97,7 +97,7 @@ def set_gl_entries_by_account(dimension_list, filters, account, gl_entries_by_ac
 			posting_date, account, {dimension}, debit, credit, is_opening, fiscal_year,
 			debit_in_account_currency, credit_in_account_currency, account_currency
 		from
-			`tabGL Entry`
+			"tabGL Entry"
 		where
 			company=%(company)s
 		{condition}

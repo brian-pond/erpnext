@@ -149,7 +149,7 @@ def compute_area(features):
 	Reference from https://github.com/scisco/area.
 
 	Args:
-	        `features` (list of dict): Features marked on the map as
+	        "features" (list of dict): Features marked on the map as
 	                GeoJSON data
 
 	Returns:
@@ -221,7 +221,7 @@ def get_children(doctype, parent=None, location=None, is_root=False):
 			name as value,
 			is_group as expandable
 		from
-			`tabLocation` comp
+			"tabLocation" comp
 		where
 			coalesce(parent_location, "")={frappe.db.escape(parent)}
 		""",

@@ -334,7 +334,7 @@ def get_purchase_receipt_supplier_map():
 		frappe.db.sql(
 			""" Select
 		pr.name, pr.supplier
-		FROM `tabPurchase Receipt` pr, `tabPurchase Receipt Item` pri
+		FROM "tabPurchase Receipt" pr, "tabPurchase Receipt Item" pri
 		WHERE
 			pri.parent = pr.name
 			AND pri.is_fixed_asset=1
@@ -349,7 +349,7 @@ def get_purchase_invoice_supplier_map():
 		frappe.db.sql(
 			""" Select
 		pi.name, pi.supplier
-		FROM `tabPurchase Invoice` pi, `tabPurchase Invoice Item` pii
+		FROM "tabPurchase Invoice" pi, "tabPurchase Invoice Item" pii
 		WHERE
 			pii.parent = pi.name
 			AND pii.is_fixed_asset=1

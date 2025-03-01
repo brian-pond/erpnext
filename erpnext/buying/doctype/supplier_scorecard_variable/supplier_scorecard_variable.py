@@ -64,8 +64,8 @@ def get_item_workdays(scorecard):
 			SELECT
 				SUM(DATEDIFF( %(end_date)s, po_item.schedule_date) * (po_item.qty))
 			FROM
-				`tabPurchase Order Item` po_item,
-				`tabPurchase Order` po
+				"tabPurchase Order Item" po_item,
+				"tabPurchase Order" po
 			WHERE
 				po.supplier = %(supplier)s
 				AND po_item.received_qty < po_item.qty
@@ -90,8 +90,8 @@ def get_total_cost_of_shipments(scorecard):
 			SELECT
 				SUM(po_item.base_amount)
 			FROM
-				`tabPurchase Order Item` po_item,
-				`tabPurchase Order` po
+				"tabPurchase Order Item" po_item,
+				"tabPurchase Order" po
 			WHERE
 				po.supplier = %(supplier)s
 				AND po_item.schedule_date BETWEEN %(start_date)s AND %(end_date)s
@@ -123,10 +123,10 @@ def get_cost_of_on_time_shipments(scorecard):
 			SELECT
 				SUM(pr_item.base_amount)
 			FROM
-				`tabPurchase Order Item` po_item,
-				`tabPurchase Receipt Item` pr_item,
-				`tabPurchase Order` po,
-				`tabPurchase Receipt` pr
+				"tabPurchase Order Item" po_item,
+				"tabPurchase Receipt Item" pr_item,
+				"tabPurchase Order" po,
+				"tabPurchase Receipt" pr
 			WHERE
 				po.supplier = %(supplier)s
 				AND po_item.schedule_date BETWEEN %(start_date)s AND %(end_date)s
@@ -153,10 +153,10 @@ def get_total_days_late(scorecard):
 			SELECT
 				SUM(DATEDIFF(pr.posting_date,po_item.schedule_date)* pr_item.qty)
 			FROM
-				`tabPurchase Order Item` po_item,
-				`tabPurchase Receipt Item` pr_item,
-				`tabPurchase Order` po,
-				`tabPurchase Receipt` pr
+				"tabPurchase Order Item" po_item,
+				"tabPurchase Receipt Item" pr_item,
+				"tabPurchase Order" po,
+				"tabPurchase Receipt" pr
 			WHERE
 				po.supplier = %(supplier)s
 				AND po_item.schedule_date BETWEEN %(start_date)s AND %(end_date)s
@@ -176,8 +176,8 @@ def get_total_days_late(scorecard):
 			SELECT
 				SUM(DATEDIFF( %(end_date)s, po_item.schedule_date) * (po_item.qty - po_item.received_qty))
 			FROM
-				`tabPurchase Order Item` po_item,
-				`tabPurchase Order` po
+				"tabPurchase Order Item" po_item,
+				"tabPurchase Order" po
 			WHERE
 				po.supplier = %(supplier)s
 				AND po_item.received_qty < po_item.qty
@@ -203,10 +203,10 @@ def get_on_time_shipments(scorecard):
 			SELECT
 				COUNT(pr_item.qty)
 			FROM
-				`tabPurchase Order Item` po_item,
-				`tabPurchase Receipt Item` pr_item,
-				`tabPurchase Order` po,
-				`tabPurchase Receipt` pr
+				"tabPurchase Order Item" po_item,
+				"tabPurchase Receipt Item" pr_item,
+				"tabPurchase Order" po,
+				"tabPurchase Receipt" pr
 			WHERE
 				po.supplier = %(supplier)s
 				AND po_item.schedule_date BETWEEN %(start_date)s AND %(end_date)s
@@ -240,8 +240,8 @@ def get_total_received(scorecard):
 			SELECT
 				COUNT(pr_item.base_amount)
 			FROM
-				`tabPurchase Receipt Item` pr_item,
-				`tabPurchase Receipt` pr
+				"tabPurchase Receipt Item" pr_item,
+				"tabPurchase Receipt" pr
 			WHERE
 				pr.supplier = %(supplier)s
 				AND pr.posting_date BETWEEN %(start_date)s AND %(end_date)s
@@ -266,8 +266,8 @@ def get_total_received_amount(scorecard):
 			SELECT
 				SUM(pr_item.received_qty * pr_item.base_rate)
 			FROM
-				`tabPurchase Receipt Item` pr_item,
-				`tabPurchase Receipt` pr
+				"tabPurchase Receipt Item" pr_item,
+				"tabPurchase Receipt" pr
 			WHERE
 				pr.supplier = %(supplier)s
 				AND pr.posting_date BETWEEN %(start_date)s AND %(end_date)s
@@ -292,8 +292,8 @@ def get_total_received_items(scorecard):
 			SELECT
 				SUM(pr_item.received_qty)
 			FROM
-				`tabPurchase Receipt Item` pr_item,
-				`tabPurchase Receipt` pr
+				"tabPurchase Receipt Item" pr_item,
+				"tabPurchase Receipt" pr
 			WHERE
 				pr.supplier = %(supplier)s
 				AND pr.posting_date BETWEEN %(start_date)s AND %(end_date)s
@@ -318,8 +318,8 @@ def get_total_rejected_amount(scorecard):
 			SELECT
 				SUM(pr_item.rejected_qty * pr_item.base_rate)
 			FROM
-				`tabPurchase Receipt Item` pr_item,
-				`tabPurchase Receipt` pr
+				"tabPurchase Receipt Item" pr_item,
+				"tabPurchase Receipt" pr
 			WHERE
 				pr.supplier = %(supplier)s
 				AND pr.posting_date BETWEEN %(start_date)s AND %(end_date)s
@@ -344,8 +344,8 @@ def get_total_rejected_items(scorecard):
 			SELECT
 				SUM(pr_item.rejected_qty)
 			FROM
-				`tabPurchase Receipt Item` pr_item,
-				`tabPurchase Receipt` pr
+				"tabPurchase Receipt Item" pr_item,
+				"tabPurchase Receipt" pr
 			WHERE
 				pr.supplier = %(supplier)s
 				AND pr.posting_date BETWEEN %(start_date)s AND %(end_date)s
@@ -370,8 +370,8 @@ def get_total_accepted_amount(scorecard):
 			SELECT
 				SUM(pr_item.qty * pr_item.base_rate)
 			FROM
-				`tabPurchase Receipt Item` pr_item,
-				`tabPurchase Receipt` pr
+				"tabPurchase Receipt Item" pr_item,
+				"tabPurchase Receipt" pr
 			WHERE
 				pr.supplier = %(supplier)s
 				AND pr.posting_date BETWEEN %(start_date)s AND %(end_date)s
@@ -396,8 +396,8 @@ def get_total_accepted_items(scorecard):
 			SELECT
 				SUM(pr_item.qty)
 			FROM
-				`tabPurchase Receipt Item` pr_item,
-				`tabPurchase Receipt` pr
+				"tabPurchase Receipt Item" pr_item,
+				"tabPurchase Receipt" pr
 			WHERE
 				pr.supplier = %(supplier)s
 				AND pr.posting_date BETWEEN %(start_date)s AND %(end_date)s
@@ -422,8 +422,8 @@ def get_total_shipments(scorecard):
 			SELECT
 				COUNT(po_item.base_amount)
 			FROM
-				`tabPurchase Order Item` po_item,
-				`tabPurchase Order` po
+				"tabPurchase Order Item" po_item,
+				"tabPurchase Order" po
 			WHERE
 				po.supplier = %(supplier)s
 				AND po_item.schedule_date BETWEEN %(start_date)s AND %(end_date)s
@@ -465,9 +465,9 @@ def get_rfq_total_number(scorecard):
 			SELECT
 				COUNT(rfq.name) as total_rfqs
 			FROM
-				`tabRequest for Quotation Item` rfq_item,
-				`tabRequest for Quotation Supplier` rfq_sup,
-				`tabRequest for Quotation` rfq
+				"tabRequest for Quotation Item" rfq_item,
+				"tabRequest for Quotation Supplier" rfq_sup,
+				"tabRequest for Quotation" rfq
 			WHERE
 				rfq_sup.supplier = %(supplier)s
 				AND rfq.transaction_date BETWEEN %(start_date)s AND %(end_date)s
@@ -493,9 +493,9 @@ def get_rfq_total_items(scorecard):
 			SELECT
 				COUNT(rfq_item.name) as total_rfqs
 			FROM
-				`tabRequest for Quotation Item` rfq_item,
-				`tabRequest for Quotation Supplier` rfq_sup,
-				`tabRequest for Quotation` rfq
+				"tabRequest for Quotation Item" rfq_item,
+				"tabRequest for Quotation Supplier" rfq_sup,
+				"tabRequest for Quotation" rfq
 			WHERE
 				rfq_sup.supplier = %(supplier)s
 				AND rfq.transaction_date BETWEEN %(start_date)s AND %(end_date)s
@@ -520,11 +520,11 @@ def get_sq_total_number(scorecard):
 			SELECT
 				COUNT(sq.name) as total_sqs
 			FROM
-				`tabRequest for Quotation Item` rfq_item,
-				`tabSupplier Quotation Item` sq_item,
-				`tabRequest for Quotation Supplier` rfq_sup,
-				`tabRequest for Quotation` rfq,
-				`tabSupplier Quotation` sq
+				"tabRequest for Quotation Item" rfq_item,
+				"tabSupplier Quotation Item" sq_item,
+				"tabRequest for Quotation Supplier" rfq_sup,
+				"tabRequest for Quotation" rfq,
+				"tabSupplier Quotation" sq
 			WHERE
 				rfq_sup.supplier = %(supplier)s
 				AND rfq.transaction_date BETWEEN %(start_date)s AND %(end_date)s
@@ -553,11 +553,11 @@ def get_sq_total_items(scorecard):
 			SELECT
 				COUNT(sq_item.name) as total_sqs
 			FROM
-				`tabRequest for Quotation Item` rfq_item,
-				`tabSupplier Quotation Item` sq_item,
-				`tabSupplier Quotation` sq,
-				`tabRequest for Quotation Supplier` rfq_sup,
-				`tabRequest for Quotation` rfq
+				"tabRequest for Quotation Item" rfq_item,
+				"tabSupplier Quotation Item" sq_item,
+				"tabSupplier Quotation" sq,
+				"tabRequest for Quotation Supplier" rfq_sup,
+				"tabRequest for Quotation" rfq
 			WHERE
 				rfq_sup.supplier = %(supplier)s
 				AND rfq.transaction_date BETWEEN %(start_date)s AND %(end_date)s
@@ -584,11 +584,11 @@ def get_rfq_response_days(scorecard):
 			SELECT
 				SUM(DATEDIFF(sq.transaction_date, rfq.transaction_date))
 			FROM
-				`tabRequest for Quotation Item` rfq_item,
-				`tabSupplier Quotation Item` sq_item,
-				`tabSupplier Quotation` sq,
-				`tabRequest for Quotation Supplier` rfq_sup,
-				`tabRequest for Quotation` rfq
+				"tabRequest for Quotation Item" rfq_item,
+				"tabSupplier Quotation Item" sq_item,
+				"tabSupplier Quotation" sq,
+				"tabRequest for Quotation Supplier" rfq_sup,
+				"tabRequest for Quotation" rfq
 			WHERE
 				rfq_sup.supplier = %(supplier)s
 				AND rfq.transaction_date BETWEEN %(start_date)s AND %(end_date)s

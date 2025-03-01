@@ -193,7 +193,7 @@ def get_account_type_based_gl_data(company, filters=None):
 	gl_sum = frappe.db.sql_list(
 		f"""
 		select sum(credit) - sum(debit)
-		from `tabGL Entry`
+		from "tabGL Entry"
 		where company=%(company)s and posting_date >= %(start_date)s and posting_date <= %(end_date)s
 			and voucher_type != 'Period Closing Voucher'
 			and account in ( SELECT name FROM tabAccount WHERE account_type = %(account_type)s) {cond}

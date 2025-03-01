@@ -498,7 +498,7 @@ def get_loyalty_programs(doc):
 		filters={
 			"auto_opt_in": 1,
 			"from_date": ["<=", today()],
-			"coalesce(to_date, '2500-01-01')": [">=", today()],
+			"ifnull(to_date, '2500-01-01')": [">=", today()],
 		},
 	)
 

@@ -83,7 +83,7 @@ def get_data(filters):
 	accounts = frappe.db.sql(
 		"""select name, account_number, parent_account, account_name, root_type, report_type, lft, rgt
 
-		from `tabAccount` where company=%s order by lft""",
+		from "tabAccount" where company=%s order by lft""",
 		filters.company,
 		as_dict=True,
 	)
@@ -95,7 +95,7 @@ def get_data(filters):
 	accounts, accounts_by_name, parent_children_map = filter_accounts(accounts)
 
 	min_lft, max_rgt = frappe.db.sql(
-		"""select min(lft), max(rgt) from `tabAccount`
+		"""select min(lft), max(rgt) from "tabAccount"
 		where company=%s""",
 		(filters.company,),
 	)[0]

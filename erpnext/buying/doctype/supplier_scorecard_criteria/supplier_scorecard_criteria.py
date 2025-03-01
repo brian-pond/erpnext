@@ -60,7 +60,7 @@ def get_criteria_list():
 		SELECT
 			scs.name
 		FROM
-			`tabSupplier Scorecard Criteria` scs""",
+			"tabSupplier Scorecard Criteria" scs""",
 		{},
 		as_dict=1,
 	)
@@ -86,7 +86,7 @@ def _get_variables(criteria):
 					SELECT
 						scv.variable_label, scv.description, scv.param_name, scv.path
 					FROM
-						`tabSupplier Scorecard Variable` scv
+						"tabSupplier Scorecard Variable" scv
 					WHERE
 						param_name=%(param)s""",
 					{"param": match.group(1)},

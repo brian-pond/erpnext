@@ -31,7 +31,7 @@ class BulkTransactionLog(Document):
 		log_detail = qb.DocType("Bulk Transaction Log Detail")
 
 		has_records = frappe.db.sql(
-			f"select exists (select * from `tabBulk Transaction Log Detail` where date = '{self.name}');"
+			f""" select exists (select * from "tabBulk Transaction Log Detail" where date = '{self.name}');"""
 		)[0][0]
 		if not has_records:
 			raise frappe.DoesNotExistError

@@ -64,12 +64,12 @@ class ShippingRule(Document):
 		"""
 		# Another mistake in Frappe framework.  Checkboxes should automatically be Booleans, not Integers.
 		# I understand that MySQL stores them as TinyINT. That's no excuse for not correctly casting them to Boolean
-		# in the Document framework. Because in Python, `1 == True` is True.  But `1 is True` equals False.
+		# in the Document framework. Because in Python, "1 == True" is True.  But "1 is True" equals False.
 		#
 		# Demonstration:  frappe.whatis(self.is_default_rule)
 		#
 		if bool(self.is_default_rule) is True:
-			statement = """ UPDATE `tabShipping Rule` SET is_default_rule = 0 WHERE name <> %(rule_name)s """
+			statement = """ UPDATE "tabShipping Rule" SET is_default_rule = 0 WHERE name <> %(rule_name)s """
 			frappe.db.sql(statement, values={'rule_name': self.name}, debug=False, explain=False)
 
 	def validate_from_to_values(self):

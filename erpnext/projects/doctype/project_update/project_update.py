@@ -2,8 +2,10 @@
 # For license information, please see license.txt
 
 
+from datetime import timedelta
 import frappe
 from frappe.model.document import Document
+from frappe.utils import now_datetime
 
 
 class ProjectUpdate(Document):
@@ -26,7 +28,6 @@ class ProjectUpdate(Document):
 		users: DF.Table[ProjectUser]
 	# end: auto-generated types
 
-	pass
 
 
 @frappe.whitelist()
@@ -47,8 +48,10 @@ def daily_reminder():
 		for drafts in draft:
 			number_of_drafts = drafts[0]
 		update = frappe.db.sql(
-			"""SELECT name,date,time,progress,progress_details FROM `tabProject Update` WHERE `tabProject Update`.project = %s AND date = DATE_ADD(CURRENT_DATE, INTERVAL -1 DAY);""",
-			project_name,
+			"""SELECT name,date,time,progress,progress_details
+			 FROM `tabProject Update`
+			 WHERE `tabProject Update`.project = %s AND date = %s ;""",
+			values=(project_name, now_datetime() - timedelta(days=1)),
 		)
 		email_sending(project_name, frequency, date_start, date_end, progress, number_of_drafts, update)
 

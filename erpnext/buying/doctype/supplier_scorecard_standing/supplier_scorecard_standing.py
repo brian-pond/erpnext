@@ -45,7 +45,7 @@ def get_standings_list():
 		SELECT
 			scs.name
 		FROM
-			`tabSupplier Scorecard Standing` scs""",
+			"tabSupplier Scorecard Standing" scs""",
 		{},
 		as_dict=1,
 	)

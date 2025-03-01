@@ -53,7 +53,7 @@ def get_pos_entries(filters, group_by_field):
 		select_mop_field = (
 			", sip.mode_of_payment, sip.base_amount - IF(sip.type='Cash', p.change_amount, 0) as paid_amount"
 		)
-		from_sales_invoice_payment = ", `tabSales Invoice Payment` sip"
+		from_sales_invoice_payment = """, "tabSales Invoice Payment" sip """
 		group_by_mop_condition = "sip.parent = p.name AND coalesce(sip.base_amount - IF(sip.type='Cash', p.change_amount, 0), 0) != 0 AND"
 		order_by += ", sip.mode_of_payment"
 
@@ -68,7 +68,7 @@ def get_pos_entries(filters, group_by_field):
 			p.posting_date, p.name as pos_invoice, p.pos_profile, p.company,
 			p.owner, p.customer, p.is_return, p.base_grand_total as grand_total {select_mop_field}
 		FROM
-			`tabPOS Invoice` p {from_sales_invoice_payment}
+			"tabPOS Invoice" p {from_sales_invoice_payment}
 		WHERE
 			p.docstatus = 1 and
 			{group_by_mop_condition}
@@ -145,7 +145,7 @@ def get_conditions(filters):
 	if filters.get("mode_of_payment"):
 		conditions += """
 			AND EXISTS(
-					SELECT name FROM `tabSales Invoice Payment` sip
+					SELECT name FROM "tabSales Invoice Payment" sip
 					WHERE parent=p.name AND coalesce(sip.mode_of_payment, '') = %(mode_of_payment)s
 				)"""
 

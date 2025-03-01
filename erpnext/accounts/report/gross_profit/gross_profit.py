@@ -604,7 +604,7 @@ class GrossProfitGenerator:
 			select
 				si.name, si_item.item_code, si_item.stock_qty as qty, si_item.base_net_amount as base_amount, si.return_against
 			from
-				`tabSales Invoice` si, `tabSales Invoice Item` si_item
+				"tabSales Invoice" si, "tabSales Invoice Item" si_item
 			where
 				si.name = si_item.parent
 				and si.docstatus = 1
@@ -763,7 +763,7 @@ class GrossProfitGenerator:
 	def load_invoice_items(self):
 		conditions = ""
 		if self.filters.company:
-			conditions += " and `tabSales Invoice`.company = %(company)s"
+			conditions += """ and "tabSales Invoice".company = %(company)s"""
 		if self.filters.from_date:
 			conditions += " and posting_date >= %(from_date)s"
 		if self.filters.to_date:
@@ -777,44 +777,44 @@ class GrossProfitGenerator:
 		if self.filters.sales_person:
 			conditions += """
 				and exists(select 1
-							from `tabSales Team` st
-							where st.parent = `tabSales Invoice`.name
+							from "tabSales Team" st
+							where st.parent = "tabSales Invoice".name
 							and   st.sales_person = %(sales_person)s)
 			"""
 
 		if self.filters.group_by == "Sales Person":
 			sales_person_cols = ", sales.sales_person, sales.allocated_amount, sales.incentives"
-			sales_team_table = "left join `tabSales Team` sales on sales.parent = `tabSales Invoice`.name"
+			sales_team_table = """  left join "tabSales Team" sales on sales.parent = "tabSales Invoice".name  """
 		else:
 			sales_person_cols = ""
 			sales_team_table = ""
 
 		if self.filters.group_by == "Payment Term":
-			payment_term_cols = """,if(`tabSales Invoice`.is_return = 1,
+			payment_term_cols = """,if("tabSales Invoice".is_return = 1,
 										'{}',
 										coalesce(schedule.payment_term, '{}')) as payment_term,
 									schedule.invoice_portion,
 									schedule.payment_amount """.format(_("Sales Return"), _("No Terms"))
-			payment_term_table = """ left join `tabPayment Schedule` schedule on schedule.parent = `tabSales Invoice`.name and
-																				`tabSales Invoice`.is_return = 0 """
+			payment_term_table = """ left join "tabPayment Schedule" schedule on schedule.parent = "tabSales Invoice".name and
+																				"tabSales Invoice".is_return = 0 """
 		else:
 			payment_term_cols = ""
 			payment_term_table = ""
 
 		if self.filters.get("sales_invoice"):
-			conditions += " and `tabSales Invoice`.name = %(sales_invoice)s"
+			conditions += """ and "tabSales Invoice".name = %(sales_invoice)s """
 
 		if self.filters.get("item_code"):
-			conditions += " and `tabSales Invoice Item`.item_code = %(item_code)s"
+			conditions += """ and "tabSales Invoice Item".item_code = %(item_code)s """
 
 		if self.filters.get("cost_center"):
 			self.filters.cost_center = frappe.parse_json(self.filters.get("cost_center"))
 			self.filters.cost_center = get_cost_centers_with_children(self.filters.cost_center)
-			conditions += " and `tabSales Invoice Item`.cost_center in %(cost_center)s"
+			conditions += """ and "tabSales Invoice Item".cost_center in %(cost_center)s """
 
 		if self.filters.get("project"):
 			self.filters.project = frappe.parse_json(self.filters.get("project"))
-			conditions += " and `tabSales Invoice Item`.project in %(project)s"
+			conditions += """ and "tabSales Invoice Item".project in %(project)s """
 
 		accounting_dimensions = get_accounting_dimensions(as_list=False)
 		if accounting_dimensions:
@@ -825,11 +825,11 @@ class GrossProfitGenerator:
 							dimension.document_type, self.filters.get(dimension.fieldname)
 						)
 						conditions += (
-							f" and `tabSales Invoice Item`.{dimension.fieldname} in %({dimension.fieldname})s"
+							f""" and "tabSales Invoice Item".{dimension.fieldname} in %({dimension.fieldname})s"""
 						)
 					else:
 						conditions += (
-							f" and `tabSales Invoice Item`.{dimension.fieldname} in %({dimension.fieldname})s"
+							f""" and "tabSales Invoice Item".{dimension.fieldname} in %({dimension.fieldname})s"""
 						)
 
 		if self.filters.get("warehouse"):
@@ -837,36 +837,39 @@ class GrossProfitGenerator:
 				"Warehouse", self.filters.get("warehouse"), ["lft", "rgt"], as_dict=1
 			)
 			if warehouse_details:
-				conditions += f" and `tabSales Invoice Item`.warehouse in (select name from `tabWarehouse` wh where wh.lft >= {warehouse_details.lft} and wh.rgt <= {warehouse_details.rgt} and warehouse = wh.name)"
+				conditions += f""" and "tabSales Invoice Item".warehouse in 
+				(select name from "tabWarehouse" wh
+				where wh.lft >= {warehouse_details.lft} and wh.rgt <= {warehouse_details.rgt} and warehouse = wh.name)
+			"""
 
 		self.si_list = frappe.db.sql(
 			"""
 			select
-				`tabSales Invoice Item`.parenttype, `tabSales Invoice Item`.parent,
-				`tabSales Invoice`.posting_date, `tabSales Invoice`.posting_time,
-				`tabSales Invoice`.project, `tabSales Invoice`.update_stock,
-				`tabSales Invoice`.customer, `tabSales Invoice`.customer_group,
-				`tabSales Invoice`.territory, `tabSales Invoice Item`.item_code,
-				`tabSales Invoice Item`.item_name, `tabSales Invoice Item`.description,
-				`tabSales Invoice Item`.warehouse, `tabSales Invoice Item`.item_group,
-				`tabSales Invoice Item`.brand, `tabSales Invoice Item`.so_detail,
-				`tabSales Invoice Item`.sales_order, `tabSales Invoice Item`.dn_detail,
-				`tabSales Invoice Item`.delivery_note, `tabSales Invoice Item`.stock_qty as qty,
-				`tabSales Invoice Item`.base_net_rate, `tabSales Invoice Item`.base_net_amount,
-				`tabSales Invoice Item`.name as "item_row", `tabSales Invoice`.is_return,
-				`tabSales Invoice Item`.cost_center, `tabSales Invoice Item`.serial_and_batch_bundle
+				"tabSales Invoice Item".parenttype, "tabSales Invoice Item".parent,
+				"tabSales Invoice".posting_date, "tabSales Invoice".posting_time,
+				"tabSales Invoice".project, "tabSales Invoice".update_stock,
+				"tabSales Invoice".customer, "tabSales Invoice".customer_group,
+				"tabSales Invoice".territory, "tabSales Invoice Item".item_code,
+				"tabSales Invoice Item".item_name, "tabSales Invoice Item".description,
+				"tabSales Invoice Item".warehouse, "tabSales Invoice Item".item_group,
+				"tabSales Invoice Item".brand, "tabSales Invoice Item".so_detail,
+				"tabSales Invoice Item".sales_order, "tabSales Invoice Item".dn_detail,
+				"tabSales Invoice Item".delivery_note, "tabSales Invoice Item".stock_qty as qty,
+				"tabSales Invoice Item".base_net_rate, "tabSales Invoice Item".base_net_amount,
+				"tabSales Invoice Item".name as "item_row", "tabSales Invoice".is_return,
+				"tabSales Invoice Item".cost_center, "tabSales Invoice Item".serial_and_batch_bundle
 				{sales_person_cols}
 				{payment_term_cols}
 			from
-				`tabSales Invoice` inner join `tabSales Invoice Item`
-					on `tabSales Invoice Item`.parent = `tabSales Invoice`.name
-				join `tabItem` item on item.name = `tabSales Invoice Item`.item_code
+				"tabSales Invoice" inner join "tabSales Invoice Item"
+					on "tabSales Invoice Item".parent = "tabSales Invoice".name
+				join "tabItem" item on item.name = "tabSales Invoice Item".item_code
 				{sales_team_table}
 				{payment_term_table}
 			where
-				`tabSales Invoice`.docstatus=1 and `tabSales Invoice`.is_opening!='Yes' {conditions} {match_cond}
+				"tabSales Invoice".docstatus=1 and "tabSales Invoice".is_opening!='Yes' {conditions} {match_cond}
 			order by
-				`tabSales Invoice`.posting_date desc, `tabSales Invoice`.posting_time desc""".format(
+				"tabSales Invoice".posting_date desc, "tabSales Invoice".posting_time desc""".format(
 				conditions=conditions,
 				sales_person_cols=sales_person_cols,
 				sales_team_table=sales_team_table,

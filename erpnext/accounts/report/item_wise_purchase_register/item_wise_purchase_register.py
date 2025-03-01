@@ -387,7 +387,7 @@ def get_purchase_receipts_against_purchase_order(item_list):
 		purchase_receipts = frappe.db.sql(
 			"""
 			select parent, purchase_order_item
-			from `tabPurchase Receipt Item`
+			from "tabPurchase Receipt Item"
 			where docstatus=1 and purchase_order_item in (%s)
 			group by purchase_order_item, parent
 		"""

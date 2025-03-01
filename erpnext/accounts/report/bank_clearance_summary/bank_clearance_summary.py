@@ -87,7 +87,7 @@ def get_entries_for_bank_clearance_summary(filters):
 			"Journal Entry", jv.name, jv.posting_date, jv.cheque_no,
 			jv.clearance_date, jvd.against_account, jvd.debit - jvd.credit
 		FROM
-			`tabJournal Entry Account` jvd, `tabJournal Entry` jv
+			"tabJournal Entry Account" jvd, "tabJournal Entry" jv
 		WHERE
 			jvd.parent = jv.name and jv.docstatus=1 and jvd.account = %(account)s {conditions}
 			order by posting_date DESC, jv.name DESC""",
@@ -100,7 +100,7 @@ def get_entries_for_bank_clearance_summary(filters):
 			"Payment Entry", name, posting_date, reference_no, clearance_date, party,
 			if(paid_from=%(account)s, ((paid_amount * -1) - total_taxes_and_charges) , received_amount)
 		FROM
-			`tabPayment Entry`
+			"tabPayment Entry"
 		WHERE
 			docstatus=1 and (paid_from = %(account)s or paid_to = %(account)s) {conditions}
 			order by posting_date DESC, name DESC""",

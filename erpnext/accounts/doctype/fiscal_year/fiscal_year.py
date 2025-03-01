@@ -1,12 +1,12 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
 
-
-import frappe
+from datetime import timedelta
 from dateutil.relativedelta import relativedelta
+import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import add_days, add_years, cstr, getdate
+from frappe.utils import add_days, add_years, cstr, getdate, now_datetime
 
 
 class FiscalYear(Document):
@@ -134,8 +134,11 @@ def check_duplicate_fiscal_year(doc):
 
 @frappe.whitelist()
 def auto_create_fiscal_year():
+
+	current_plus_3 = now_datetime().date() + timedelta(days=3)
 	for d in frappe.db.sql(
-		"""select name from "tabFiscal Year" where year_end_date = date_add(current_date, interval 3 day)"""
+		""" SLEECT name from "tabFiscal Year" where year_end_date = %(current_plus_three)s)""",
+		values={"current_plus_3": current_plus_3}
 	):
 		try:
 			current_fy = frappe.get_doc("Fiscal Year", d[0])

@@ -78,7 +78,7 @@ def assign_tasks(asset_maintenance_name, assign_to_member, maintenance_task, nex
 		"date": next_due_date,
 	}
 	if not frappe.db.sql(
-		"""select owner from `tabToDo`
+		"""select owner from "tabToDo"
 		where reference_type=%(doctype)s and reference_name=%(name)s and status='Open'
 		and owner=%(assign_to)s""",
 		args,
@@ -174,7 +174,7 @@ def get_maintenance_log(asset_name):
 	return frappe.db.sql(
 		"""
         select maintenance_status, count(asset_name) as count, asset_name
-        from `tabAsset Maintenance Log`
+        from "tabAsset Maintenance Log"
         where asset_name=%s group by maintenance_status""",
 		(asset_name),
 		as_dict=1,

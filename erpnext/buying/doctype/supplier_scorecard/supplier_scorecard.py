@@ -94,7 +94,7 @@ class SupplierScorecard(Document):
 			SELECT
 				scp.name
 			FROM
-				`tabSupplier Scorecard Period` scp
+				"tabSupplier Scorecard Period" scp
 			WHERE
 				scp.scorecard = %(sc)s
 				AND scp.docstatus = 1
@@ -156,7 +156,7 @@ def get_timeline_data(doctype, name):
 		SELECT
 			sc.name
 		FROM
-			`tabSupplier Scorecard Period` sc
+			"tabSupplier Scorecard Period" sc
 		WHERE
 			sc.scorecard = %(scs)s
 			AND sc.docstatus = 1""",
@@ -186,7 +186,7 @@ def refresh_scorecards():
 		SELECT
 			sc.name
 		FROM
-			`tabSupplier Scorecard` sc""",
+			"tabSupplier Scorecard" sc""",
 		{},
 		as_dict=1,
 	)
@@ -217,7 +217,7 @@ def make_all_scorecards(docname):
 			SELECT
 				scp.name
 			FROM
-				`tabSupplier Scorecard Period` scp
+				"tabSupplier Scorecard Period" scp
 			WHERE
 				scp.scorecard = %(sc)s
 				AND scp.docstatus = 1

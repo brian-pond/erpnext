@@ -515,7 +515,7 @@ class Asset(AccountsController):
 	def cancel_movement_entries(self):
 		movements = frappe.db.sql(
 			"""SELECT asm.name, asm.docstatus
-			FROM `tabAsset Movement` asm, `tabAsset Movement Item` asm_item
+			FROM "tabAsset Movement" asm, "tabAsset Movement Item" asm_item
 			WHERE asm_item.parent=asm.name and asm_item.asset=%s and asm.docstatus=1""",
 			self.name,
 			as_dict=1,
@@ -633,7 +633,7 @@ class Asset(AccountsController):
 		cwip_enabled = is_cwip_accounting_enabled(self.asset_category)
 		cwip_account = self.get_cwip_account(cwip_enabled=cwip_enabled)
 
-		query = """SELECT name FROM `tabGL Entry` WHERE voucher_no = %s and account = %s"""
+		query = """SELECT name FROM "tabGL Entry" WHERE voucher_no = %s and account = %s"""
 		if asset_bought_with_invoice:
 			# with invoice purchase either expense or cwip has been booked
 			expense_booked = frappe.db.sql(query, (purchase_document, fixed_asset_account), as_dict=1)
@@ -841,7 +841,7 @@ def make_post_gl_entry():
 	for asset_category in asset_categories:
 		if cint(asset_category.enable_cwip_accounting):
 			assets = frappe.db.sql_list(
-				""" select name from `tabAsset`
+				""" select name from "tabAsset"
 				where asset_category = %s and coalesce(booked_fixed_asset, 0) = 0
 				and available_for_use_date = %s""",
 				(asset_category.name, nowdate()),

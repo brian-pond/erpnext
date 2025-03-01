@@ -127,8 +127,8 @@ class TaxRule(Document):
 			conds += f""" and from_date < '{self.to_date}'"""
 
 		tax_rule = frappe.db.sql(
-			f"select name, priority \
-			from `tabTax Rule` where {conds} and name != '{self.name}'",
+			f""" select name, priority \
+			from "tabTax Rule" where {conds} and name != '{self.name}' """,
 			as_dict=1,
 		)
 
@@ -218,7 +218,7 @@ def get_tax_template(posting_date, args):
 			conditions.append(f"coalesce({key}, '') in ('', {frappe.db.escape(cstr(value))})")
 
 	tax_rule = frappe.db.sql(
-		"""select * from `tabTax Rule`
+		"""select * from "tabTax Rule"
 		where {}""".format(" and ".join(conditions)),
 		as_dict=True,
 	)

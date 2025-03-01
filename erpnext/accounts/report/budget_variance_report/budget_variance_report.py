@@ -145,7 +145,7 @@ def get_cost_centers(filters):
 				select
 					name
 				from
-					`tab{tab}`
+					"tab{tab}"
 				where
 					company = %s
 				{order_by}
@@ -158,7 +158,7 @@ def get_cost_centers(filters):
 				select
 					name
 				from
-					`tab{tab}`
+					"tab{tab}"
 			""".format(tab=filters.get("budget_against"))
 		)  # nosec
 
@@ -181,8 +181,8 @@ def get_dimension_target_details(filters):
 				ba.budget_amount,
 				b.fiscal_year
 			from
-				`tabBudget` b,
-				`tabBudget Account` ba
+				"tabBudget" b,
+				"tabBudget Account" ba
 			where
 				b.name = ba.parent
 				and b.docstatus = 1
@@ -216,8 +216,8 @@ def get_target_distribution_details(filters):
 				mdp.month,
 				mdp.percentage_allocation
 			from
-				`tabMonthly Distribution Percentage` mdp,
-				`tabMonthly Distribution` md
+				"tabMonthly Distribution Percentage" mdp,
+				"tabMonthly Distribution" md
 			where
 				mdp.parent = md.name
 				and md.fiscal_year between %s and %s
@@ -254,9 +254,9 @@ def get_actual_details(name, filters):
 				MONTHNAME(gl.posting_date) as month_name,
 				b.{budget_against} as budget_against
 			from
-				`tabGL Entry` gl,
-				`tabBudget Account` ba,
-				`tabBudget` b
+				"tabGL Entry" gl,
+				"tabBudget Account" ba,
+				"tabBudget" b
 			where
 				b.name = ba.parent
 				and b.docstatus = 1
@@ -268,7 +268,7 @@ def get_actual_details(name, filters):
 					select
 						name
 					from
-						`tab{filters.budget_against}`
+						"tab{filters.budget_against}"
 					where
 						name = gl.{budget_against}
 						{cond}
@@ -325,7 +325,7 @@ def get_fiscal_years(filters):
 			select
 				name
 			from
-				`tabFiscal Year`
+				"tabFiscal Year"
 			where
 				name between %(from_fiscal_year)s and %(to_fiscal_year)s
 		""",

@@ -34,7 +34,7 @@ def get_accounts_data(based_on, company):
 	if based_on == "Cost Center":
 		return frappe.db.sql(
 			"""select name, parent_cost_center as parent_account, cost_center_name as account_name, lft, rgt
-			from `tabCost Center` where company=%s order by name""",
+			from "tabCost Center" where company=%s order by name""",
 			company,
 			as_dict=True,
 		)
@@ -215,8 +215,8 @@ def set_gl_entries_by_account(
 
 	gl_entries = frappe.db.sql(
 		"""select posting_date, {based_on} as based_on, debit, credit,
-		is_opening, (select root_type from `tabAccount` where name = account) as type
-		from `tabGL Entry` where company=%(company)s
+		is_opening, (select root_type from "tabAccount" where name = account) as type
+		from "tabGL Entry" where company=%(company)s
 		{additional_conditions}
 		and posting_date <= %(to_date)s
 		and {based_on} is not null
