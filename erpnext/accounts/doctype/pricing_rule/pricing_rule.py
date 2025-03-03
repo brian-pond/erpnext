@@ -994,6 +994,7 @@ def get_item_uoms(doctype, txt, searchfield, start, page_len, filters):
 		"UOM Conversion Detail",
 		filters={"parent": ("in", items), "uom": ("like", f"{txt}%")},
 		fields=["distinct uom"],
+		order_by=["uom"],  # when using Distinct, Postgres requires that 'Order By' contain Selected columns, but no others.
 		as_list=1,
 	)
 
