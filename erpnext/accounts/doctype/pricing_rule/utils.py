@@ -125,7 +125,7 @@ def get_pricing_rules(args, doc=None):
 	if not rules:
 		frappe.dprint("\u274c: get_pricing_rules() line 126. No pricing rules found based on conditions.", check_env='FTP_DEBUG_PRICING_RULE')
 	else:
-		frappe.dprint(f"3. Final rules include {[ each['name'] for each in rules] }", check_env='FTP_DEBUG_PRICING_RULE')
+		frappe.dprint(f"3. Final rules include {[ each.get('name', '') for each in rules] }", check_env='FTP_DEBUG_PRICING_RULE')
 
 	return rules
 
