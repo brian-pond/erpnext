@@ -1552,8 +1552,8 @@ def future_sle_exists(args, sl_entries=None, allow_force_reposting=True):
 		from `tabStock Ledger Entry`
 		where
 			({})
-			and timestamp(posting_date, posting_time)
-				>= timestamp(%(posting_date)s, %(posting_time)s)
+			and (posting_date + posting_time)
+				>= (%(posting_date)s + %(posting_time)s)
 			and voucher_no != %(voucher_no)s
 			and is_cancelled = 0
 		GROUP BY

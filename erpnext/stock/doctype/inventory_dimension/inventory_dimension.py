@@ -369,6 +369,7 @@ def get_inventory_dimensions():
 				"validate_negative_stock",
 			],
 			filters={"disabled": 0},
+			order_by=None
 		)
 
 		frappe.local.inventory_dimensions = dimensions
