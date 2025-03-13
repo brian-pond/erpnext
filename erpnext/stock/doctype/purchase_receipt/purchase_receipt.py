@@ -1121,6 +1121,7 @@ def get_item_wise_returned_qty(pr_doc):
 				["Purchase Receipt Item", "purchase_receipt_item", "in", items],
 			],
 			group_by="`tabPurchase Receipt Item`.purchase_receipt_item",
+			order_by=None,
 			as_list=1,
 		)
 	)
