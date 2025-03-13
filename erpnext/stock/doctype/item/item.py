@@ -440,7 +440,7 @@ class Item(Document):
 				options = frappe.get_meta("Item Barcode").get_options("barcode_type").split("\n")
 				if item_barcode.barcode:
 					duplicate = frappe.db.sql(
-						"""select parent from `tabItem Barcode` where barcode = %s and parent != %s""",
+						"""select parent from "tabItem Barcode" where barcode = %s and parent != %s""",
 						(item_barcode.barcode, self.name),
 					)
 					if duplicate:

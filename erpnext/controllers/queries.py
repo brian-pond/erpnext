@@ -153,8 +153,8 @@ def item_query(doctype, txt, searchfield, start, page_len, filters, as_dict=Fals
 		columns += ", " + ", ".join(extra_searchfields)
 
 	if "description" in searchfields:
-		columns += """, if(length(tabItem.description) > 40, \
-			concat(substr(tabItem.description, 1, 40), "..."), description) as description"""
+		columns += """, CASE WHEN LENGTH(tabItem.description) > 40 THEN \
+			concat(substr(tabItem.description, 1, 40), '...') ELSE description END as description"""
 
 	searchfields = searchfields + [
 		field
@@ -197,29 +197,44 @@ def item_query(doctype, txt, searchfield, start, page_len, filters, as_dict=Fals
 		# scan description only if items are less than 50000
 		description_cond = "or tabItem.description LIKE %(txt)s"
 
-	return frappe.db.sql(
-		"""select
+	# pylint: disable=pointless-string-statement
+	"""
+			
+			-- and (tabItem.end_of_life > %(today)s or coalesce(tabItem.end_of_life, TO_DATE('1900-01-01','YYYY-MM-DD')) =  TO_DATE('1900-01-01','YYYY-MM-DD'))
+			-- and ({scond} or tabItem.item_code IN (select parent from "tabItem Barcode" where barcode LIKE %(txt)s)
+			-- 	{description_cond})
+			-- {fcond} {mcond}
+
+	"""
+
+	this_query = """
+		SELECT
 			tabItem.name {columns}
-		from tabItem
-		where tabItem.docstatus < 2
+		FROM 
+			"tabItem"		AS tabItem
+		WHERE
+			tabItem.docstatus < 2
 			and tabItem.disabled=0
 			and tabItem.has_variants=0
-			and (tabItem.end_of_life > %(today)s or coalesce(tabItem.end_of_life, '0000-00-00')='0000-00-00')
-			and ({scond} or tabItem.item_code IN (select parent from `tabItem Barcode` where barcode LIKE %(txt)s)
-				{description_cond})
-			{fcond} {mcond}
-		order by
-			if(locate(%(_txt)s, name), locate(%(_txt)s, name), 99999),
-			if(locate(%(_txt)s, item_name), locate(%(_txt)s, item_name), 99999),
+		ORDER BY
+			CASE WHEN locate(%(_txt)s, name) > 0 THEN locate(%(_txt)s, name) ELSE 99999 END,
+			CASE WHEN locate(%(_txt)s, item_name) > 0 THEN locate(%(_txt)s, item_name) ELSE 99999 END,
 			idx desc,
 			name, item_name
-		limit %(start)s, %(page_len)s """.format(
+		LIMIT  %(page_len)s
+		OFFSET %(start)s 
+		""".format(
 			columns=columns,
 			scond=searchfields,
-			fcond=get_filters_cond(doctype, filters, conditions).replace("%", "%%"),
-			mcond=get_match_cond(doctype).replace("%", "%%"),
-			description_cond=description_cond,
-		),
+			# fcond=None, # get_filters_cond(doctype, filters, conditions).replace("%", "%%"),
+			# mcond=None, # get_match_cond(doctype).replace("%", "%%"),
+			# description_cond=None   #description_cond,
+		)
+
+	this_query = this_query.replace("`tabItem`", 'tabItem')  # TODO: VERY UNCLEAN FIX
+
+	results = frappe.db.sql(
+		this_query,
 		{
 			"today": nowdate(),
 			"txt": "%%%s%%" % txt,
@@ -229,6 +244,7 @@ def item_query(doctype, txt, searchfield, start, page_len, filters, as_dict=Fals
 		},
 		as_dict=as_dict,
 	)
+	return results
 
 
 @frappe.whitelist()
