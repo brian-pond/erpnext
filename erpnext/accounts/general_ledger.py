@@ -705,7 +705,7 @@ def validate_against_pcv(is_opening, posting_date, company):
 		)
 
 	last_pcv_date = frappe.db.get_value(
-		"Period Closing Voucher", {"docstatus": 1, "company": company}, "max(posting_date)"
+		"Period Closing Voucher", {"docstatus": 1, "company": company}, "max(posting_date)", order_by=None
 	)
 
 	if last_pcv_date and getdate(posting_date) <= getdate(last_pcv_date):

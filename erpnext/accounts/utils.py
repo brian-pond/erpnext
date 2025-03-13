@@ -991,7 +991,7 @@ def get_held_invoices(party_type, party):
 
 	if party_type == "Supplier":
 		held_invoices = frappe.db.sql(
-			"""SELECT name FROM "tabPurchase Invoice" WHERE on_hold = 1 and release_date IS NOT NULL and release_date > CURDATE()""",
+			"""SELECT name FROM "tabPurchase Invoice" WHERE on_hold = 1 and release_date IS NOT NULL and release_date > CURRENT_DATE""",
 			as_dict=1,
 		)
 		held_invoices = set(d["name"] for d in held_invoices)
@@ -1871,6 +1871,7 @@ class QueryPaymentLedger:
 				)
 
 		# build query for voucher amount
+		# FTP: Fix missing Group By columns for query March 13th 2025
 		query_voucher_amount = (
 			qb.from_(ple)
 			.select(
@@ -1891,7 +1892,17 @@ class QueryPaymentLedger:
 			.where(Criterion.all(self.common_filter))
 			.where(Criterion.all(self.dimensions_filter))
 			.where(Criterion.all(self.voucher_posting_date))
-			.groupby(ple.voucher_type, ple.voucher_no, ple.party_type, ple.party)
+			.groupby(
+				ple.account,
+				ple.voucher_type,
+				ple.voucher_no,
+				ple.party_type,
+				ple.party,
+				ple.posting_date,
+				ple.due_date,
+				ple.account_currency,
+				ple.cost_center
+			)
 		)
 
 		# build query for voucher outstanding
@@ -1912,7 +1923,16 @@ class QueryPaymentLedger:
 			.where(ple.delinked == 0)
 			.where(Criterion.all(filter_on_against_voucher_no))
 			.where(Criterion.all(self.common_filter))
-			.groupby(ple.against_voucher_type, ple.against_voucher_no, ple.party_type, ple.party)
+			.groupby(
+				ple.account,
+				ple.against_voucher_type,
+				ple.against_voucher_no,
+				ple.party_type,
+				ple.party,
+				ple.posting_date,
+				ple.due_date,
+				ple.account_currency
+			)
 		)
 
 		# build CTE for combining voucher amount and outstanding
