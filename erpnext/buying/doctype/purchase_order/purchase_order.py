@@ -440,14 +440,19 @@ class PurchaseOrder(BuyingController):
 			update_bin_qty(item_code, warehouse, {"ordered_qty": get_ordered_qty(item_code, warehouse)})
 
 	def check_modified_date(self):
-		mod_db = frappe.db.sql("""select modified from "tabPurchase Order" where name = %s""", self.name)
-		date_diff = frappe.db.sql(f"select '{mod_db[0][0]}' - '{cstr(self.modified)}' ")
+		mod_db = frappe.db.sql("""select modified from "tabPurchase Order" where name = %s""", (self.name,),)
 
-		if date_diff and date_diff[0][0]:
-			msgprint(
-				_("{0} {1} has been modified. Please refresh.").format(self.doctype, self.name),
-				raise_exception=True,
+		if mod_db and mod_db[0][0]:
+			date_diff = frappe.db.sql(
+				"SELECT EXTRACT(EPOCH FROM (%s::timestamp - %s::timestamp))",
+				(mod_db[0][0], self.modified),
 			)
+			if date_diff and date_diff[0][0] > 0:
+				frappe.msgprint(
+					_("{0} {1} has been modified. Please refresh.").format(self.doctype, self.name),
+					raise_exception=True,
+				)
+
 
 	def update_status(self, status):
 		self.check_modified_date()
