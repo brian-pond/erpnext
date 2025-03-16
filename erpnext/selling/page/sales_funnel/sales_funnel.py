@@ -44,9 +44,9 @@ def get_funnel_data(from_date, to_date, company):
 	)[0][0]
 
 	converted = frappe.db.sql(
-		"""select count(*) from `tabCustomer`
+		"""SELECT (*) from "tabCustomer"
 		JOIN `tabLead` ON `tabLead`.name = `tabCustomer`.lead_name
-		WHERE (date(`tabCustomer`.creation) between %s and %s)
+		WHERE (date("tabCustomer".creation) between %s and %s)
 		and `tabLead`.company=%s""",
 		(from_date, to_date, company),
 	)[0][0]

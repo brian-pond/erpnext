@@ -1751,7 +1751,7 @@ def delink_original_entry(pl_entry, partial_cancel=False):
 		ple = qb.DocType("Payment Ledger Entry")
 		query = (
 			qb.update(ple)
-			.set(ple.delinked, True)
+			.set(ple.delinked, 1)  # Datahenge:  Unfortunately this is actually an Integer in the database...for now
 			.set(ple.modified, now())
 			.set(ple.modified_by, frappe.session.user)
 			.where(
