@@ -3,7 +3,7 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:customer_group_name",
- "creation": "2013-01-10 16:34:23",
+ "creation": "2013-01-10 16:34:23+00:00",
  "doctype": "DocType",
  "document_type": "Setup",
  "engine": "InnoDB",
@@ -30,6 +30,7 @@
   "onfleet_merchant",
   "hdwd_behavior",
   "ignore_missing_payment_method",
+  "skip_new_customer_packing",
   "section_break_15",
   "override"
  ],
@@ -210,13 +211,20 @@
    "fieldname": "customer_name_suffix",
    "fieldtype": "Data",
    "label": "Customer Name Suffix"
+  },
+  {
+   "default": "0",
+   "description": "When marked, ERP will never print \"New Customer\" on the Packing Slip PDF.",
+   "fieldname": "skip_new_customer_packing",
+   "fieldtype": "Check",
+   "label": "Not a New Customer (Packing Slip)"
   }
  ],
  "icon": "fa fa-sitemap",
  "idx": 1,
  "is_tree": 1,
  "links": [],
- "modified": "2025-02-17 13:58:46.419146",
+ "modified": "2025-03-17 19:45:40.611510+00:00",
  "modified_by": "Administrator",
  "module": "Setup",
  "name": "Customer Group",

@@ -36,6 +36,7 @@ class CustomerGroup(NestedSet):
 		parent_customer_group: DF.Link | None
 		payment_terms: DF.Link | None
 		rgt: DF.Int
+		skip_new_customer_packing: DF.Check
 	# end: auto-generated types
 
 	nsm_parent_field = "parent_customer_group"
