@@ -158,7 +158,7 @@ def get_street_address_html(party_type, party):
 			`tabDynamic Link` link,
 			`tabAddress` address
 		WHERE
-			link.parenttype = "Address"
+			link.parenttype = 'Address'
 				AND link.link_name = %(party)s
 		ORDER BY
 			address.address_type="Postal" DESC,
