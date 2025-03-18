@@ -21,6 +21,7 @@ class ItemManufacturer(Document):
 		item_code: DF.Link
 		item_name: DF.Data | None
 		manufacturer: DF.Link
+		manufacturer_full_name: DF.Data | None
 		manufacturer_part_no: DF.Data
 	# end: auto-generated types
 

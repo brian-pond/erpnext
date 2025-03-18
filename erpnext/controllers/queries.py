@@ -136,6 +136,8 @@ def tax_account_query(doctype, txt, searchfield, start, page_len, filters):
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def item_query(doctype, txt, searchfield, start, page_len, filters, as_dict=False):
+
+	# Datahenge:  VERY IMPORTANT to use LOWER() due to Case Sensitive matching in Postgres
 	doctype = "Item"
 	conditions = []
 
@@ -161,7 +163,7 @@ def item_query(doctype, txt, searchfield, start, page_len, filters, as_dict=Fals
 		for field in [searchfield or "name", "item_code", "item_group", "item_name"]
 		if field not in searchfields
 	]
-	searchfields = " or ".join([field + " like %(txt)s" for field in searchfields])
+	searchfields = " or ".join([ 'LOWER(' + field + ')' + " like LOWER(%(txt)s)" for field in searchfields])
 
 	if filters and isinstance(filters, dict):
 		if filters.get("customer") or filters.get("supplier"):
@@ -195,18 +197,9 @@ def item_query(doctype, txt, searchfield, start, page_len, filters, as_dict=Fals
 	description_cond = ""
 	if frappe.db.count(doctype, cache=True) < 50000:
 		# scan description only if items are less than 50000
-		description_cond = "or tabItem.description LIKE %(txt)s"
+		description_cond = "or LOWER(tabItem.description) LIKE LOWER(%(txt)s)"
 
-	# pylint: disable=pointless-string-statement
-	"""
-			
-			-- and (tabItem.end_of_life > %(today)s or coalesce(tabItem.end_of_life, TO_DATE('1900-01-01','YYYY-MM-DD')) =  TO_DATE('1900-01-01','YYYY-MM-DD'))
-			-- and ({scond} or tabItem.item_code IN (select parent from "tabItem Barcode" where barcode LIKE %(txt)s)
-			-- 	{description_cond})
-			-- {fcond} {mcond}
-
-	"""
-
+	# pylint: disable=consider-using-f-string
 	this_query = """
 		SELECT
 			tabItem.name {columns}
@@ -216,6 +209,14 @@ def item_query(doctype, txt, searchfield, start, page_len, filters, as_dict=Fals
 			tabItem.docstatus < 2
 			and tabItem.disabled=0
 			and tabItem.has_variants=0
+			and (tabItem.end_of_life > %(today)s or tabItem.end_of_life IS NULL)
+			and (
+				 {scond} 
+				 or tabItem.item_code IN (select parent from `tabItem Barcode` where barcode LIKE %(txt)s)
+			     {description_cond}
+			)
+			{fcond}
+			{mcond}			
 		ORDER BY
 			CASE WHEN locate(%(_txt)s, name) > 0 THEN locate(%(_txt)s, name) ELSE 99999 END,
 			CASE WHEN locate(%(_txt)s, item_name) > 0 THEN locate(%(_txt)s, item_name) ELSE 99999 END,
@@ -226,9 +227,9 @@ def item_query(doctype, txt, searchfield, start, page_len, filters, as_dict=Fals
 		""".format(
 			columns=columns,
 			scond=searchfields,
-			# fcond=None, # get_filters_cond(doctype, filters, conditions).replace("%", "%%"),
-			# mcond=None, # get_match_cond(doctype).replace("%", "%%"),
-			# description_cond=None   #description_cond,
+			fcond=get_filters_cond(doctype, filters, conditions).replace("%", "%%"),
+			mcond=get_match_cond(doctype).replace("%", "%%"),
+			description_cond=description_cond
 		)
 
 	this_query = this_query.replace("`tabItem`", 'tabItem')  # TODO: VERY UNCLEAN FIX

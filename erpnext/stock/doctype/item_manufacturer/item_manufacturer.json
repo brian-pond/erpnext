@@ -1,7 +1,7 @@
 {
  "actions": [],
  "allow_import": 1,
- "creation": "2019-06-02 04:41:37.332911",
+ "creation": "2019-06-02 04:41:37.332911+00:00",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -58,6 +58,7 @@
    "read_only": 1
   },
   {
+   "allow_in_quick_entry": 1,
    "default": "0",
    "fieldname": "is_default",
    "fieldtype": "Check",
@@ -70,10 +71,10 @@
    "fieldtype": "Data",
    "label": "Manufacturer Name",
    "read_only": 1
-  }  
+  }
  ],
  "links": [],
- "modified": "2022-02-05 20:25:55.507905",
+ "modified": "2025-03-18 18:54:33.674601+00:00",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Item Manufacturer",
@@ -119,6 +120,7 @@
  "quick_entry": 1,
  "sort_field": "modified",
  "sort_order": "ASC",
+ "states": [],
  "title_field": "item_code",
  "track_changes": 1
 }
