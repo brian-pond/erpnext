@@ -34,15 +34,17 @@ class PurchaseOrderItem(Document):
 		conversion_factor: DF.Float
 		cost_center: DF.Link | None
 		delivered_by_supplier: DF.Check
-		description: DF.TextEditor | None
+		description: DF.TextEditor
 		discount_amount: DF.Currency
 		discount_percentage: DF.Percent
+		exclude_posted_qty_ftp: DF.Check
 		expected_delivery_date: DF.Date | None
 		expense_account: DF.Link | None
 		fg_item: DF.Link | None
 		fg_item_qty: DF.Float
 		from_warehouse: DF.Link | None
 		image: DF.Attach | None
+		include_draft_qty_ftp: DF.Check
 		include_exploded_items: DF.Check
 		is_fixed_asset: DF.Check
 		is_free_item: DF.Check
@@ -53,6 +55,7 @@ class PurchaseOrderItem(Document):
 		item_tax_template: DF.Link | None
 		last_purchase_rate: DF.Currency
 		manufacturer: DF.Link | None
+		manufacturer_name: DF.Data | None
 		manufacturer_part_no: DF.Data | None
 		margin_rate_or_amount: DF.Float
 		margin_type: DF.Literal["", "Percentage", "Amount"]

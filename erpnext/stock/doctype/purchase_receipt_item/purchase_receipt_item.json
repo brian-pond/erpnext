@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "hash",
- "creation": "2013-05-24 19:29:10",
+ "creation": "2013-05-24 19:29:10+01:00",
  "doctype": "DocType",
  "document_type": "Document",
  "editable_grid": 1,
@@ -15,6 +15,7 @@
   "supplier_part_no",
   "column_break_2",
   "item_name",
+  "manufacturer_name",
   "section_break_4",
   "description",
   "brand",
@@ -1135,12 +1136,19 @@
    "no_copy": 1,
    "options": "Company:company:default_currency",
    "print_hide": 1
+  },
+  {
+   "fetch_from": "manufacturer.full_name",
+   "fieldname": "manufacturer_name",
+   "fieldtype": "Data",
+   "label": "Manufacturer Name",
+   "read_only": 1
   }
  ],
  "idx": 1,
  "istable": 1,
  "links": [],
- "modified": "2024-07-19 12:14:21.521466",
+ "modified": "2025-03-25 19:38:45.051822+01:00",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Purchase Receipt Item",
