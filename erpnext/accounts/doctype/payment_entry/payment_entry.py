@@ -550,10 +550,6 @@ class PaymentEntry(AccountsController):
 								title=_("Invalid Purchase Invoice"),
 							)
 
-					#if ref_doc.doctype == "Daily Order":
-					#	allowed_delivery_status = ["Ready", "Delivered", "For Review", "Good Faith"]
-					#	if ref_doc.status_delivery not in allowed_delivery_status:
-					#		frappe.throw(_(f"Daily Order delivery status must be one of {', '.join(allowed_delivery_status)}"))
 					if ref_doc.docstatus != 1 and ref_doc.doctype != "Daily Order":
 						frappe.throw(
 							_("{0} {1} must be submitted").format(_(d.reference_doctype), d.reference_name)

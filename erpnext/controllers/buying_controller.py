@@ -916,7 +916,7 @@ class BuyingController(SubcontractingController):
 					and self.transaction_date
 					and getdate(d.schedule_date) < getdate(self.transaction_date)
 				):
-					frappe.throw(_("Row #{0}: Reqd by Date cannot be before Transaction Date").format(d.idx))
+					frappe.throw(_(f"Row #{0}: Reqd by Date {d.schedule_date} cannot be before Transaction Date {self.transaction_date}").format(d.idx))
 		else:
 			frappe.throw(_("Please enter Reqd by Date"))
 
