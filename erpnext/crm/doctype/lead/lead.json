@@ -4,7 +4,8 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2022-02-08 13:14:41.083327",
+ "creation": "2022-02-08 13:14:41.083327+00:00",
+ "default_view": "List",
  "doctype": "DocType",
  "document_type": "Document",
  "email_append_to": 1,
@@ -103,8 +104,6 @@
   {
    "fieldname": "company_name",
    "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
    "label": "Organization Name",
    "mandatory_depends_on": "eval: !(doc.first_name)",
    "oldfieldname": "company_name",
@@ -113,11 +112,13 @@
   {
    "fieldname": "email_id",
    "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Email",
    "oldfieldname": "email_id",
    "oldfieldtype": "Data",
    "options": "Email",
-   "search_index": 1
+   "unique": 1
   },
   {
    "fieldname": "col_break123",
@@ -138,7 +139,6 @@
    "default": "Lead",
    "fieldname": "status",
    "fieldtype": "Select",
-   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
    "no_copy": 1,
@@ -163,6 +163,9 @@
   {
    "fieldname": "source",
    "fieldtype": "Link",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Source",
    "oldfieldname": "source",
    "oldfieldtype": "Select",
@@ -240,6 +243,7 @@
   {
    "fieldname": "type",
    "fieldtype": "Select",
+   "in_filter": 1,
    "label": "Lead Type",
    "oldfieldname": "type",
    "oldfieldtype": "Select",
@@ -300,7 +304,9 @@
    "default": "0",
    "fieldname": "unsubscribed",
    "fieldtype": "Check",
-   "label": "Unsubscribed"
+   "in_list_view": 1,
+   "label": "Unsubscribed",
+   "read_only": 1
   },
   {
    "default": "0",
@@ -423,8 +429,6 @@
   {
    "fieldname": "job_title",
    "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
    "label": "Job Title"
   },
   {
@@ -516,7 +520,7 @@
  "idx": 5,
  "image_field": "image",
  "links": [],
- "modified": "2023-12-01 18:46:49.468526",
+ "modified": "2025-03-28 15:02:21.846565+00:00",
  "modified_by": "Administrator",
  "module": "CRM",
  "name": "Lead",
@@ -583,5 +587,5 @@
  "sort_order": "DESC",
  "states": [],
  "subject_field": "title",
- "title_field": "title"
+ "title_field": "email_id"
 }
