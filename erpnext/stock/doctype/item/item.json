@@ -4,7 +4,7 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:item_code",
- "creation": "2013-05-03 10:45:46",
+ "creation": "2013-05-03 10:45:46+01:00",
  "description": "A Product or a Service that is bought, sold or kept in stock.",
  "doctype": "DocType",
  "document_type": "Setup",
@@ -141,6 +141,7 @@
   "can_be_favorite",
   "include_in_popular_searches",
   "exclude_from_shipping_rule_subtotal",
+  "prep_item",
   "cb_misc_ftp_2",
   "exclude_from_subtotal_discounts",
   "exclude_from_weekly_sales_controls",
@@ -1105,6 +1106,13 @@
    "fieldname": "warehouse_slot",
    "fieldtype": "Data",
    "label": "Warehouse Slot Number"
+  },
+  {
+   "default": "0",
+   "description": "When checked, this box indicates the item requires some preparation prior to fulfillment.",
+   "fieldname": "prep_item",
+   "fieldtype": "Check",
+   "label": "Prep Item"
   }
  ],
  "icon": "fa fa-tag",
@@ -1113,7 +1121,7 @@
  "index_web_pages_for_search": 1,
  "links": [],
  "make_attachments_public": 1,
- "modified": "2025-02-17 11:05:14.678429",
+ "modified": "2025-04-01 18:36:45.164668+01:00",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Item",

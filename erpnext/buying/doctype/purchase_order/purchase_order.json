@@ -3,7 +3,7 @@
  "allow_auto_repeat": 1,
  "allow_import": 1,
  "autoname": "naming_series:",
- "creation": "2013-05-21 16:16:39",
+ "creation": "2013-05-21 16:16:39+01:00",
  "doctype": "DocType",
  "document_type": "Document",
  "engine": "InnoDB",
@@ -58,6 +58,7 @@
   "net_total",
   "tax_withholding_net_total",
   "base_tax_withholding_net_total",
+  "expected_pallets",
   "section_break_48",
   "pricing_rules",
   "raw_material_details",
@@ -1288,13 +1289,18 @@
    "fieldname": "stock_use_date",
    "fieldtype": "Date",
    "label": "Stock Use Date"
+  },
+  {
+   "fieldname": "expected_pallets",
+   "fieldtype": "Data",
+   "label": "Expected Pallets"
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-31 13:57:18.021077",
+ "modified": "2025-03-27 16:25:42.901395+01:00",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Purchase Order",
