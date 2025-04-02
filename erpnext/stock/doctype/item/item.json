@@ -4,7 +4,7 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:item_code",
- "creation": "2013-05-03 10:45:46+01:00",
+ "creation": "2013-05-03 10:45:46+05:00",
  "description": "A Product or a Service that is bought, sold or kept in stock.",
  "doctype": "DocType",
  "document_type": "Setup",
