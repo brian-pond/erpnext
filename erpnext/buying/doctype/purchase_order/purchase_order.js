@@ -92,7 +92,7 @@ frappe.ui.form.on("Purchase Order", {
 				*/
 				frm.add_custom_button(__('Supplier'), () => {
 					frappe.call({
-						method: "ftp._standard_extensions.events.purchase_order.get_suppliers_default_items",
+						method: "ftp._standard_extensions.overrides.purchase_order.get_suppliers_default_items",
 						args: { "supplier_id": frm.doc.supplier},
 						callback: function(r) {
 							if (r.message) {
@@ -138,7 +138,7 @@ frappe.ui.form.on("Purchase Order", {
 				__('Revert to Draft'),
 				() => {
 					frappe.call({
-						method: "ftp._standard_extensions.events.purchase_order.revert_to_draft_ftp",
+						method: "ftp._standard_extensions.overrides.purchase_order.revert_to_draft_ftp",
 						args: {
 							purchase_order_key: frm.doc.name
 						},
@@ -267,7 +267,7 @@ frappe.ui.form.on("Purchase Order", {
 				let dialog_args = mydialog.get_values();
 
 				frappe.call({
-					method: "ftp._standard_extensions.events.purchase_order.get_purchase_lines_based_on_sales",
+					method: "ftp._standard_extensions.overrides.purchase_order.get_purchase_lines_based_on_sales",
 					args: {
 						supplier_id: frm.doc.supplier,
 						delivery_date_from: dialog_args.delivery_date_from,
