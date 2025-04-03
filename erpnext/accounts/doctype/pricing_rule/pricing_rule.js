@@ -278,7 +278,7 @@ function weighted_price_calculator(frm) {
 	this_dialog.set_primary_action(__('Calculate'), function() {
 		const dialog_data = this_dialog.get_values();
 		frappe.call({
-			'method': 'erpnext.accounts.doctype.pricing_rule.weighted_discounts.show_weighted_discounts',
+			'method': 'ftp.utilities.pricing.show_weighted_discounts',
 			'args': {
 				'item_code': dialog_data.item_code,
 				'discount_price': dialog_data.discount_price,
