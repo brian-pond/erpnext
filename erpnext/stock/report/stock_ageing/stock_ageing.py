@@ -15,6 +15,10 @@ Filters = frappe._dict
 
 
 def execute(filters: Filters = None) -> tuple:
+
+	if not filters.get("warehouse", None):
+		return
+
 	to_date = filters["to_date"]
 	columns = get_columns(filters)
 
@@ -50,7 +54,7 @@ def format_report_data(filters: Filters, item_details: dict, to_date: str) -> li
 		latest_age = date_diff(to_date, fifo_queue[-1][1])
 		range1, range2, range3, above_range3 = get_range_age(filters, fifo_queue, to_date, item_dict)
 
-		row = [details.name, details.item_name, details.description, details.item_group, details.brand]
+		row = [details.name, details.item_name, details.item_group ]
 
 		if filters.get("show_warehouse_wise_stock"):
 			row.append(details.warehouse)
@@ -119,10 +123,10 @@ def get_columns(filters: Filters) -> list[dict]:
 			"fieldname": "item_code",
 			"fieldtype": "Link",
 			"options": "Item",
-			"width": 100,
+			"width": 150,
 		},
-		{"label": _("Item Name"), "fieldname": "item_name", "fieldtype": "Data", "width": 100},
-		{"label": _("Description"), "fieldname": "description", "fieldtype": "Data", "width": 200},
+		{"label": _("Item Name"), "fieldname": "item_name", "fieldtype": "Data", "width": 150},
+		# {"label": _("Description"), "fieldname": "description", "fieldtype": "Data", "width": 200},
 		{
 			"label": _("Item Group"),
 			"fieldname": "item_group",
@@ -130,13 +134,13 @@ def get_columns(filters: Filters) -> list[dict]:
 			"options": "Item Group",
 			"width": 100,
 		},
-		{
-			"label": _("Brand"),
-			"fieldname": "brand",
-			"fieldtype": "Link",
-			"options": "Brand",
-			"width": 100,
-		},
+		#{
+		#	"label": _("Brand"),
+		#	"fieldname": "brand",
+		#	"fieldtype": "Link",
+		#	"options": "Brand",
+		#	"width": 100,
+		#},
 	]
 
 	if filters.get("show_warehouse_wise_stock"):

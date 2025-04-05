@@ -48,12 +48,14 @@ frappe.query_reports["Stock Ageing"] = {
 			fieldtype: "Link",
 			options: "Item",
 		},
+		/*
 		{
 			fieldname: "brand",
 			label: __("Brand"),
 			fieldtype: "Link",
 			options: "Brand",
 		},
+		*/
 		{
 			fieldname: "range1",
 			label: __("Ageing Range 1"),
