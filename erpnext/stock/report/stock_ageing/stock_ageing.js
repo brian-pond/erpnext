@@ -30,6 +30,7 @@ frappe.query_reports["Stock Ageing"] = {
 			label: __("Warehouse"),
 			fieldtype: "Link",
 			options: "Warehouse",
+			reqd: 1,
 			get_query: () => {
 				let warehouse_type = frappe.query_report.get_filter_value("warehouse_type");
 				let company = frappe.query_report.get_filter_value("company");
