@@ -560,10 +560,14 @@ def get_material_requests_based_on_supplier(doctype, txt, searchfield, start, pa
 	if not supplier_items:
 		frappe.throw(_("{0} is not the default supplier for any items.").format(supplier))
 
+	# pylint: disable=consider-using-f-string
 	material_requests = frappe.db.sql(
-		"""select distinct mr.name, transaction_date,company
-		from `tabMaterial Request` mr, `tabMaterial Request Item` mr_item
-		where mr.name = mr_item.parent
+		"""
+		SELECT DISTINCT mr.name, mr_item.item_code, transaction_date, company
+		FROM
+			"tabMaterial Request" 		AS mr,
+			"tabMaterial Request Item" 	AS mr_item
+		WHERE mr.name = mr_item.parent
 			and mr_item.item_code in ({})
 			and mr.material_request_type = 'Purchase'
 			and mr.per_ordered < 99.99
