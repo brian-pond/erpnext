@@ -104,6 +104,7 @@
   "anonymous",
   "column_break_btlz",
   "registration_date",
+  "zip_check_email_address",
   "sb_pauses",
   "pauses",
   "email_overrides_section",
@@ -794,6 +795,13 @@
   {
    "fieldname": "column_break_jyom",
    "fieldtype": "Column Break"
+  },
+  {
+   "description": "The email address an anonymous shopper provided during zip check. \nThis value is not verfified, could have duplicates, and is potentially untrustworthy.\nMay have a related Contact in Mailchimp.",
+   "fieldname": "zip_check_email_address",
+   "fieldtype": "Data",
+   "label": "Email From Zip Check",
+   "read_only": 1
   }
  ],
  "icon": "fa fa-user",
@@ -817,7 +825,7 @@
    "link_fieldname": "customer"
   }
  ],
- "modified": "2025-04-09 17:35:18.307611+00:00",
+ "modified": "2025-04-09 18:07:45.066653+00:00",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",
