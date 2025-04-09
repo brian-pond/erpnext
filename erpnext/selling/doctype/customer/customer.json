@@ -4,7 +4,7 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2013-06-11 14:26:44",
+ "creation": "2013-06-11 14:26:44+00:00",
  "description": "Buyer of Goods and Services.",
  "doctype": "DocType",
  "document_type": "Setup",
@@ -98,19 +98,24 @@
   "heading_contacts",
   "column_break_23",
   "ftp_tab",
+  "section_break_other",
+  "customer_retention_segment",
+  "customer_acquisition_channel",
+  "anonymous",
+  "column_break_btlz",
+  "registration_date",
   "sb_pauses",
   "pauses",
   "email_overrides_section",
   "first_order_email_sent",
   "override",
-  "customer_retention_segment",
   "ftp_custom_controls_section",
-  "ftp_options",
   "reusable_packaging_opt_in",
+  "ftp_options",
+  "sb_dbp",
   "dbp_order_quantity",
-  "dbp_login_id",
-  "customer_acquisition_channel",
-  "registration_date"
+  "column_break_jyom",
+  "dbp_login_id"
  ],
  "fields": [
   {
@@ -702,9 +707,10 @@
    "fieldtype": "Column Break"
   },
   {
+   "collapsible": 1,
    "fieldname": "ftp_custom_controls_section",
    "fieldtype": "Section Break",
-   "label": "FTP Custom Controls"
+   "label": "Opt-Ins"
   },
   {
    "default": "0",
@@ -738,6 +744,7 @@
    "options": "Unknown\nYes\nNo"
   },
   {
+   "description": "The acquisition channel is currently imported from a spreadsheet.",
    "fieldname": "customer_acquisition_channel",
    "fieldtype": "Link",
    "label": "Acquisition Channel",
@@ -760,6 +767,33 @@
    "fieldname": "ftp_tab",
    "fieldtype": "Tab Break",
    "label": "FTP"
+  },
+  {
+   "default": "0",
+   "description": "If marked, customer has not completed Registration Step 2.",
+   "fieldname": "anonymous",
+   "fieldtype": "Check",
+   "label": "Anonymous",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_btlz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_other",
+   "fieldtype": "Section Break",
+   "label": "Other"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb_dbp",
+   "fieldtype": "Section Break",
+   "label": "DBP"
+  },
+  {
+   "fieldname": "column_break_jyom",
+   "fieldtype": "Column Break"
   }
  ],
  "icon": "fa fa-user",
@@ -783,7 +817,7 @@
    "link_fieldname": "customer"
   }
  ],
- "modified": "2024-12-26 13:01:38.949130",
+ "modified": "2025-04-09 17:35:18.307611+00:00",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",
