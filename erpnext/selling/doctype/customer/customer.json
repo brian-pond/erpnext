@@ -215,6 +215,7 @@
    "oldfieldname": "customer_group",
    "oldfieldtype": "Link",
    "options": "Customer Group",
+   "reqd": 1,
    "search_index": 1
   },
   {
@@ -825,7 +826,7 @@
    "link_fieldname": "customer"
   }
  ],
- "modified": "2025-04-09 18:07:45.066653+00:00",
+ "modified": "2025-04-14 19:44:35.948052+00:00",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",
