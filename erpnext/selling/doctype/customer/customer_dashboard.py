@@ -25,6 +25,6 @@ def get_data():
 			#},
 			#{"label": _("Projects"), "items": ["Project"]},
 			{"label": _("Pricing"), "items": ["Pricing Rule"]},
-			{"label": _("Web Subscriptions"), "items": ["Web Subscription"]},
+			{"label": _("Customer Subscriptions"), "items": ["Customer Subscription"]},
 		],
 	}
