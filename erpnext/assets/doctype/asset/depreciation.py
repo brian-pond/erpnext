@@ -123,7 +123,7 @@ def get_depreciable_asset_depr_schedules_data(date):
 		.where(a.status.isin(["Submitted", "Partially Depreciated"]))
 		.where(ds.journal_entry.isnull())
 		.where(ds.schedule_date <= date)
-		.groupby(ads.name)
+		.groupby(ads.name, a.name, a.asset_category, a.company)   # DH Bug Fix for Group By with Postgres
 		.orderby(a.creation, order=Order.desc)
 	)
 
@@ -372,6 +372,7 @@ def get_depreciation_accounts(asset_category, company):
 def get_credit_and_debit_accounts(accumulated_depreciation_account, depreciation_expense_account):
 	root_type = frappe.get_value("Account", depreciation_expense_account, "root_type")
 
+	credit_account, debit_account = None, None
 	if root_type == "Expense":
 		credit_account = accumulated_depreciation_account
 		debit_account = depreciation_expense_account
