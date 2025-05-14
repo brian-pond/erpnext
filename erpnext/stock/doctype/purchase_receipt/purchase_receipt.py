@@ -31,13 +31,11 @@ class PurchaseReceipt(BuyingController):
 		from frappe.types import DF
 
 		from erpnext.accounts.doctype.pricing_rule_detail.pricing_rule_detail import PricingRuleDetail
-		from erpnext.accounts.doctype.purchase_taxes_and_charges.purchase_taxes_and_charges import (
-			PurchaseTaxesandCharges,
-		)
-		from erpnext.buying.doctype.purchase_receipt_item_supplied.purchase_receipt_item_supplied import (
-			PurchaseReceiptItemSupplied,
-		)
+		from erpnext.accounts.doctype.purchase_taxes_and_charges.purchase_taxes_and_charges import PurchaseTaxesandCharges
+		from erpnext.buying.doctype.purchase_receipt_item_supplied.purchase_receipt_item_supplied import PurchaseReceiptItemSupplied
 		from erpnext.stock.doctype.purchase_receipt_item.purchase_receipt_item import PurchaseReceiptItem
+		from frappe.types import DF
+		from ftp.ftp_module.doctype.receiving_item_table.receiving_item_table import ReceivingItemTable
 
 		additional_discount_percentage: DF.Float
 		address_display: DF.SmallText | None
@@ -98,6 +96,7 @@ class PurchaseReceipt(BuyingController):
 		pricing_rules: DF.Table[PricingRuleDetail]
 		project: DF.Link | None
 		range: DF.Data | None
+		receiving_table: DF.Table[ReceivingItemTable]
 		rejected_warehouse: DF.Link | None
 		remarks: DF.SmallText | None
 		represents_company: DF.Link | None
@@ -283,6 +282,8 @@ class PurchaseReceipt(BuyingController):
 				item.provisional_expense_account = default_provisional_account
 
 	def validate_with_previous_doc(self):
+		# Datahenge : This is causing us headaches because we want to change UOMs
+		return
 		super().validate_with_previous_doc(
 			{
 				"Purchase Order": {

@@ -188,6 +188,10 @@ erpnext.buying = {
 
 				frappe.model.set_value(cdt, cdn, "received_qty", received_qty);
 				frappe.model.set_value(cdt, cdn, "received_stock_qty", received_stock_qty);
+
+				// Ensure number_of_cases is always equal to qty
+				const receiving_item = doc.receiving_table.find((rec) => rec.purchase_receipt_item_name === cdn);
+				frappe.model.set_value("Receiving Item Table", receiving_item.name, "number_of_cases", item.qty);
 			}
 
 			batch_no(doc, cdt, cdn) {
