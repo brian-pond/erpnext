@@ -900,6 +900,9 @@ class Item(Document):
 	def validate_uom_conversion_factor(self):
 		if self.uoms:
 			for d in self.uoms:
+				if d.conversion_factor:
+					continue  # Datahenge BUG FIX
+				# Datahenge ^ : Absolutely f*cking not.  UOM Conversion can be different for different Products.
 				value = get_uom_conv_factor(d.uom, self.stock_uom)
 				if value:
 					d.conversion_factor = value
