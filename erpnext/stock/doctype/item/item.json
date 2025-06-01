@@ -145,7 +145,9 @@
   "cb_misc_ftp_2",
   "exclude_from_subtotal_discounts",
   "exclude_from_weekly_sales_controls",
-  "scale_weight_required"
+  "scale_weight_required",
+  "ftp_tab_traits",
+  "product_traits"
  ],
  "fields": [
   {
@@ -1099,8 +1101,7 @@
    "fieldname": "website_item_groups",
    "fieldtype": "Table",
    "label": "Categories",
-   "options": "Website Item Group",
-   "read_only": 1
+   "options": "Website Item Group"
   },
   {
    "fieldname": "warehouse_slot",
@@ -1113,6 +1114,17 @@
    "fieldname": "prep_item",
    "fieldtype": "Check",
    "label": "Prep Item"
+  },
+  {
+   "fieldname": "ftp_tab_traits",
+   "fieldtype": "Tab Break",
+   "label": "Item Traits"
+  },
+  {
+   "fieldname": "product_traits",
+   "fieldtype": "Table MultiSelect",
+   "label": "Add product traits here:",
+   "options": "Product Trait Map"
   }
  ],
  "icon": "fa fa-tag",
@@ -1121,7 +1133,7 @@
  "index_web_pages_for_search": 1,
  "links": [],
  "make_attachments_public": 1,
- "modified": "2025-05-27 16:01:51.256453+00:00",
+ "modified": "2025-05-31 21:12:58.193018+00:00",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Item",
