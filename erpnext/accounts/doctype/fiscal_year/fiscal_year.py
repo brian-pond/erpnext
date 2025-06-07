@@ -137,7 +137,7 @@ def auto_create_fiscal_year():
 
 	current_plus_3 = now_datetime().date() + timedelta(days=3)
 	for d in frappe.db.sql(
-		""" SLEECT name from "tabFiscal Year" where year_end_date = %(current_plus_three)s)""",
+		""" SELECT name from "tabFiscal Year" where year_end_date = %(current_plus_three)s)""",
 		values={"current_plus_three": current_plus_3}
 	):
 		try:
