@@ -2,6 +2,7 @@
 
 # For license information, please see license.txt
 
+# pylint: disable=protected-access
 
 import copy
 import json
@@ -12,7 +13,6 @@ from frappe import _, throw
 from frappe.model.document import Document
 from frappe.utils import cint, flt
 from frappe.utils import getdate  # Datahenge
-from temporal import validate_datatype  # Datahenge
 
 
 apply_on_dict = {"Item Code": "items", "Item Group": "item_groups", "Brand": "brands"}
@@ -441,6 +441,7 @@ def apply_pricing_rule(args, doc=None):
 	        "ignore_pricing_rule": "something"
 	}
 	"""
+	from temporal import validate_datatype  # Datahenge
 
 	# ---------------
 	# Datahenge:	This function is called directly by JS code on the ERPNext website.
@@ -549,7 +550,7 @@ def get_pricing_rule_for_item(args, doc=None, for_validate=False) -> dict:
 	  * 'doc' is the SalesOrder document.
 
 	"""
-
+	from temporal import validate_datatype  # Datahenge
 	from erpnext.accounts.doctype.pricing_rule.utils import (
 		get_applied_pricing_rules,
 		get_pricing_rule_items,
@@ -680,18 +681,18 @@ def get_pricing_rule_for_item(args, doc=None, for_validate=False) -> dict:
 				frappe.dprint(f"* ... pricing rule meets Nth Order requirements on Daily Order {doc.name}", check_env='FTP_DEBUG_PRICING_RULE')
 
 				# ------------------------------------
-				# Farm To People: Pricing Rule based on Order Line's Origin Code.
+				# DH: Pricing Rule based on Order Line being ALC or Subscription.
 				# ------------------------------------
 				if (pricing_rule.limit_to_origin != "All") and (doc.doctype == 'Daily Order Item'):
-					if pricing_rule.limit_to_origin == 'ALC' and doc.origin_code != 'A la carte':
-						frappe.dprint(f"X  Removing pricing rule due to Origin mismatch {doc.name} - {doc.origin_code}", check_env='FTP_DEBUG_PRICING_RULE')
+					if pricing_rule.limit_to_origin == 'ALC' and doc.ref_subscription_item:
+						frappe.dprint(f"X  Removing pricing rule; requires ALC but Daily Order Item is a subscription. {doc.name} - {doc.ref_subscription_item}", check_env='FTP_DEBUG_PRICING_RULE')
 						continue
-					if pricing_rule.limit_to_origin == 'Subscription' and doc.origin_code != 'Subscription':
-						frappe.dprint(f"X  Removing pricing rule due to Origin mismatch {doc.name} - {doc.origin_code}", check_env='FTP_DEBUG_PRICING_RULE')						
+					if pricing_rule.limit_to_origin == 'Subscription' and not doc.ref_subscription_item:
+						frappe.dprint(f"X  Removing pricing rule; requires Daily Order be related to a Subscription. {doc.name}", check_env='FTP_DEBUG_PRICING_RULE')
 						continue
 
 				# ------------------------------------
-				# Farm To People: Pricing Rule based on Coupon Codes.
+				# DH: Pricing Rule based on Coupon Codes.
 				# ------------------------------------
 				# NOTE: Standard code never accomplished this.
 				# Coupon Codes (if they actually worked at all), only worked with ERPNext shopping carts.
@@ -803,7 +804,7 @@ def update_args_for_pricing_rule(args):
 def get_pricing_rule_details(args, pricing_rule):
 	"""
 	Another really poor function name.  It's just creating a dictionary, without "getting" anything new.
-	"""	
+	"""
 	return frappe._dict(
 		{
 			"pricing_rule": pricing_rule.name,
