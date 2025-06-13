@@ -66,7 +66,7 @@ class ShippingRule(Document):
 		# I understand that MySQL stores them as TinyINT. That's no excuse for not correctly casting them to Boolean
 		# in the Document framework. Because in Python, "1 == True" is True.  But "1 is True" equals False.
 		#
-		# Demonstration:  frappe.whatis(self.is_default_rule)
+		# Demonstration:  print(self.is_default_rule)
 		#
 		if bool(self.is_default_rule) is True:
 			statement = """ UPDATE "tabShipping Rule" SET is_default_rule = 0 WHERE name <> %(rule_name)s """

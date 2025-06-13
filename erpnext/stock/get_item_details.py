@@ -1171,12 +1171,15 @@ def get_pos_profile(company, pos_profile=None, user=None):
 @frappe.whitelist()
 def get_conversion_factor(item_code, uom, stock_uom=None):
 	# Datahenge: Added optional argument 'stock_uom' to support validation checks -before- an Item document is written to database.
-	variant_of = frappe.db.get_value("Item", item_code, "variant_of", cache=True)
+
+	#variant_of = frappe.db.get_value("Item", item_code, "variant_of", cache=True)
 	filters = {"parent": item_code, "uom": uom}
 
-	if variant_of:
-		filters["parent"] = ("in", (item_code, variant_of))
+	#if variant_of:
+	#	filters["parent"] = ("in", (item_code, variant_of))
+
 	conversion_factor = frappe.db.get_value("UOM Conversion Detail", filters, "conversion_factor")
+
 	if not conversion_factor:
 		# There is no Item-specific Conversion Factor for {uom}
 		stock_uom = stock_uom or frappe.db.get_value("Item", item_code, "stock_uom")
