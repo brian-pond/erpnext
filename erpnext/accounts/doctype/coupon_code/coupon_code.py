@@ -27,15 +27,25 @@ class CouponCode(Document):
 
 	if TYPE_CHECKING:
 		from frappe.types import DF
+		from ftp.ftp_module.doctype.coupon_code_multi.coupon_code_multi import CouponCodeMulti
+		from ftp.ftp_module.doctype.coupon_code_pricing_rule.coupon_code_pricing_rule import CouponCodePricingRule
 
+		add_credit_to_account: DF.Currency
+		add_to_customer_group: DF.Link | None
 		amended_from: DF.Link | None
+		apply_shipping_rule: DF.Link | None
+		assign_to_acquisition_channel: DF.Link
 		coupon_code: DF.Data | None
-		# coupon_name: DF.Data
-		coupon_type: DF.Literal["Promotional", "Gift Card"]
+		coupon_code_group: DF.Link | None
+		coupon_type: DF.Literal["Promotional", "Gift Card", "Referral", "Allow No Impact"]
 		customer: DF.Link | None
-		description: DF.TextEditor | None
+		description: DF.SmallText | None
+		internal_use_only: DF.Check
 		maximum_use: DF.Int
-		pricing_rule: DF.Link
+		maximum_use_per_customer: DF.Int
+		multi_coupon_codes: DF.Table[CouponCodeMulti]
+		pricing_rule: DF.Table[CouponCodePricingRule]
+		stacks_with_other_coupons: DF.Check
 		used: DF.Int
 		valid_from: DF.Date | None
 		valid_upto: DF.Date | None

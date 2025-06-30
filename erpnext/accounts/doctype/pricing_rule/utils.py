@@ -920,6 +920,7 @@ def validate_coupon_code(coupon_name):
 
 def update_coupon_code_count(coupon_name, transaction_type):
 	coupon = frappe.get_doc("Coupon Code", coupon_name)
+	coupon.flags.ignore_mandatory = True
 	if coupon:
 		if transaction_type == "used":
 			if coupon.maximum_use == 0 or (coupon.used < coupon.maximum_use):  # DH: Bug fix; zero implies unlimited usage.
