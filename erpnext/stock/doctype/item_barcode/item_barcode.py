@@ -15,23 +15,7 @@ class ItemBarcode(Document):
 		from frappe.types import DF
 
 		barcode: DF.Data
-		barcode_type: DF.Literal[
-			"",
-			"EAN",
-			"UPC-A",
-			"CODE-39",
-			"EAN-12",
-			"EAN-8",
-			"GS1",
-			"GTIN",
-			"ISBN",
-			"ISBN-10",
-			"ISBN-13",
-			"ISSN",
-			"JAN",
-			"PZN",
-			"UPC",
-		]
+		barcode_type: DF.Literal["", "EAN", "UPC-A", "CODE-39", "EAN-12", "EAN-8", "GS1", "GTIN", "ISBN", "ISBN-10", "ISBN-13", "ISSN", "JAN", "NoValidation", "PZN", "UPC"]
 		parent: DF.Data
 		parentfield: DF.Data
 		parenttype: DF.Data
