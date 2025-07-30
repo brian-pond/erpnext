@@ -1091,7 +1091,7 @@
    "fieldname": "packing_slip_section",
    "fieldtype": "Select",
    "label": "Packing Slip Section",
-   "options": "Section 1A: Frozen\nSection 1B: Refrigerated\nSection 2A: Grocery\nSection 2B: Bakery\nSection 2C: Non-Lit Produce\nSection 3: Produce\nSection 9: Other"
+   "options": "Section 1A: Frozen\nSection 1B: Refrigerated\nSection 2A: Grocery\nSection 2B: Bakery\nSection 2C: Non-Lit Produce\nSection 3: Produce\nSection 3B: No Produce\nSection 9: Other"
   },
   {
    "fieldname": "web_categories_section",
@@ -1139,7 +1139,7 @@
  "index_web_pages_for_search": 1,
  "links": [],
  "make_attachments_public": 1,
- "modified": "2025-07-23 18:41:33.029949+00:00",
+ "modified": "2025-07-27 18:40:05.735570+00:00",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Item",
