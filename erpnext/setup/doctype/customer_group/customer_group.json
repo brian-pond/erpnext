@@ -3,7 +3,7 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:customer_group_name",
- "creation": "2013-01-10 16:34:23+00:00",
+ "creation": "2013-01-10 17:34:23+01:00",
  "doctype": "DocType",
  "document_type": "Setup",
  "engine": "InnoDB",
@@ -11,6 +11,7 @@
   "customer_group_name",
   "parent_customer_group",
   "is_group",
+  "default_language",
   "cb0",
   "default_price_list",
   "payment_terms",
@@ -218,13 +219,19 @@
    "fieldname": "skip_new_customer_packing",
    "fieldtype": "Check",
    "label": "Not a New Customer (Packing Slip)"
+  },
+  {
+   "fieldname": "default_language",
+   "fieldtype": "Link",
+   "label": "Default Language",
+   "options": "Language"
   }
  ],
  "icon": "fa fa-sitemap",
  "idx": 1,
  "is_tree": 1,
  "links": [],
- "modified": "2025-03-17 19:45:40.611510+00:00",
+ "modified": "2025-08-19 17:36:09.307482+01:00",
  "modified_by": "Administrator",
  "module": "Setup",
  "name": "Customer Group",
