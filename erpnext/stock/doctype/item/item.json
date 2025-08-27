@@ -584,6 +584,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "7",
    "description": "Average time taken by the supplier to deliver",
    "fieldname": "lead_time_days",
    "fieldtype": "Int",

@@ -4,7 +4,7 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2013-01-10 16:34:11",
+ "creation": "2013-01-10 16:34:11+00:00",
  "description": "Supplier of Goods or Services.",
  "doctype": "DocType",
  "document_type": "Setup",
@@ -77,7 +77,8 @@
   "emails_for_purchase_order",
   "purchase_lead_days",
   "default_print_format",
-  "po_email_template"
+  "po_email_template",
+  "disable_suggested_po"
  ],
  "fields": [
   {
@@ -501,6 +502,13 @@
    "fieldtype": "Link",
    "label": "PO Email Template",
    "options": "Email Template"
+  },
+  {
+   "default": "0",
+   "description": "When marked, ERP will ignore this Supplier's products for 'Suggested Purchase Orders'",
+   "fieldname": "disable_suggested_po",
+   "fieldtype": "Check",
+   "label": "Disabled Suggested PO"
   }
  ],
  "icon": "fa fa-user",
@@ -513,7 +521,7 @@
    "link_fieldname": "party"
   }
  ],
- "modified": "2024-06-08 18:02:57.342931",
+ "modified": "2025-08-25 23:51:28.042136+00:00",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Supplier",

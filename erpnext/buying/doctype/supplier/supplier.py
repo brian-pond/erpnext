@@ -26,13 +26,10 @@ class Supplier(TransactionBase):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from frappe.types import DF
-
-		from erpnext.accounts.doctype.allowed_to_transact_with.allowed_to_transact_with import (
-			AllowedToTransactWith,
-		)
+		from erpnext.accounts.doctype.allowed_to_transact_with.allowed_to_transact_with import AllowedToTransactWith
 		from erpnext.accounts.doctype.party_account.party_account import PartyAccount
 		from erpnext.utilities.doctype.portal_user.portal_user import PortalUser
+		from frappe.types import DF
 
 		accounts: DF.Table[PartyAccount]
 		allow_purchase_invoice_creation_without_purchase_order: DF.Check
@@ -42,8 +39,11 @@ class Supplier(TransactionBase):
 		default_bank_account: DF.Link | None
 		default_currency: DF.Link | None
 		default_price_list: DF.Link | None
+		default_print_format: DF.Link | None
+		disable_suggested_po: DF.Check
 		disabled: DF.Check
 		email_id: DF.ReadOnly | None
+		emails_for_purchase_order: DF.Data | None
 		hold_type: DF.Literal["", "All", "Invoices", "Payments"]
 		image: DF.AttachImage | None
 		is_frozen: DF.Check
@@ -54,10 +54,12 @@ class Supplier(TransactionBase):
 		naming_series: DF.Literal["SUP-.YYYY.-"]
 		on_hold: DF.Check
 		payment_terms: DF.Link | None
+		po_email_template: DF.Link | None
 		portal_users: DF.Table[PortalUser]
 		prevent_pos: DF.Check
 		prevent_rfqs: DF.Check
 		primary_address: DF.Text | None
+		purchase_lead_days: DF.Int
 		release_date: DF.Date | None
 		represents_company: DF.Link | None
 		supplier_details: DF.Text | None
