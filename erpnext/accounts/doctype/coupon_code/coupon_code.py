@@ -34,12 +34,13 @@ class CouponCode(Document):
 		add_to_customer_group: DF.Link | None
 		amended_from: DF.Link | None
 		apply_shipping_rule: DF.Link | None
-		assign_to_acquisition_channel: DF.Link
+		assign_to_acquisition_channel: DF.Link | None
 		coupon_code: DF.Data | None
 		coupon_code_group: DF.Link | None
 		coupon_type: DF.Literal["Promotional", "Gift Card", "Referral", "Allow No Impact"]
 		customer: DF.Link | None
 		description: DF.SmallText | None
+		error_message: DF.SmallText | None
 		internal_use_only: DF.Check
 		maximum_use: DF.Int
 		maximum_use_per_customer: DF.Int
