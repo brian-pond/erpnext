@@ -167,3 +167,5 @@ def on_doctype_update():
 		frappe.db.sql(""" ALTER TABLE "tabCoupon Code" ALTER COLUMN coupon_code TYPE citext; """)
 	except Exception as ex:
 		print(f"Coupon Code, on_doctype_update(), {ex}")
+		frappe.db.rollback()
+
