@@ -161,6 +161,9 @@ def on_doctype_update():
 	# FTP : Performance index for finding a customer's Referral Code
 	frappe.db.add_index("Coupon Code", ["coupon_type", "customer", "valid_upto"], index_name="referral_code_IDX")
 
-	frappe.db.sql(""" CREATE EXTENSION IF NOT EXISTS citext """)
-	frappe.db.sql(""" ALTER TABLE "tabCoupon Code" ALTER COLUMN name TYPE citext ;""")
-	frappe.db.sql(""" ALTER TABLE "tabCoupon Code" ALTER COLUMN coupon_code TYPE citext; """)
+	try:
+		frappe.db.sql(""" CREATE EXTENSION IF NOT EXISTS citext """)
+		frappe.db.sql(""" ALTER TABLE "tabCoupon Code" ALTER COLUMN name TYPE citext ;""")
+		frappe.db.sql(""" ALTER TABLE "tabCoupon Code" ALTER COLUMN coupon_code TYPE citext; """)
+	except Exception as ex:
+		print(f"Coupon Code, on_doctype_update(), {ex}")
