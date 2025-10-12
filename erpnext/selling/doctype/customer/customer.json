@@ -227,7 +227,8 @@
    "oldfieldtype": "Link",
    "options": "Territory",
    "print_hide": 1,
-   "read_only": 1
+   "read_only": 1,
+   "reqd": 1
   },
   {
    "fieldname": "tax_id",
@@ -826,7 +827,7 @@
    "link_fieldname": "customer"
   }
  ],
- "modified": "2025-04-14 19:44:35.948052+00:00",
+ "modified": "2025-10-12 16:30:48.567538+00:00",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Customer",
