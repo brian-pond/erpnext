@@ -170,7 +170,7 @@ frappe.ui.form.on("Payment Entry", {
 			// Farm To People: Daily Orders are never Submitted, their docstatus is perpetually zero
 			if(child.reference_doctype == "Daily Order") {
 				filters["docstatus"] = 0;
-				filters["status_delivery"] = "Ready";
+				filters["status_billing"] != "Fully Billed";
 			}
 
 			if (in_list(party_type_doctypes, child.reference_doctype)) {
