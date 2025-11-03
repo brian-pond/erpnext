@@ -3,7 +3,7 @@
  "allow_auto_repeat": 1,
  "allow_import": 1,
  "autoname": "naming_series:",
- "creation": "2013-05-21 16:16:39+05:00",
+ "creation": "2013-05-21 11:16:39+00:00",
  "doctype": "DocType",
  "document_type": "Document",
  "engine": "InnoDB",
@@ -28,6 +28,10 @@
   "email_status",
   "supplier_warehouse",
   "amended_from",
+  "additional_dates_section",
+  "required_by_date",
+  "column_break_nbdc",
+  "expected_ship_date",
   "accounting_dimensions_section",
   "cost_center",
   "dimension_col_break",
@@ -244,8 +248,9 @@
    "default": "Today",
    "fieldname": "transaction_date",
    "fieldtype": "Date",
+   "hidden": 1,
    "in_list_view": 1,
-   "label": "Date",
+   "label": "Transaction Date",
    "oldfieldname": "transaction_date",
    "oldfieldtype": "Date",
    "reqd": 1,
@@ -255,7 +260,7 @@
    "allow_on_submit": 1,
    "fieldname": "schedule_date",
    "fieldtype": "Date",
-   "label": "Required By"
+   "label": "Delivery Date"
   },
   {
    "allow_on_submit": 1,
@@ -1294,13 +1299,33 @@
    "fieldname": "expected_pallets",
    "fieldtype": "Data",
    "label": "Expected Pallets"
+  },
+  {
+   "fieldname": "required_by_date",
+   "fieldtype": "Date",
+   "label": "Required by Date"
+  },
+  {
+   "fieldname": "expected_ship_date",
+   "fieldtype": "Date",
+   "label": "Expected Ship Date"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "additional_dates_section",
+   "fieldtype": "Section Break",
+   "label": "Additional Dates"
+  },
+  {
+   "fieldname": "column_break_nbdc",
+   "fieldtype": "Column Break"
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-03-27 16:25:42.901395+01:00",
+ "modified": "2025-11-03 20:25:43.572393+00:00",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Purchase Order",

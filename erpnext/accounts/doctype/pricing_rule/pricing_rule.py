@@ -27,24 +27,12 @@ class PricingRule(Document):
 	from typing import TYPE_CHECKING
 
 	if TYPE_CHECKING:
-		from frappe.types import DF
-
 		from erpnext.accounts.doctype.pricing_rule_brand.pricing_rule_brand import PricingRuleBrand
 		from erpnext.accounts.doctype.pricing_rule_item_code.pricing_rule_item_code import PricingRuleItemCode
-		from erpnext.accounts.doctype.pricing_rule_item_group.pricing_rule_item_group import (
-			PricingRuleItemGroup,
-		)
+		from erpnext.accounts.doctype.pricing_rule_item_group.pricing_rule_item_group import PricingRuleItemGroup
+		from frappe.types import DF
 
-		applicable_for: DF.Literal[
-			"",
-			"Customer",
-			"Customer Group",
-			"Territory",
-			"Sales Partner",
-			"Campaign",
-			"Supplier",
-			"Supplier Group",
-		]
+		applicable_for: DF.Literal["", "Customer", "Customer Group", "Territory", "Sales Partner", "Campaign", "Supplier", "Supplier Group"]
 		apply_discount_on: DF.Literal["Grand Total", "Net Total"]
 		apply_discount_on_rate: DF.Check
 		apply_multiple_pricing_rules: DF.Check
@@ -63,16 +51,19 @@ class PricingRule(Document):
 		disable: DF.Check
 		discount_amount: DF.Currency
 		discount_percentage: DF.Float
+		first_n_orders: DF.Int
 		for_price_list: DF.Link | None
 		free_item: DF.Link | None
 		free_item_rate: DF.Currency
 		free_item_uom: DF.Link | None
 		free_qty: DF.Float
+		funding: DF.Literal["OI - Vendor Funded", "Scanback - Vendor Funded", "Internal Marketing - Not Funded", "Procurement - Not Funded"]
 		has_priority: DF.Check
 		is_cumulative: DF.Check
 		is_recursive: DF.Check
 		item_groups: DF.Table[PricingRuleItemGroup]
 		items: DF.Table[PricingRuleItemCode]
+		limit_to_origin: DF.Literal["All", "ALC", "Subscription"]
 		margin_rate_or_amount: DF.Float
 		margin_type: DF.Literal["", "Percentage", "Amount"]
 		max_amt: DF.Currency
@@ -81,33 +72,12 @@ class PricingRule(Document):
 		min_qty: DF.Float
 		mixed_conditions: DF.Check
 		naming_series: DF.Literal["PRLE-.####"]
+		nth_order_only: DF.Int
 		other_brand: DF.Link | None
 		other_item_code: DF.Link | None
 		other_item_group: DF.Link | None
 		price_or_product_discount: DF.Literal["Price", "Product"]
-		priority: DF.Literal[
-			"",
-			"1",
-			"2",
-			"3",
-			"4",
-			"5",
-			"6",
-			"7",
-			"8",
-			"9",
-			"10",
-			"11",
-			"12",
-			"13",
-			"14",
-			"15",
-			"16",
-			"17",
-			"18",
-			"19",
-			"20",
-		]
+		priority: DF.Literal["", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"]
 		promotional_scheme: DF.Link | None
 		promotional_scheme_id: DF.Data | None
 		rate: DF.Currency
@@ -124,6 +94,8 @@ class PricingRule(Document):
 		threshold_percentage: DF.Percent
 		title: DF.Data
 		valid_from: DF.Date | None
+		valid_from_price_date: DF.Date | None
+		valid_to_price_date: DF.Date | None
 		valid_upto: DF.Date | None
 		validate_applied_rule: DF.Check
 		warehouse: DF.Link | None

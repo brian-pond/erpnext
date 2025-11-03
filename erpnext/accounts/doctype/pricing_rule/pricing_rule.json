@@ -3,7 +3,7 @@
  "allow_import": 1,
  "allow_rename": 1,
  "autoname": "naming_series:",
- "creation": "2014-02-21 15:02:51",
+ "creation": "2014-02-21 15:02:51+00:00",
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
@@ -25,7 +25,7 @@
   "sb_usage",
   "first_n_orders",
   "cb_usage",
-  "nth_order_only",  
+  "nth_order_only",
   "section_break_18",
   "apply_rule_on_other",
   "column_break_17",
@@ -62,13 +62,13 @@
   "recurse_for",
   "apply_recursion_over",
   "section_break_23",
-  "delivery_date_column",  
+  "delivery_date_column",
   "valid_from",
   "valid_upto",
   "col_break1",
   "valid_from_price_date",
   "valid_to_price_date",
-  "column_break_57",  
+  "column_break_57",
   "company",
   "currency",
   "margin",
@@ -83,6 +83,8 @@
   "discount_amount",
   "discount_percentage",
   "for_price_list",
+  "section_break_stdy",
+  "funding",
   "dynamic_condition_tab",
   "condition",
   "section_break_13",
@@ -183,7 +185,7 @@
   },
   {
    "default": "0",
-   "depends_on": "eval: doc.apply_on != \"Transaction\"",   
+   "depends_on": "eval: doc.apply_on != \"Transaction\"",
    "fieldname": "is_cumulative",
    "fieldtype": "Check",
    "label": "Is Cumulative",
@@ -193,7 +195,7 @@
    "default": "0",
    "fieldname": "coupon_code_based",
    "fieldtype": "Check",
-   "in_list_view": 1,   
+   "in_list_view": 1,
    "label": "Coupon Code Based"
   },
   {
@@ -364,7 +366,7 @@
    "depends_on": "eval:doc.apply_on != \"Transaction\";",
    "fieldname": "col_break1",
    "fieldtype": "Column Break",
-   "label": "<b>Price Date</b>"   
+   "label": "<b>Price Date</b>"
   },
   {
    "fieldname": "company",
@@ -453,12 +455,12 @@
    "label": "Discount Percentage"
   },
   {
+   "default": "Standard Selling",
    "depends_on": "eval:doc.rate_or_discount!=\"Rate\"",
-   "default": "Standard Selling",   
    "fieldname": "for_price_list",
    "fieldtype": "Link",
    "label": "For Price List",
-   "mandatory_depends_on": "eval:doc.rate_or_discount && doc.rate_or_discount != \"Rate\";",   
+   "mandatory_depends_on": "eval:doc.rate_or_discount && doc.rate_or_discount != \"Rate\";",
    "options": "Price List"
   },
   {
@@ -516,7 +518,7 @@
    "description": "Higher the number, higher the priority",
    "fieldname": "priority",
    "fieldtype": "Select",
-   "in_list_view": 1,   
+   "in_list_view": 1,
    "label": "Priority",
    "options": "\n1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n20"
   },
@@ -536,7 +538,7 @@
    "fieldname": "apply_discount_on_rate",
    "fieldtype": "Check",
    "label": "Apply Discount on Discounted Rate",
-   "read_only_depends_on": "eval:doc.apply_on == 'Transaction';"   
+   "read_only_depends_on": "eval:doc.apply_on == 'Transaction';"
   },
   {
    "default": "0",
@@ -663,63 +665,74 @@
    "fieldname": "has_priority",
    "fieldtype": "Check",
    "label": "Has Priority"
+  },
+  {
+   "default": "All",
+   "depends_on": "eval: doc.apply_on != \"Transaction\"",
+   "fieldname": "limit_to_origin",
+   "fieldtype": "Select",
+   "label": "Limit to Origin",
+   "options": "All\nALC\nSubscription",
+   "reqd": 1
+  },
+  {
+   "fieldname": "first_n_orders",
+   "fieldtype": "Int",
+   "label": "First N Orders"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "sb_usage",
+   "fieldtype": "Section Break",
+   "label": "Usage"
+  },
+  {
+   "fieldname": "cb_usage",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "nth_order_only",
+   "fieldtype": "Int",
+   "label": "Apply to N-th Order Only"
+  },
+  {
+   "depends_on": "eval: doc.apply_on != \"Transaction\"",
+   "fieldname": "valid_from_price_date",
+   "fieldtype": "Date",
+   "label": "Valid From Price Date"
+  },
+  {
+   "depends_on": "eval: doc.apply_on != \"Transaction\"",
+   "fieldname": "valid_to_price_date",
+   "fieldtype": "Date",
+   "label": "Valid Upto Price Date"
+  },
+  {
+   "fieldname": "column_break_57",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "delivery_date_column",
+   "fieldtype": "Column Break",
+   "label": "<b>Delivery Date</b>"
+  },
+  {
+   "fieldname": "section_break_stdy",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "Internal Marketing - Not Funded",
+   "documentation_url": "https://www.rodeocpg.com/knowledge-share/in-store-promotions-explained",
+   "fieldname": "funding",
+   "fieldtype": "Select",
+   "label": "Funding",
+   "options": "OI - Vendor Funded\nScanback - Vendor Funded\nInternal Marketing - Not Funded\nProcurement - Not Funded"
   }
-  ,{
-	"default": "All",
-	"depends_on": "eval: doc.apply_on != \"Transaction\"",
-	"fieldname": "limit_to_origin",
-	"fieldtype": "Select",
-	"label": "Limit to Origin",
-	"options": "All\nALC\nSubscription",
-	"reqd": 1
-   },
-   {
-	"fieldname": "first_n_orders",
-	"fieldtype": "Int",
-	"label": "First N Orders"
-   },
-   {
-	"collapsible": 1,
-	"fieldname": "sb_usage",
-	"fieldtype": "Section Break",
-	"label": "Usage"
-   },
-   {
-	"fieldname": "cb_usage",
-	"fieldtype": "Column Break"
-   },
-   {
-	"fieldname": "nth_order_only",
-	"fieldtype": "Int",
-	"label": "Apply to N-th Order Only"
-   },
-   {
-	"depends_on": "eval: doc.apply_on != \"Transaction\"",
-	"fieldname": "valid_from_price_date",
-	"fieldtype": "Date",
-	"label": "Valid From Price Date"
-   },
-   {
-	"depends_on": "eval: doc.apply_on != \"Transaction\"",
-	"fieldname": "valid_to_price_date",
-	"fieldtype": "Date",
-	"label": "Valid Upto Price Date"
-   },
-   {
-	"fieldname": "column_break_57",
-	"fieldtype": "Column Break"
-   },
-   {
-	"fieldname": "delivery_date_column",
-	"fieldtype": "Column Break",
-	"label": "<b>Delivery Date</b>"
-   }
-
  ],
  "icon": "fa fa-gift",
  "idx": 1,
  "links": [],
- "modified": "2024-09-01 13:16:34.496704",
+ "modified": "2025-10-30 15:49:28.325234+00:00",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Pricing Rule",
