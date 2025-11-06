@@ -1,16 +1,17 @@
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and contributors
 # For license information, please see license.txt
 
+# pylint: disable=protected-access
 
 import json
 from functools import reduce
 
+from pypika.functions import Sum  # Coalesce
+
 import frappe
 from frappe import ValidationError, _, qb, scrub, throw
 from frappe.utils import cint, comma_or, flt, getdate, nowdate
-from frappe.utils.data import comma_and, fmt_money
-from pypika import Case
-from pypika.functions import Coalesce, Sum
+from frappe.utils.data import comma_and
 
 import erpnext
 from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import get_dimensions
@@ -95,7 +96,7 @@ class PaymentEntry(AccountsController):
 		self.validate_paid_invoices()
 		self.ensure_supplier_is_not_blocked()
 		self.set_tax_withholding()
-		self.set_status()
+		# self.set_status()  # Datahenge:  This is problematic.  The act of validating should *not* alter the data, especially the 'modified' timestamp
 		self.set_total_in_words()
 
 	def on_submit(self):
@@ -521,6 +522,7 @@ class PaymentEntry(AccountsController):
 						self.validate_journal_entry()
 
 					if d.reference_doctype in frappe.get_hooks("invoice_doctypes"):
+						ref_party_account = None  # avoid possibility of using variable before assignment, pylint E0606
 						if self.party_type == "Customer":
 							ref_party_account = (
 								get_party_account_based_on_invoice_discounting(d.reference_name)
@@ -737,6 +739,8 @@ class PaymentEntry(AccountsController):
 		return allocated_amount
 
 	def set_status(self):
+		# Datahenge: Need to make this better, avoid needless SQL calls, avoid corrupting 'modified' field
+		current_status = self.status
 		if self.docstatus == 2:
 			self.status = "Cancelled"
 		elif self.docstatus == 1:
@@ -744,7 +748,9 @@ class PaymentEntry(AccountsController):
 		else:
 			self.status = "Draft"
 
-		self.db_set("status", self.status, update_modified=True)
+		if self.status != current_status:
+			if not self.is_new() and self.get("__islocal"):  # only edit the database if Existing Record is being modified anyway
+				self.db_set("status", self.status, update_modified=False)  # Don't mess with modified
 
 	def set_total_in_words(self):
 		from frappe.utils import money_in_words
