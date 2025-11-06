@@ -749,8 +749,9 @@ class PaymentEntry(AccountsController):
 			self.status = "Draft"
 
 		if self.status != current_status:
-			if not self.is_new() and self.get("__islocal"):  # only edit the database if Existing Record is being modified anyway
-				self.db_set("status", self.status, update_modified=False)  # Don't mess with modified
+			if not self.is_new():
+				# Can happen during a submit(), or cancel()
+				self.db_set("status", self.status, update_modified=True)  # Don't mess with modified
 
 	def set_total_in_words(self):
 		from frappe.utils import money_in_words
