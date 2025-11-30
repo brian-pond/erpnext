@@ -34,12 +34,13 @@ class CouponCode(Document):
 		add_to_customer_group: DF.Link | None
 		amended_from: DF.Link | None
 		apply_shipping_rule: DF.Link | None
-		assign_to_acquisition_channel: DF.Link
+		assign_to_acquisition_channel: DF.Link | None
 		coupon_code: DF.Data | None
 		coupon_code_group: DF.Link | None
 		coupon_type: DF.Literal["Promotional", "Gift Card", "Referral", "Allow No Impact"]
 		customer: DF.Link | None
 		description: DF.SmallText | None
+		error_message: DF.SmallText | None
 		internal_use_only: DF.Check
 		maximum_use: DF.Int
 		maximum_use_per_customer: DF.Int
@@ -160,6 +161,11 @@ def on_doctype_update():
 	# FTP : Performance index for finding a customer's Referral Code
 	frappe.db.add_index("Coupon Code", ["coupon_type", "customer", "valid_upto"], index_name="referral_code_IDX")
 
-	frappe.db.sql(""" CREATE EXTENSION IF NOT EXISTS citext """)
-	frappe.db.sql(""" ALTER TABLE "tabCoupon Code" ALTER COLUMN name TYPE citext ;""")
-	frappe.db.sql(""" ALTER TABLE "tabCoupon Code" ALTER COLUMN coupon_code TYPE citext; """)
+	try:
+		frappe.db.sql(""" CREATE EXTENSION IF NOT EXISTS citext """)
+		frappe.db.sql(""" ALTER TABLE "tabCoupon Code" ALTER COLUMN name TYPE citext ;""")
+		frappe.db.sql(""" ALTER TABLE "tabCoupon Code" ALTER COLUMN coupon_code TYPE citext; """)
+	except Exception as ex:
+		print(f"Coupon Code, on_doctype_update(), {ex}")
+		frappe.db.rollback()
+

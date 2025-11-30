@@ -1,7 +1,7 @@
 {
  "actions": [],
  "autoname": "hash",
- "creation": "2013-05-24 19:29:06+01:00",
+ "creation": "2013-05-24 18:29:06+00:00",
  "doctype": "DocType",
  "document_type": "Document",
  "editable_grid": 1,
@@ -913,7 +913,7 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "0",
+   "default": "1",
    "fieldname": "exclude_posted_qty_ftp",
    "fieldtype": "Check",
    "in_list_view": 1,
@@ -938,7 +938,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-03-25 19:34:09.357541+01:00",
+ "modified": "2025-10-04 18:58:40.264734+00:00",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Purchase Order Item",

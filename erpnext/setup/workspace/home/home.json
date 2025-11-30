@@ -1,7 +1,7 @@
 {
  "charts": [],
  "content": "[{\"id\":\"kb3XPLg8lb\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Your Shortcuts</b></span>\",\"col\":12}},{\"id\":\"nWd2KJPW8l\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Item\",\"col\":3}},{\"id\":\"snrzfbFr5Y\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Customer\",\"col\":3}},{\"id\":\"SHJKakmLLf\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Supplier\",\"col\":3}},{\"id\":\"CPxEyhaf3G\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sales Invoice\",\"col\":3}},{\"id\":\"4MijmHCpSQ\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Order\",\"col\":3}},{\"id\":\"GDVXK9zl2D\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"CRM Lead\",\"col\":3}},{\"id\":\"Arqy99P-3L\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Customer Subscription\",\"col\":3}},{\"id\":\"d_KVM1gsf9\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"JVu8-FJZCu\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Reports &amp; Masters</b></span>\",\"col\":12}},{\"id\":\"JiuSi0ubOg\",\"type\":\"card\",\"data\":{\"card_name\":\"Accounting\",\"col\":4}},{\"id\":\"ji2Jlm3Q8i\",\"type\":\"card\",\"data\":{\"card_name\":\"Stock\",\"col\":4}},{\"id\":\"N61oiXpuwK\",\"type\":\"card\",\"data\":{\"card_name\":\"CRM\",\"col\":4}},{\"id\":\"6J0CVl1mPo\",\"type\":\"card\",\"data\":{\"card_name\":\"Data Import and Settings\",\"col\":4}}]",
- "creation": "2024-12-26 10:28:34.061393+00:00",
+ "creation": "2024-12-26 05:28:34.061393-05:00",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -232,7 +232,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-04-18 23:31:16.539524+00:00",
+ "modified": "2025-08-12 15:10:35.163385-04:00",
  "modified_by": "Administrator",
  "module": "Setup",
  "name": "Home",

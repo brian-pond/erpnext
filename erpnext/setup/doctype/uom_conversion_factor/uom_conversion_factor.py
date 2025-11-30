@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 
+import frappe
 from frappe.model.document import Document
 
 
@@ -20,4 +21,7 @@ class UOMConversionFactor(Document):
 		value: DF.Float
 	# end: auto-generated types
 
-	pass
+
+def on_doctype_update():
+	# Datahenge: Incredibly important to prevent duplicate conversion factors for the same From and To pairs.
+	frappe.db.add_unique("UOM Conversion Factor", ["from_uom", "to_uom"], constraint_name="uom_conversion_factor_from_to")

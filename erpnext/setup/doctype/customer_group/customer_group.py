@@ -24,6 +24,7 @@ class CustomerGroup(NestedSet):
 		credit_limits: DF.Table[CustomerCreditLimit]
 		customer_group_name: DF.Data
 		customer_name_suffix: DF.Data | None
+		default_language: DF.Link | None
 		default_price_list: DF.Link | None
 		default_shipping_rule: DF.Link | None
 		hdwd_behavior: DF.Literal["Normal", "Without Short-Sub", "Never"]

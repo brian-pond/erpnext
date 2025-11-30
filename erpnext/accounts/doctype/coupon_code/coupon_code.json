@@ -16,6 +16,7 @@
   "customer",
   "column_break_4",
   "description",
+  "error_message",
   "sb_pricing_rule",
   "pricing_rule",
   "sb_custom_behavior",
@@ -218,12 +219,17 @@
    "fieldname": "assign_to_acquisition_channel",
    "fieldtype": "Link",
    "label": "Acquisition Channel",
-   "options": "Acquisition Channel",
-   "reqd": 0
+   "options": "Acquisition Channel"
+  },
+  {
+   "description": "Website will display this message, instead of \"Something went wrong\" if the coupon code is not applicable.",
+   "fieldname": "error_message",
+   "fieldtype": "Small Text",
+   "label": "Error Message"
   }
  ],
  "links": [],
- "modified": "2025-06-30 18:29:45.530647+00:00",
+ "modified": "2025-09-15 21:01:22.421103+00:00",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Coupon Code",
