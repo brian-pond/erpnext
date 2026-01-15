@@ -405,6 +405,7 @@ def make_purchase_receipt(source_name, target_doc=None):
 		target.base_amount = (flt(obj.qty) - flt(obj.received_qty)) * \
 			flt(obj.rate) * flt(source_parent.conversion_rate)
 		target.rate_per_weight_uom = obj.rate_per_weight_uom
+		target.received_qty_weight_uom = obj.qty_in_weight_uom
 
 	doc = get_mapped_doc("Purchase Order", source_name,	{
 		"Purchase Order": {
