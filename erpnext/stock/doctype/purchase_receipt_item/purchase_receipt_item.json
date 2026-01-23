@@ -838,7 +838,7 @@
   {
    "fieldname": "received_qty_weight_uom",
    "fieldtype": "Float",
-   "label": "Received per Weight UOM",
+   "label": "Recvd per Weight UOM",
    "precision": "4"
   },
   {
