@@ -209,12 +209,9 @@
    "fetch_from": "supplier.tax_id",
    "fieldname": "tax_id",
    "fieldtype": "Data",
-   "hidden": 1,
-   "ignore_user_permissions": 1,
    "label": "Tax Id",
    "permlevel": 1,
-   "print_hide": 1,
-   "read_only": 1
+   "print_hide": 1
   },
   {
    "fieldname": "due_date",
@@ -1316,8 +1313,8 @@
  "icon": "fa fa-file-text",
  "idx": 204,
  "is_submittable": 1,
- "modified": "2026-04-21 12:14:41.488449",
- "modified_by": "Administrator",
+ "modified": "2026-04-21 12:45:27.258287",
+ "modified_by": "accounting@spectrumfruits.com",
  "module": "Accounts",
  "name": "Purchase Invoice",
  "name_case": "Title Case",
