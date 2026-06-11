@@ -8,8 +8,6 @@ frappe.ui.form.on('Payment Entry', {
 			if (!frm.doc.paid_from) frm.set_value("paid_from_account_currency", null);
 			if (!frm.doc.paid_to) frm.set_value("paid_to_account_currency", null);
 		}
-		// Spectrum Fruits: Remit to Address.
-		frm.set_query("remit_to_address", get_address_query);
 	},
 
 	setup: function(frm) {
@@ -157,23 +155,6 @@ frappe.ui.form.on('Payment Entry', {
 		frm.events.hide_unhide_fields(frm);
 		frm.events.set_dynamic_labels(frm);
 		frm.events.show_general_ledger(frm);
-
-		// Spectrum Fruits: Show a link to Checks
-		frappe.call({
-			doc: frm.doc,
-			method: 'has_cheques',
-			callback: function(r) {
-				if (r.message && r.message == true) {
-					// Doing this inside the callback (to avoid await outside it?)
-					frm.add_custom_button(__('View Bank Checks'), function() {
-						frappe.set_route('List', 'Bank Check', {origin_record: frm.doc.name});
-					})
-				}
-			}
-		});
-		// EOM: Spectrum Fruits
-
-
 	},
 
 	validate_company: (frm) => {
@@ -321,7 +302,6 @@ frappe.ui.form.on('Payment Entry', {
 		if (frm.doc.contact_email || frm.doc.contact_person) {
 			frm.set_value("contact_email", "");
 			frm.set_value("contact_person", "");
-			frm.set_value("remit_to_address", "");  // Spectrum Fruits
 		}
 		if(frm.doc.payment_type && frm.doc.party_type && frm.doc.party && frm.doc.company) {
 			if(!frm.doc.posting_date) {
@@ -363,16 +343,6 @@ frappe.ui.form.on('Payment Entry', {
 								frm.set_party_account_based_on_party = false;
 								if (r.message.bank_account) {
 									frm.set_value("bank_account", r.message.bank_account);
-								}
-							},
-							() => {
-								// Spectrum Fruits
-								if(frm.doc.party_type == "Supplier") {
-									frm.set_value("mode_of_payment", r.message.mode_of_payment);
-									frm.set_value("remit_to_address", r.message.remit_to_address.name);
-								}
-								if(frm.doc.party_type == "Customer") {
-									frm.set_value("mode_of_payment", r.message.mode_of_payment);
 								}
 							}
 						]);
@@ -434,21 +404,13 @@ frappe.ui.form.on('Payment Entry', {
 								frm.set_value(balance_field, r.message['account_balance']);
 
 								if(frm.doc.payment_type=="Receive" && currency_field=="paid_to_account_currency") {
-									// Spectrum Fruits Begin: Disabling Mandatory Reference Number and Date
-									/*
 									frm.toggle_reqd(["reference_no", "reference_date"],
 										(r.message['account_type'] == "Bank" ? 1 : 0));
-									*/
-									// Spectrum Fruits End
 									if(!frm.doc.received_amount && frm.doc.paid_amount)
 										frm.events.paid_amount(frm);
 								} else if(frm.doc.payment_type=="Pay" && currency_field=="paid_from_account_currency") {
-									// Spectrum Fruits Begin: Disabling Mandatory Reference Number and Date
-									/*
 									frm.toggle_reqd(["reference_no", "reference_date"],
 										(r.message['account_type'] == "Bank" ? 1 : 0));
-									*/
-									// Spectrum Fruits End
 									if(!frm.doc.paid_amount && frm.doc.received_amount)
 										frm.events.received_amount(frm);
 
@@ -1102,11 +1064,3 @@ frappe.ui.form.on('Payment Entry', {
 		}
 	},
 })
-
-// Spectrum Fruits:
-function get_address_query (doc) {
-	return {
-		query: 'frappe.contacts.doctype.address.address.address_query',
-		filters: { link_doctype: doc.party_type, link_name: doc.party }
-	};
-}

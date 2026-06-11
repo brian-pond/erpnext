@@ -11,7 +11,7 @@ from six import string_types, iteritems
 
 import frappe
 from frappe import _, scrub, ValidationError
-from frappe.utils import flt, comma_or, nowdate, getdate, money_in_words # SPECTRUM
+from frappe.utils import flt, comma_or, nowdate, getdate
 
 import erpnext
 from erpnext.accounts.utils import get_outstanding_invoices, get_account_currency, get_balance_on
@@ -51,18 +51,7 @@ class PaymentEntry(AccountsController):
 			self.party_account_currency = self.paid_to_account_currency
 
 
-	def before_validate(self):
-		# SF: Default the reference date to the posting date (https://datahenge.atlassian.net/browse/V12UP-80)
-		if not self.reference_date:
-			self.reference_date = self.posting_date
-
-
 	def validate(self):
-
-		if self.is_new():
-			# Spectrum Fruits: Do not allow saving unless the Bank Check and Naming Series match up.
-			if self.mode_of_payment == 'Bank Check' and self.naming_series != 'JV-CK-':
-				raise Exception("When mode of payment is 'Bank Check', the naming series should be 'JV-CK-'")
 		self.setup_party_account_field()
 		self.set_missing_values()
 		self.validate_payment_type()
@@ -92,7 +81,6 @@ class PaymentEntry(AccountsController):
 		self.update_advance_paid()
 		self.update_expense_claim()
 		self.update_payment_schedule()
-		self.insert_bank_cheque()  # Spectrum Fruits: Conditions handled inside the function.
 		self.set_status()
 
 	def on_cancel(self):
@@ -105,8 +93,6 @@ class PaymentEntry(AccountsController):
 		self.update_payment_schedule(cancel=1)
 		self.set_payment_req_status()
 		self.set_status(update=True)
-		self.clearance_date = None  # Spectrum Fruits: When a Payment Entry is Cancelled, remove the Clearance Date, so it does get copied during Amend.
-		self.cancel_cheque()
 
 	def set_payment_req_status(self):
 		from erpnext.accounts.doctype.payment_request.payment_request import update_payment_req_status
@@ -124,11 +110,6 @@ class PaymentEntry(AccountsController):
 			reference_names.append((d.reference_doctype, d.reference_name, d.payment_term))
 
 	def set_bank_account_data(self):
-
-		# Spectrum Fruits:  Let's skip this, so that 'paid_from' is not modified.
-		if self.payment_type == "Pay":
-			return
-
 		if self.bank_account:
 			bank_data = get_bank_account_details(self.bank_account)
 
@@ -244,11 +225,6 @@ class PaymentEntry(AccountsController):
 		for field in ("paid_amount", "received_amount", "source_exchange_rate", "target_exchange_rate"):
 			if not self.get(field):
 				frappe.throw(_("{0} is mandatory").format(self.meta.get_label(field)))
-		# Spectrum Fruits
-		mode_of_payment = frappe.get_doc('Mode of Payment', self.mode_of_payment)
-		if (mode_of_payment):
-			if (mode_of_payment.mandatory_remit_to) and (self.party_type == 'Supplier') and (self.remit_to_address is None):
-				frappe.throw(_("When payment mode is '{}', the Remit-To Address is mandatory.").format(self.mode_of_payment))
 
 	def validate_reference_documents(self):
 		if self.party_type == "Student":
@@ -486,11 +462,9 @@ class PaymentEntry(AccountsController):
 		bank_account = self.paid_to if self.payment_type == "Receive" else self.paid_from
 		bank_account_type = frappe.db.get_value("Account", bank_account, "account_type")
 
-		# Spectrum Fruits: Disabling this mandatory requirement.
-		# if bank_account_type == "Bank":
-		#	if not self.reference_no or not self.reference_date:
-		#		frappe.throw(_("Reference No and Reference Date is mandatory for Bank transaction"))
-		# Spectrum Fruits End
+		if bank_account_type == "Bank":
+			if not self.reference_no or not self.reference_date:
+				frappe.throw(_("Reference No and Reference Date is mandatory for Bank transaction"))
 	def set_remarks(self):
 		if self.remarks: return
 
@@ -661,37 +635,6 @@ class PaymentEntry(AccountsController):
 
 		self.append('deductions', row)
 		self.set_unallocated_amount()
-
-	# SPECTRUM_FRUITS
-	def has_cheques(self):
-		""" Returns a boolean True if Journal Entry has related Bank Checks. """
-		# Returns a Tuple
-		sql_results = frappe.db.sql(f"""SELECT count(`name`)
-			FROM `tabBank Check`
-			WHERE origin_type = 'Payment Entry' AND origin_record = '{self.name}'
-			""")
-		if sql_results[0]:
-			if isinstance(sql_results[0][0],int) and sql_results[0][0] > 0:
-				return True
-		return False
-
-	def insert_bank_cheque(self):
-		"""
-		If using an applicable Mode of Payment, create a Bank Check.
-		"""
-		from sf.bank.doctype.bank_check import bank_check  # late import due to cross-app reference
-
-		if not self.payment_type == 'Pay':
-			return
-		doc_mode_of_payment = frappe.get_doc("Mode of Payment", self.mode_of_payment)
-		if bool(doc_mode_of_payment.create_bank_check) is True:
-			bank_check.create_from_doc(caller_doc=self)
-
-	def cancel_cheque(self):
-		from sf.bank.doctype.bank_check import bank_check  # late import due to cross-app reference
-		bank_check.cancel_from_origin_doc(self)
-
-	# EOM Spectrum Fruits
 
 @frappe.whitelist()
 def get_outstanding_reference_documents(args):
@@ -891,19 +834,6 @@ def get_party_details(company, party_type, party, date, cost_center=None):
 	party_balance = get_balance_on(party_type=party_type, party=party, cost_center=cost_center)
 	if party_type in ["Customer", "Supplier"]:
 		bank_account = get_party_bank_account(party_type, party)
-	# Spectrum Fruits
-	mode_of_payment = None
-	remit_to_address = None
-	if party_type in ["Supplier"]:
-		supplier = frappe.get_doc("Supplier", party)
-		mode_of_payment = supplier.mode_of_payment
-		remit_to_address = supplier.get_remit_to_address(first_only=True, none_on_error=(mode_of_payment != 'Check'))
-	elif party_type == "Customer":
-		mode_of_payment = frappe.get_value("Customer", party, "mode_of_payment") or None
-	elif party_type == "Employee":
-		employee = frappe.get_doc("Employee", party)
-		remit_to_address = employee.get_remit_to_address(first_only=True)
-
 
 	return {
 		"party_account": party_account,
@@ -911,9 +841,7 @@ def get_party_details(company, party_type, party, date, cost_center=None):
 		"party_account_currency": account_currency,
 		"party_balance": party_balance,
 		"account_balance": account_balance,
-		"bank_account": bank_account,
-		"mode_of_payment" : mode_of_payment,  # Spectrum Fruits
-		"remit_to_address": remit_to_address  # Spectrum Fruits
+		"bank_account": bank_account
 	}
 
 
@@ -1123,51 +1051,19 @@ def get_payment_entry(dt, dn, party_amount=None, bank_account=None, bank_amount=
 			# if party account currency and bank currency is different then populate paid amount as well
 			paid_amount = received_amount * doc.conversion_rate
 
-	# Spectrum Fruits: Default Mode of Payment
-	default_mode_of_payment = doc.get("mode_of_payment")
-	if (not default_mode_of_payment) and (dt in ("Purchase Invoice", "Purchase Order")):
-		default_mode_of_payment = frappe.db.get_value("Supplier",
-		                                              {"name": doc.supplier}, "mode_of_payment")
-	# Spectrum Fruits: End
-
 	pe = frappe.new_doc("Payment Entry")
 	pe.payment_type = payment_type
 	pe.company = doc.company
 	pe.cost_center = doc.get("cost_center")
 	pe.posting_date = nowdate()
-	# Spectrum Fruits: Begin
-	# 1. Mode of Payment
-	pe.mode_of_payment = default_mode_of_payment
-	# 2. Remit To Address
-	if dt in ("Purchase Invoice", "Purchase Order"):
-		supplier = frappe.get_doc("Supplier", doc.supplier)
-		# Datahenge: Remit to Address is only mandatory when Payment Method = Check
-		try:
-			remit_to_doc =  supplier.get_remit_to_address(none_on_error=(pe.mode_of_payment != 'Check'))
-		except:
-			remit_to_doc = None  # For example, Exotic does not have a Remit-To address.
-
-		if remit_to_doc:
-			pe.remit_to_address = remit_to_doc.name
-	# Spectrum Fruits: End
+	pe.mode_of_payment = doc.get("mode_of_payment")
 	pe.party_type = party_type
 	pe.party = doc.get(scrub(party_type))
 	pe.contact_person = doc.get("contact_person")
 	pe.contact_email = doc.get("contact_email")
 	pe.ensure_supplier_is_not_blocked()
 
-	# Spectrum Fruits: October 11th 2022: Make the 'paid_from' the value of the GL account referenced by the Mode of Payment
-	# pe.paid_from = party_account if payment_type=="Receive" else bank.account
-	if payment_type=="Pay":
-		try:
-			account_per_mode_of_payment =  frappe.db.get_value("Mode of Payment Account",
-			{"parent": pe.mode_of_payment, "company": pe.company}, "default_account")
-		except Exception as ex:
-			print(ex)
-			account_per_mode_of_payment = None
-		pe.paid_from = party_account if payment_type=="Receive" else account_per_mode_of_payment
-	else:
-		pe.paid_from = party_account
+	pe.paid_from = party_account if payment_type=="Receive" else bank.account
 
 	# Paid To:
 	pe.paid_to = party_account if payment_type=="Pay" else bank.account
@@ -1293,9 +1189,3 @@ def make_payment_order(source_name, target_doc=None):
 	}, target_doc, set_missing_values)
 
 	return doclist
-
-@frappe.whitelist()
-def get_supplier_mode_of_payment(supplier_key):
-	# Spectrum Fruits
-	return frappe.db.get_value('Supplier',
-		supplier_key, 'mode_of_payment')
