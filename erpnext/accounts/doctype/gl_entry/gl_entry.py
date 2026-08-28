@@ -65,8 +65,8 @@ class GLEntry(Document):
 				# Spectrum Fruits: Improved error message.
 				msg = f"<b>Document: GL Entry</b>"
 				msg += f"<br>\u2022 Account: '{self.account}'"
-				# msg += f"<br>\u2022 Voucher: {self.voucher_no}"
-				# msg += f"<br>\u2022 Voucher Type: {self.voucher_type}"
+				msg += f"<br>\u2022 Voucher: {self.voucher_no}"
+				msg += f"<br>\u2022 Voucher Type: {self.voucher_type}"
 				msg += "<br>\u2022 Account Type: 'Payable'"
 				msg += "<br>Document field 'party_type' or 'party' is empty."
 				frappe.throw(_(msg))
