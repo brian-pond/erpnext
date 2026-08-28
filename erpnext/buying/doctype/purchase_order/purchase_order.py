@@ -256,38 +256,44 @@ class PurchaseOrder(BuyingController):
 		self.update_requested_qty()
 		self.update_ordered_qty()
 
-		# self.update_blanket_order()
+		# Spectrum Fruits: on_update() does not run on cancel, so release the blanket
+		# contract quantity here.  See update_blanket_order_ordered_qty().
+		self.update_blanket_order_ordered_qty()
 
 		self.update_receiving_percentage()  # Spectrum Fruits: Should be set to zero for a cancelled PO.
 		unlink_inter_company_doc(self.doctype, self.name, self.inter_company_order_reference)
 
 	def on_update(self):
 		# Spectrum Fruits:  When the PO Qty is updated, indicate this on the Blanket Order Line also.
-		for order_line in self.items:
-			if order_line.blanket_order_item:
+		self.update_blanket_order_ordered_qty()
 
-				# 1. First, fetch the quantities from other, non-cancelled PO lines, related to the same Blanket Line.
-				query = """
-				SELECT SUM(qty) FROM `tabPurchase Order Item` WHERE
-				docstatus != 2
-				AND blanket_order_item = %(blanket_order_item)s
-				AND name != %(name)s """
-				query_result = frappe.db.sql(query, values={"blanket_order_item": order_line.blanket_order_item,
-				                                            "name": order_line.name})
-				if query_result and query_result[0]:
-					other_po_qty = query_result[0][0] or 0
-				else:
-					other_po_qty = 0
+	def update_blanket_order_ordered_qty(self):
+		"""
+		Spectrum Fruits: Recalculate 'ordered_qty' on every Blanket Order line this PO draws from.
 
-				# 2. Get quantity for this line (substituting a value of zero, if this PO is cancelled.)
-				if (self.docstatus == 2) or (self.status == 'Cancelled') or \
-					(order_line.docstatus == 2):
-					this_quantity = 0
-				else:
-					this_quantity = order_line.qty
-				# 3. Update the quantity on the related Blanket Order line.
-				#    Annoying side-effect.  If you update the value, and "set_route", the old Document value is still shown!
-				frappe.db.set_value("Blanket Order Item", order_line.blanket_order_item, "ordered_qty", this_quantity + other_po_qty)
+		Only *submitted* Purchase Orders consume blanket contract quantity; drafts do not
+		reserve.  The rule lives in one place -- get_submitted_po_qty() -- rather than being
+		re-implemented here, because the two copies previously disagreed about drafts.
+
+		This runs from on_update() and on_cancel(), both of which fire *after* db_update()
+		and update_children(), so a single query already sees this PO's current lines and
+		docstatus.  No need to sum "other" lines and add this one back in.
+
+		Note that on_update() does not run on cancel -- run_post_save_methods() calls
+		on_cancel() alone -- which is why on_cancel() must call this too.  Before that call
+		existed, cancelling a PO left the blanket line holding quantity until somebody
+		pressed 'Recalculate Quantity on PO' by hand.
+
+		Annoying side-effect.  If you update the value, and "set_route", the old Document
+		value is still shown!
+		"""
+		from erpnext.manufacturing.doctype.blanket_order_item.blanket_order_item import get_submitted_po_qty
+
+		blanket_line_keys = set(order_line.blanket_order_item for order_line in self.items
+		                        if order_line.blanket_order_item)
+		for blanket_line_key in blanket_line_keys:
+			frappe.db.set_value("Blanket Order Item", blanket_line_key, "ordered_qty",
+			                    get_submitted_po_qty(blanket_line_key))
 
 	def before_save(self):
 		"""
