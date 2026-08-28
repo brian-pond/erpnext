@@ -20,24 +20,7 @@ class JournalEntry(AccountsController):
 	def get_feed(self):
 		return self.voucher_type
 
-	# Spectrum Fruits: Begin
-	def before_validate(self):
-		"""
-		If not printing a bank check, clear the Remit-to Address prior to saving.
-		"""
-		if not self.create_bank_check:
-			self.check_address_remit_to = None
-
-		# SF: Default the reference date to the posting date (https://datahenge.atlassian.net/browse/V12UP-80)
-		if not self.cheque_date:
-			self.cheque_date = self.posting_date
-		# Spectrum Fruits: End
-
 	def validate(self):
-		if self.is_new():
-			# Spectrum Fruits: Do not allow saving unless the Bank Check and Naming Series match up.
-			if self.create_bank_check and self.naming_series != 'JV-CK-':
-				raise Exception("When 'Create a Bank Check' is marked, the naming series should be 'JV-CK-'")
 		if not self.is_opening:
 			self.is_opening='No'
 		self.clearance_date = None
@@ -74,7 +57,6 @@ class JournalEntry(AccountsController):
 		self.update_loan()
 		self.update_inter_company_jv()
 		self.update_invoice_discounting()
-		self.insert_bank_cheque()  # Create a Bank Check for the Journal Entry (if applicable)
 
 	def on_cancel(self):
 		from erpnext.accounts.utils import unlink_ref_doc_from_payment_entries
@@ -90,7 +72,6 @@ class JournalEntry(AccountsController):
 		self.unlink_inter_company_jv()
 		self.unlink_asset_adjustment_entry()
 		self.update_invoice_discounting()
-		self.cancel_cheque()  # Spectrum Fruits
 
 	def get_title(self):
 		return self.pay_to_recd_from or self.accounts[0].account
@@ -668,44 +649,6 @@ class JournalEntry(AccountsController):
 
 			d.account_balance = account_balance[d.account]
 			d.party_balance = party_balance[(d.party_type, d.party)]
-
-	# SPECTRUM_FRUITS
-	def has_cheques(self):
-		""" Returns a boolean True if Journal Entry has related Cheques. """
-		# Returns a Tuple
-		sql_results = frappe.db.sql("""SELECT COUNT(`name`)
-			FROM `tabBank Check`
-			WHERE origin_type = 'Journal Entry' AND origin_record = %(origin_record)s
-			""", values={"origin_record": self.name})
-		if sql_results[0]:
-			if isinstance(sql_results[0][0],int) and sql_results[0][0] > 0:
-				return True
-		return False
-
-	def insert_bank_cheque(self):
-		"""
-		Create a new Bank Check when checkbox is marked on Journal Entry.
-		"""
-		from sf.bank.doctype.bank_check import bank_check  # late import due to cross-module code
-		if self.create_bank_check:
-			if not self.check_address_remit_to:
-				frappe.throw("Cannot create a Bank Check without a Remit-to Address.")
-			bank_check.create_from_doc(caller_doc=self)
-
-	def cancel_cheque(self):
-		from sf.bank.doctype.bank_check import bank_check  # late import due to cross-module code
-		bank_check.cancel_from_origin_doc(self)
-
-	def validate_bank_check_party(self):
-		if self.party:
-			if not frappe.db.exists(self.party_type, self.party):
-				frappe.throw(_("Invalid {0}: {1}").format(self.party_type, self.party))
-
-			if self.party_account and self.party_type in ("Customer", "Supplier"):
-				self.validate_account_type(self.party_account,
-					[erpnext.get_party_account_type(self.party_type)])
-
-	# EOM Spectrum Fruits
 
 
 @frappe.whitelist()
