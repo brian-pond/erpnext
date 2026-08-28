@@ -14,13 +14,6 @@
   "posting_date",
   "company",
   "finance_book",
-  "sb_bank_check",
-  "check_party_type",
-  "check_party",
-  "check_party_name",
-  "cb_checks",
-  "create_bank_check",
-  "check_address_remit_to",
   "2_add_edit_gl_entries",
   "accounts",
   "section_break99",
@@ -63,8 +56,7 @@
   "stock_entry",
   "subscription_section",
   "auto_repeat",
-  "amended_from",
-  "voucher_type_orig"
+  "amended_from"
  ],
  "fields": [
   {
@@ -73,8 +65,10 @@
    "options": "fa fa-flag"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "title",
    "fieldtype": "Data",
+   "hidden": 1,
    "label": "Title",
    "no_copy": 1,
    "print_hide": 1
@@ -490,60 +484,12 @@
    "options": "Journal Entry",
    "print_hide": 1,
    "read_only": 1
-  },
-  {
-   "fieldname": "voucher_type_orig",
-   "fieldtype": "Data",
-   "label": "Voucher Type v4",
-   "options": "Journal Entry\nInter Company Journal Entry\nBank Entry\nCash Entry\nCredit Card Entry\nDebit Note\nCredit Note\nContra Entry\nExcise Entry\nWrite Off Entry\nOpening Entry\nDepreciation Entry\nExchange Rate Revaluation",
-   "read_only": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "create_bank_check",
-   "fieldtype": "Check",
-   "label": "Create a Bank Check"
-  },
-  {
-   "collapsible": 1,
-   "fieldname": "sb_bank_check",
-   "fieldtype": "Section Break",
-   "label": "Party Refs and Bank Checks"
-  },
-  {
-   "fieldname": "check_party_type",
-   "fieldtype": "Link",
-   "label": "Party Type",
-   "options": "DocType"
-  },
-  {
-   "fieldname": "check_party",
-   "fieldtype": "Dynamic Link",
-   "label": "Party",
-   "options": "check_party_type"
-  },
-  {
-   "depends_on": "eval: doc.create_bank_check == 1 && doc.check_party",
-   "fieldname": "check_address_remit_to",
-   "fieldtype": "Link",
-   "label": "Remit-to Address",
-   "options": "Address"
-  },
-  {
-   "fieldname": "cb_checks",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "check_party_name",
-   "fieldtype": "Data",
-   "label": "Party Name",
-   "read_only": 1
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 176,
  "is_submittable": 1,
- "modified": "2022-02-08 14:54:19.193057",
+ "modified": "2026-08-28 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Accounts",
  "name": "Journal Entry",
