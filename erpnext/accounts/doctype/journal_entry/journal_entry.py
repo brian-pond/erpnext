@@ -673,10 +673,10 @@ class JournalEntry(AccountsController):
 	def has_cheques(self):
 		""" Returns a boolean True if Journal Entry has related Cheques. """
 		# Returns a Tuple
-		sql_results = frappe.db.sql(f"""SELECT count(`name`)
+		sql_results = frappe.db.sql("""SELECT COUNT(`name`)
 			FROM `tabBank Check`
-			WHERE origin_type = 'Journal Entry' AND origin_record = '{self.name}'
-			""")
+			WHERE origin_type = 'Journal Entry' AND origin_record = %(origin_record)s
+			""", values={"origin_record": self.name})
 		if sql_results[0]:
 			if isinstance(sql_results[0][0],int) and sql_results[0][0] > 0:
 				return True

@@ -69,7 +69,6 @@ class GLEntry(Document):
 				# msg += f"<br>\u2022 Voucher Type: {self.voucher_type}"
 				msg += "<br>\u2022 Account Type: 'Payable'"
 				msg += "<br>Document field 'party_type' or 'party' is empty."
-				raise Exception("Breakpoint")
 				frappe.throw(_(msg))
 
 		# Zero value transaction is not allowed
