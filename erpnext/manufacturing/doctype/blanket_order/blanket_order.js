@@ -172,8 +172,8 @@ erpnext.manufacturing.BlanketOrder = frappe.ui.form.Controller.extend({
 				method: "view_allocated_po_lines",
 				doc: me.frm.doc,
 				callback: function() {
-					frappe.msgprint(`Finished recalculating PO Qty Ordered, per blanket order line.`);
-					console.log('Finished recalculating PO quantities.');
+					// The server method displays the allocation table itself.
+					console.log('Finished fetching PO line allocations.');
 				}
 			});
 		}, "View");

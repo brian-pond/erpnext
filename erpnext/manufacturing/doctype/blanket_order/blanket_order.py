@@ -79,14 +79,27 @@ class BlanketOrder(Document):
 		frappe.db.sql("""UPDATE `tabBlanket Order Item` SET docstatus = 0 WHERE parent = %s""", self.name)
 
 	def view_allocated_po_lines(self):
-		html_message = []
+		"""
+		Show which Purchase Order lines are allocated to each Blanket Order line.
+
+		msgprint(as_table=True) iterates the cells of each row, so every row must be a
+		list.  Handing it a list of strings renders one table cell per character.
+		"""
+		html_message = [["Blanket Line", "Item", "Blanket Qty", "Purchase Order", "PO Line", "PO Qty"]]
 		for blanket_line in self.items:
-			row = f"Blanket Line {blanket_line.idx}: {blanket_line.item_code} ---- Quantity {blanket_line.qty}"
-			po_lines = frappe.get_list("Purchase Order Item", fields=["parent", "qty"], filters={"blanket_order_item": blanket_line.name})
+			po_lines = frappe.get_list("Purchase Order Item",
+			                           fields=["parent", "idx", "qty"],
+			                           filters={"blanket_order_item": blanket_line.name},
+			                           order_by="parent, idx")
+			blanket_columns = [blanket_line.idx, blanket_line.item_code, blanket_line.qty]
+			if not po_lines:
+				html_message.append(blanket_columns + ["-", "-", "-"])
+				continue
 			for purchase_line in po_lines:
-				row += f"PO {purchase_line.parent}, Line {purchase_line.idx}, Quantity {purchase_line.qty}"
-		html_message.append(row)
-		frappe.msgprint(html_message, as_table=True)
+				html_message.append(blanket_columns +
+				                    [purchase_line.parent, purchase_line.idx, purchase_line.qty])
+
+		frappe.msgprint(html_message, title="PO Line Allocations", as_table=True)
 
 
 @frappe.whitelist()
